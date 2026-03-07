@@ -1,0 +1,69 @@
+{
+  "strictness": 2,
+  "commentTypes": ["logic", "syntax", "style", "info"],
+  "triggerOnUpdates": true,
+  "statusCheck": true,
+  "statusCommentsEnabled": true,
+  "shouldUpdateDescription": false,
+  "updateExistingSummaryComment": true,
+  "fixWithAI": true,
+  "excludeAuthors": ["dependabot[bot]", "github-actions[bot]"],
+  "ignorePatterns": "**/*.generated.*\n**/node_modules/**\n**/dist/**\n**/.next/**\n**/coverage/**\nCargo.lock\n*.lock",
+  "instructions": "Prioritize correctness, security, and production risk over style nitpicks. For this Starknet skills repo, focus on smart contract safety (Cairo and ERC-8004 compliance), cross-repo boundary awareness (starknet-agentic, starkclaw), input validation, proper error handling, type safety, side-effect cleanup, deterministic behavior, and private key / secret handling. Flag any code that could compromise agent security or introduce non-deterministic state.",
+  "reviewProfile": "security-focused",
+  "focus": [
+    "security",
+    "cross-repo-compatibility",
+    "architecture"
+  ],
+  "patternRepositories": [
+    "keep-starknet-strange/starknet-agentic",
+    "keep-starknet-strange/starkclaw"
+  ],
+  "customContext": {
+    "rules": [
+      {
+        "scope": ["contracts/**/*.cairo"],
+        "rule": "Cairo contracts must follow ERC-8004 identity standards. Flag any missing access control, unsafe felt252 casts, or unvalidated external calls."
+      },
+      {
+        "scope": ["packages/**/src/**/*.ts", "skills/**/src/**/*.ts"],
+        "rule": "TypeScript packages must have strict typing, proper error boundaries, input validation on all public APIs, and no floating promises. Flag any side-effects in constructors or module scope."
+      },
+      {
+        "scope": [".github/workflows/**"],
+        "rule": "Workflows must pin action versions to full SHA, never use mutable tags. Flag any secrets exposure, missing permissions blocks, or overly broad permissions."
+      },
+      {
+        "scope": ["docs/**"],
+        "rule": "Documentation must stay in sync with code. Flag any stale API references, missing security warnings, or undocumented breaking changes."
+      }
+    ],
+    "files": [
+      {
+        "path": "README.md",
+        "description": "Project overview and setup instructions"
+      },
+      {
+        "path": "CONTRIBUTING.md",
+        "description": "Contribution guidelines and code standards"
+      }
+    ],
+    "other": [
+      {
+        "scope": ["contracts/**/*.cairo", "packages/**/src/**/*.ts", "skills/**/src/**/*.ts"],
+        "content": "Security-critical quality gates: ERC-8004 compliance, agent identity integrity, session-account isolation, private key hygiene, and cross-repo boundary safety with starknet-agentic and starkclaw. Prioritize findings that can violate agent trust assumptions."
+      }
+    ]
+  },
+  "paths": {
+    "include": [
+      "contracts/**",
+      "packages/**",
+      "skills/**",
+      ".github/workflows/**",
+      "docs/**",
+      "scripts/**"
+    ]
+  }
+}
