@@ -1,0 +1,92 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+early_access: false
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  review_status: true
+  review_details: true
+  collapse_walkthrough: false
+  changed_files_summary: true
+  poem: false
+  fail_commit_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    auto_pause_after_reviewed_commits: 0
+
+  path_instructions:
+    - path: "contracts/**/*.cairo"
+      instructions: >
+        Enforce strict Cairo security patterns. Flag missing access control on external functions,
+        unchecked felt252 arithmetic that can overflow, reentrancy vulnerabilities, and unsafe
+        storage access patterns. Verify that all state-modifying functions have proper authorization
+        guards. Flag any delegate call without target whitelist validation.
+    - path: "packages/**"
+      instructions: >
+        Validate API compatibility and backward compatibility for published packages.
+        Breaking API changes require explicit migration notes. Flag any removal or rename
+        of exported symbols without deprecation notice. Verify semver compliance.
+    - path: ".github/workflows/**"
+      instructions: >
+        Ensure least-privilege permissions and safe CI execution patterns. Flag any workflow
+        with write permissions that doesn't strictly need them. Verify secrets are not exposed
+        in logs or artifacts. Dependency actions must use pinned SHA versions, not tags.
+    - path: "docs/**"
+      instructions: >
+        Security documentation must accurately reflect the current implementation.
+        Flag any discrepancy between documented and actual behavior. API docs must include
+        authentication and authorization requirements.
+    - path: "scripts/**"
+      instructions: >
+        Flag any script that runs with elevated privileges without justification.
+        Verify input sanitization in deployment scripts. Flag hardcoded credentials,
+        URLs, or environment-specific assumptions.
+    - path: "skills/**"
+      instructions: >
+        Skills define agent capabilities on Starknet. Verify correct parameter validation,
+        proper error handling, and that skill interfaces follow the established patterns.
+        Flag any skill that lacks documentation or tests.
+
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: >
+        Use a clear scope prefix naming the touched subsystem
+        (contracts/packages/docs/skills/ci) and summarize the behavioral impact.
+    description:
+      mode: "warning"
+    issue_assessment:
+      mode: "warning"
+    custom_checks:
+      - name: "Cross-repo boundary awareness"
+        mode: "error"
+        instructions: >
+          Boundary changes must acknowledge impacted repos:
+          keep-starknet-strange/starknet-agentic and keep-starknet-strange/starkclaw.
+          If contracts/** or packages/** are changed, the PR must declare cross-repo
+          impact or explicitly state "no cross-repo impact".
+      - name: "Cairo contract safety gate"
+        mode: "error"
+        instructions: >
+          For changes in contracts/**/*.cairo, verify that all external/public functions
+          have explicit access control. Flag any new storage variable without initialization
+          guard. Verify felt252 operations are bounds-checked. Fail if unsafe patterns are
+          detected without mitigation documentation.
+      - name: "CI/CD security gate"
+        mode: "warning"
+        instructions: >
+          For changes in .github/workflows/**, flag any new or expanded permissions,
+          unpinned action versions, or secrets referenced without need-to-know scope.
+
+tools:
+  opengrep:
+    enabled: true
+  trufflehog:
+    enabled: true
+
+chat:
+  auto_reply: true
