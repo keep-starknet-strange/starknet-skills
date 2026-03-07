@@ -1,0 +1,10 @@
+{
+  "case_id": "case-aa-self-call-session",
+  "module": "cairo-auditor",
+  "expected": {
+    "detect": true,
+    "severity": "high",
+    "class_id": "AA-SELF-CALL-SESSION"
+  },
+  "notes": "Session path allows self-call without privileged-selector deny checks."
+}

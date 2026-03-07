@@ -1,0 +1,11 @@
+.DS_Store
+*.swp
+*.swo
+
+# Local tooling
+.venv/
+.env
+
+# Python cache
+__pycache__/
+*.pyc

@@ -1,0 +1,17 @@
+# starknet-skills
+
+Root router: ./SKILL.md
+
+Modules:
+- ./cairo-auditor/SKILL.md
+- ./cairo-contract-authoring/SKILL.md
+- ./cairo-testing/SKILL.md
+- ./cairo-optimization/SKILL.md
+- ./cairo-toolchain/SKILL.md
+- ./account-abstraction/SKILL.md
+- ./starknet-network-facts/SKILL.md
+- ./openzeppelin-cairo/SKILL.md
+
+Data:
+- ./datasets/audits/README.md
+- ./evals/README.md

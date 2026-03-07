@@ -1,0 +1,16 @@
+{
+  "finding_id": "AUDIT-001",
+  "source_audit": "example_audit_2026_q1",
+  "severity": "high",
+  "file_path": "contracts/example/src/account.cairo",
+  "function_name": "__execute__",
+  "root_cause": "missing selector denylist check for privileged self-call",
+  "exploit_path": "session key invokes privileged selector on self and escalates control",
+  "vulnerable_pattern": "self.call_contract_syscall(self_addr, selector, calldata)",
+  "fixed_pattern": "assert(call.to != self_addr, 'session self-call blocked')",
+  "detection_rule": "flag session-key paths that allow account self-call to privileged selectors",
+  "false_positive_caveat": "self-call may be acceptable in owner-only path, not session path",
+  "required_test": "session key cannot invoke account privileged selector",
+  "provenance": "audit_section_3_2",
+  "confidence": "high"
+}
