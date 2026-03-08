@@ -17,6 +17,7 @@ class Case:
     class_id: str
     expected_detect: bool
     source: str
+    source_url: str | None
     code: str
 
 
@@ -40,6 +41,9 @@ def load_cases(path: Path) -> list[Case]:
                 class_id=str(raw["class_id"]),
                 expected_detect=raw["expected_detect"],
                 source=str(raw["source"]),
+                source_url=(
+                    str(raw["source_url"]) if raw.get("source_url") is not None else None
+                ),
                 code=str(raw["code"]),
             )
         )
@@ -151,6 +155,7 @@ def run_benchmark(cases: list[Case]) -> tuple[list[dict[str, object]], dict[str,
                 "predicted_detect": predicted,
                 "outcome": outcome,
                 "source": case.source,
+                "source_url": case.source_url,
             }
         )
     return results, totals
@@ -217,8 +222,11 @@ def render_markdown(
     lines.append("| Case | Class | Expected | Predicted | Outcome | Source |")
     lines.append("| --- | --- | ---: | ---: | --- | --- |")
     for row in results:
+        source = str(row["source"])
+        if row.get("source_url"):
+            source = f"[{source}]({row['source_url']})"
         lines.append(
-            f"| {row['case_id']} | {row['class_id']} | {str(row['expected_detect']).lower()} | {str(row['predicted_detect']).lower()} | {row['outcome']} | {row['source']} |"
+            f"| {row['case_id']} | {row['class_id']} | {str(row['expected_detect']).lower()} | {str(row['predicted_detect']).lower()} | {row['outcome']} | {source} |"
         )
     lines.append("")
     lines.append("## Notes")

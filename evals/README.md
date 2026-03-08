@@ -32,3 +32,13 @@ python scripts/quality/benchmark_cairo_auditor.py \
   --min-precision 0.90 \
   --min-recall 0.90
 ```
+
+Run the real-world Cairo corpus benchmark (public snippets + normalized audit findings):
+
+```bash
+python scripts/quality/benchmark_cairo_auditor.py \
+  --cases evals/cases/cairo_auditor_realworld_benchmark.jsonl \
+  --output evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md \
+  --min-precision 0.90 \
+  --min-recall 0.90
+```

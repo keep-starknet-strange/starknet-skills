@@ -68,3 +68,11 @@ jobs:
             --output /tmp/cairo-auditor-benchmark.md \
             --min-precision 0.90 \
             --min-recall 0.90
+
+      - name: Cairo auditor real-world benchmark
+        run: |
+          python scripts/quality/benchmark_cairo_auditor.py \
+            --cases evals/cases/cairo_auditor_realworld_benchmark.jsonl \
+            --output /tmp/cairo-auditor-realworld-benchmark.md \
+            --min-precision 0.90 \
+            --min-recall 0.90
