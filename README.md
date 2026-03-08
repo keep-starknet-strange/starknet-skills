@@ -10,6 +10,14 @@ Operational SDK and protocol execution playbooks belong in `starknet-agentic` / 
 - In scope: Cairo correctness, security review patterns, Starknet architectural facts, testing and hardening workflows.
 - Out of scope: runtime tool execution guides (MCP tool usage, SDK call recipes, protocol operation runbooks).
 
+## Install & Use
+
+1. Clone repository:
+   - `git clone https://github.com/keep-starknet-strange/starknet-skills.git`
+2. Load the root router in your agent session:
+   - `SKILL.md` (local) or [raw SKILL.md](https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md)
+3. Let the router activate only the needed module skill for the task.
+
 ## Modules
 
 - `cairo-auditor/` — flagship workflow skill for Cairo security review.

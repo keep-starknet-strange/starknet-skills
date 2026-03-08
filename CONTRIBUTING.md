@@ -26,6 +26,10 @@ Local check before PR:
 
 `python scripts/quality/validate_skills.py`
 
+If missing dependencies locally, install:
+
+`python -m pip install pyyaml`
+
 ## Evaluation-Driven Changes
 
 Skill changes that affect detection or remediation quality must include one of:

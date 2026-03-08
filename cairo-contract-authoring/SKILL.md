@@ -1,6 +1,6 @@
 ---
 name: cairo-contract-authoring
-description: Use when writing Cairo smart contracts on Starknet. Covers safe structure choices, component composition, and implementation workflow with references for full patterns.
+description: Guides Cairo smart-contract authoring on Starknet with safe structure choices, component composition, and implementation workflow references.
 license: Apache-2.0
 metadata: {"author":"starknet-skills","version":"0.1.1","org":"keep-starknet-strange","source":"starknet-agentic"}
 keywords: [cairo, contracts, starknet, openzeppelin, components, storage, interfaces]

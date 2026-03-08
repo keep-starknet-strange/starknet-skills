@@ -9,14 +9,21 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 
 SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+\.md)\)")
+DISALLOWED_DESCRIPTION_PREFIXES = ("use ", "use when ", "use for ", "use this ")
+
+try:
+    import yaml
+except ImportError as exc:  # pragma: no cover - enforced in CI
+    raise RuntimeError("PyYAML is required. Install with: pip install pyyaml") from exc
 
 
-def parse_frontmatter(text: str) -> tuple[dict[str, str], int] | None:
+def parse_frontmatter(text: str, path: Path) -> tuple[dict[str, Any], int, list[str]] | None:
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return None
@@ -30,15 +37,33 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], int] | None:
     if end is None:
         return None
 
-    raw = lines[1:end]
-    parsed: dict[str, str] = {}
-    for line in raw:
-        if not line.strip() or line.strip().startswith("#") or ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        parsed[key.strip()] = value.strip().strip('"')
+    raw = "\n".join(lines[1:end])
+    errors: list[str] = []
 
-    return parsed, end + 1
+    try:
+        parsed = yaml.safe_load(raw)
+    except yaml.YAMLError as exc:
+        errors.append(f"{path}: invalid YAML frontmatter: {exc}")
+        return {}, end + 1, errors
+
+    if parsed is None:
+        parsed = {}
+
+    if not isinstance(parsed, dict):
+        errors.append(f"{path}: frontmatter must parse to a mapping/object")
+        return {}, end + 1, errors
+
+    return parsed, end + 1, errors
+
+
+def _normalized_target(target: str) -> str:
+    return target.split("#", 1)[0].split("?", 1)[0].strip()
+
+
+def _resolve_link_path(current_skill: Path, target: str) -> Path:
+    if target.startswith("/"):
+        return (ROOT / target.lstrip("/")).resolve()
+    return (current_skill.parent / target).resolve()
 
 
 def check_skill(path: Path) -> list[str]:
@@ -52,16 +77,21 @@ def check_skill(path: Path) -> list[str]:
     if "/Users/" in text or "C:\\Users\\" in text:
         errors.append(f"{path}: contains absolute local filesystem paths")
 
-    parsed = parse_frontmatter(text)
+    parsed = parse_frontmatter(text, path)
     if parsed is None:
         errors.append(f"{path}: missing valid YAML frontmatter block")
         return errors
 
-    frontmatter, body_start = parsed
-    name = frontmatter.get("name", "")
-    description = frontmatter.get("description", "")
+    frontmatter, body_start, frontmatter_errors = parsed
+    errors.extend(frontmatter_errors)
 
-    if not name:
+    name_raw = frontmatter.get("name", "")
+    description_raw = frontmatter.get("description", "")
+
+    name = name_raw if isinstance(name_raw, str) else ""
+    description = description_raw if isinstance(description_raw, str) else ""
+
+    if not isinstance(name_raw, str) or not name.strip():
         errors.append(f"{path}: frontmatter missing 'name'")
     else:
         if len(name) > 64:
@@ -69,8 +99,38 @@ def check_skill(path: Path) -> list[str]:
         if not SKILL_NAME_RE.match(name):
             errors.append(f"{path}: skill name is not kebab-case: {name}")
 
-    if not description:
+    if not isinstance(description_raw, str) or not description.strip():
         errors.append(f"{path}: frontmatter missing 'description'")
+    else:
+        lowered = description.strip().lower()
+        if lowered.startswith(DISALLOWED_DESCRIPTION_PREFIXES):
+            errors.append(
+                f"{path}: description should be third-person trigger style, not imperative 'Use ...'"
+            )
+
+    body = "\n".join(lines[body_start:])
+
+    # Enforce markdown reference validity on every SKILL.
+    for m in LINK_RE.finditer(body):
+        target = m.group(1)
+        if target.startswith(("http://", "https://")):
+            continue
+
+        normalized = _normalized_target(target)
+        if not normalized:
+            continue
+
+        depth = normalized.count("/")
+        if depth > 1:
+            errors.append(f"{path}: markdown link '{target}' is deeper than one level from SKILL.md")
+
+        resolved = _resolve_link_path(path, normalized)
+        if ROOT not in resolved.parents and resolved != ROOT:
+            errors.append(f"{path}: markdown link '{target}' resolves outside repository root")
+            continue
+
+        if not resolved.exists():
+            errors.append(f"{path}: markdown link target does not exist: {target}")
 
     # For non-root skills, enforce folder/name consistency and required sections.
     if path.parent != ROOT:
@@ -79,7 +139,6 @@ def check_skill(path: Path) -> list[str]:
                 f"{path}: directory name '{path.parent.name}' must match frontmatter name '{name}'"
             )
 
-        body = "\n".join(lines[body_start:])
         if "## When to Use" not in body:
             errors.append(f"{path}: missing '## When to Use' section")
         if "## When NOT to Use" not in body:
@@ -87,18 +146,6 @@ def check_skill(path: Path) -> list[str]:
 
         if "auditor" in path.as_posix() and "## Rationalizations to Reject" not in body:
             errors.append(f"{path}: security/audit skill missing '## Rationalizations to Reject'")
-
-        # Enforce one-level deep markdown links for progressive disclosure.
-        for m in LINK_RE.finditer(body):
-            target = m.group(1)
-            if target.startswith("http://") or target.startswith("https://"):
-                continue
-            normalized = target.split("#", 1)[0]
-            depth = normalized.count("/")
-            if depth > 1:
-                errors.append(
-                    f"{path}: markdown link '{target}' is deeper than one level from SKILL.md"
-                )
 
     return errors
 

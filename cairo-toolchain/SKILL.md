@@ -1,6 +1,6 @@
 ---
 name: cairo-toolchain
-description: Use for Starknet build, declare, deploy, verify, and release operations with a deterministic workflow and references for command-level details.
+description: Covers Starknet build, declare, deploy, verify, and release operations with a deterministic workflow and command-level references.
 license: Apache-2.0
 metadata: {"author":"starknet-skills","version":"0.1.1","org":"keep-starknet-strange","source":"starknet-agentic"}
 keywords: [cairo, deploy, sncast, starknet, sepolia, mainnet, declare, verification]

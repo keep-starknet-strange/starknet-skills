@@ -1,6 +1,6 @@
 ---
 name: cairo-auditor
-description: Security audit workflow for Cairo/Starknet contracts. Use for pre-merge and pre-release vulnerability discovery, triage, and remediation planning.
+description: Runs a security audit workflow for Cairo/Starknet contracts with pre-merge and pre-release vulnerability discovery, triage, and remediation planning.
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 ---
 

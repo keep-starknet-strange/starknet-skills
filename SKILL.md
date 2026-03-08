@@ -1,6 +1,6 @@
 ---
 name: starknet-skills
-description: Router skill for Cairo/Starknet high-quality coding and auditing. Use this first to pick a focused module.
+description: Routes Cairo/Starknet coding and audit tasks to the smallest relevant module for focused, high-quality execution.
 ---
 
 # Starknet Skills Router

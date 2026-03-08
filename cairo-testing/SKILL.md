@@ -1,6 +1,6 @@
 ---
 name: cairo-testing
-description: Use when writing tests for Cairo smart contracts. Provides test strategy and progressive references for snforge unit, integration, fuzz, and fork tests.
+description: Provides Cairo smart-contract testing strategy with progressive references for snforge unit, integration, fuzz, and fork tests.
 license: Apache-2.0
 metadata: {"author":"starknet-skills","version":"0.1.1","org":"keep-starknet-strange","source":"starknet-agentic"}
 keywords: [cairo, testing, snforge, starknet-foundry, fuzzing, integration]

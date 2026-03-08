@@ -1,6 +1,6 @@
 ---
 name: cairo-optimization
-description: Use after correctness is established to improve Cairo performance and resource usage. Entry workflow plus references for full optimization patterns.
+description: Improves Cairo performance and resource usage after correctness is established, with an entry workflow and references for full optimization patterns.
 license: Apache-2.0
 metadata: {"author":"feltroidprime","contributors":["starknet-agentic"],"version":"1.1.1","org":"keep-starknet-strange","upstream":"https://github.com/feltroidprime/cairo-skills/tree/main/skills/cairo-coding"}
 keywords: [cairo, optimization, gas, bounded-int, storage-packing, arithmetic, starknet]
