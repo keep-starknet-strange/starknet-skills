@@ -65,6 +65,9 @@ jobs:
             --schema evals/cases/contract-benchmark-case.schema.json \
             --jsonl evals/cases/contract_skill_benchmark.jsonl
           python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/contract-generation-case.schema.json \
+            --jsonl evals/cases/contract_skill_generation_eval.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/cases/benchmark-case.schema.json \
             --jsonl evals/heldout/cairo_auditor_llm_eval_cases.jsonl
           python scripts/audit-pipeline/validate_jsonl.py \

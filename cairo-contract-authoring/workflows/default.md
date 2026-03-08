@@ -28,4 +28,6 @@
 
 7. Distill findings into skills
 - Encode each fixed class of issue in `../references/legacy-full.md`.
+- Add explicit anti-pattern/secure-pattern snippets in `../references/anti-pattern-pairs.md`.
 - Add/adjust deterministic checks in `../../evals/cases/contract_skill_benchmark.jsonl`.
+- For generation quality tracking, update `../../evals/cases/contract_skill_generation_eval.jsonl` prompts/checks when authoring guidance changes.

@@ -83,6 +83,9 @@ jobs:
             --schema evals/cases/contract-benchmark-case.schema.json \
             --jsonl evals/cases/contract_skill_benchmark.jsonl
           python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/contract-generation-case.schema.json \
+            --jsonl evals/cases/contract_skill_generation_eval.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/cases/benchmark-case.schema.json \
             --jsonl evals/heldout/cairo_auditor_llm_eval_cases.jsonl
           python scripts/audit-pipeline/validate_jsonl.py \
@@ -269,9 +272,32 @@ jobs:
             --min-precision 0.75 \
             --min-recall 0.75
 
+      - name: Contract generation eval (build side, informational)
+        if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && steps.models_probe.outputs.available == 'true' }}
+        continue-on-error: true
+        timeout-minutes: 40
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          python scripts/quality/run_contract_generation_eval.py \
+            --cases evals/cases/contract_skill_generation_eval.jsonl \
+            --output-json "${RUNNER_TEMP}/scorecards/contract-generation-eval.json" \
+            --output-md "${RUNNER_TEMP}/scorecards/contract-generation-eval.md" \
+            --model openai/gpt-4o \
+            --min-pass-rate 0.55 \
+            --max-vuln-rate 0.35 \
+            --min-evaluated 8 \
+            --enforce-min-evaluated \
+            --require-tools
+
       - name: "LLM held-out eval (skipped: GitHub Models unavailable)"
         if: ${{ steps.models_probe.outputs.available != 'true' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
         run: echo "Skipping LLM held-out eval because GitHub Models is unavailable for this run."
+
+      - name: "Contract generation eval (skipped: GitHub Models unavailable)"
+        if: ${{ steps.models_probe.outputs.available != 'true' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+        run: echo "Skipping contract generation eval because GitHub Models is unavailable for this run."
 
       - name: Upload benchmark scorecards
         if: always()
@@ -295,3 +321,5 @@ jobs:
             ${{ runner.temp }}/scorecards/cairo-auditor-sierra-parallel.json
             ${{ runner.temp }}/scorecards/cairo-auditor-llm-heldout.md
             ${{ runner.temp }}/scorecards/cairo-auditor-llm-heldout.json
+            ${{ runner.temp }}/scorecards/contract-generation-eval.md
+            ${{ runner.temp }}/scorecards/contract-generation-eval.json

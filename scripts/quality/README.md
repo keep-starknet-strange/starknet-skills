@@ -63,6 +63,12 @@
   - resolves workspace/member target directories via `scarb metadata`
   - parses `.sierra.json`, `.starknet_artifacts.json`, and `*.contract_class.json`
   - emits function-order signal (`external_call` before `state_write`) for CEI triage
+- `run_contract_generation_eval.py`
+  - build-side contract generation quality evaluation
+  - prompt pack: `evals/cases/contract_skill_generation_eval.jsonl`
+  - generates fixture `src/lib.cairo`, then runs build/test/static policy checks
+  - emits markdown/json reports with pass/vulnerability rates
+  - intended as informative calibration telemetry (`continue-on-error` in workflow)
 
 ## Quick Start
 

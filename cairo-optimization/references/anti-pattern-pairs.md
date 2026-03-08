@@ -1,0 +1,86 @@
+# Optimization Anti-Pattern Pairs
+
+Build-side optimization pairs meant for post-correctness refactors.
+
+## 1) Division + Modulus by 2
+
+Anti-pattern:
+
+```cairo
+let half = amount / 2;
+let rem = amount % 2;
+```
+
+Secure/optimized pattern:
+
+```cairo
+use core::num::traits::DivRem;
+let (half, rem) = DivRem::div_rem(amount, 2);
+```
+
+## 2) Bitwise Parity Shortcut
+
+Anti-pattern:
+
+```cairo
+let is_odd = (value & 1) == 1;
+```
+
+Secure/optimized pattern:
+
+```cairo
+let (_half, rem) = DivRem::div_rem(value, 2);
+let is_odd = rem == 1;
+```
+
+## 3) Less-Than Loop Termination
+
+Anti-pattern:
+
+```cairo
+let mut i = 0_u32;
+while i < n {
+    i += 1;
+}
+```
+
+Secure/optimized pattern:
+
+```cairo
+let mut i = 0_u32;
+while i != n {
+    i += 1;
+}
+```
+
+## 4) Repeated `.len()` in Loop Conditions
+
+Anti-pattern:
+
+```cairo
+let mut i = 0;
+while i != data.len() {
+    i += 1;
+}
+```
+
+Secure/optimized pattern:
+
+```cairo
+let n = data.len();
+let mut i = 0;
+while i != n {
+    i += 1;
+}
+```
+
+## 5) Micro-Optimizing Before Correctness
+
+Anti-pattern:
+- optimize arithmetic before authorization/invariants are tested
+- merge security and optimization refactors into one opaque diff
+
+Secure/optimized pattern:
+- first make behavior and security checks pass
+- then optimize one operation class per commit
+- encode regression rules in eval cases for the exact optimization claim
