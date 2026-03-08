@@ -42,56 +42,56 @@
   },
   "modules": [
     {
-      "description": "Deterministic + workflow-guided security review",
+      "description": "Audit workflow for Cairo contracts",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/SKILL.md",
       "name": "cairo-auditor",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md",
       "skill_path": "cairo-auditor/SKILL.md"
     },
     {
-      "description": "Safe implementation patterns",
+      "description": "Contract implementation patterns",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-contract-authoring/SKILL.md",
       "name": "cairo-contract-authoring",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md",
       "skill_path": "cairo-contract-authoring/SKILL.md"
     },
     {
-      "description": "Unit/integration/invariant strategy",
+      "description": "Unit, integration, and invariant testing",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-testing/SKILL.md",
       "name": "cairo-testing",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md",
       "skill_path": "cairo-testing/SKILL.md"
     },
     {
-      "description": "Performance/resource hardening",
+      "description": "Performance and resource usage",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-optimization/SKILL.md",
       "name": "cairo-optimization",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md",
       "skill_path": "cairo-optimization/SKILL.md"
     },
     {
-      "description": "Build/declare/deploy/verify ops",
+      "description": "Build, declare, deploy, and verify",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-toolchain/SKILL.md",
       "name": "cairo-toolchain",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-toolchain/SKILL.md",
       "skill_path": "cairo-toolchain/SKILL.md"
     },
     {
-      "description": "Account/session-key threat patterns",
+      "description": "Accounts, sessions, and threat patterns",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/account-abstraction/SKILL.md",
       "name": "account-abstraction",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/account-abstraction/SKILL.md",
       "skill_path": "account-abstraction/SKILL.md"
     },
     {
-      "description": "Chain semantics and constraints",
+      "description": "Network semantics and constraints",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/starknet-network-facts/SKILL.md",
       "name": "starknet-network-facts",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/starknet-network-facts/SKILL.md",
       "skill_path": "starknet-network-facts/SKILL.md"
     },
     {
-      "description": "OZ Cairo composition footguns",
+      "description": "OpenZeppelin Cairo notes and footguns",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/openzeppelin-cairo/SKILL.md",
       "name": "openzeppelin-cairo",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/openzeppelin-cairo/SKILL.md",
