@@ -25,7 +25,7 @@ jobs:
         run: python -m pip install jsonschema pyyaml
 
       - name: Python compile check
-        run: python -m py_compile scripts/audit-pipeline/*.py scripts/quality/*.py
+        run: python -m py_compile scripts/audit-pipeline/*.py scripts/quality/*.py scripts/site/*.py
 
       - name: Validate SKILL contract
         run: python scripts/quality/validate_skills.py
@@ -125,3 +125,12 @@ jobs:
 
       - name: Held-out leakage check
         run: python scripts/audit-pipeline/check_no_heldout_leak.py
+
+      - name: Verify website snapshots are fresh
+        run: |
+          python scripts/site/build_site.py --domain starkskills.org
+          git diff --exit-code -- \
+            website/index.html \
+            website/vuln-cards/index.html \
+            website/data/site-data.json \
+            website/CNAME

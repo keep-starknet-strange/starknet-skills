@@ -18,3 +18,6 @@ Output files:
 - `website/CNAME` (when `--domain` is supplied)
 
 The generator reads repository source-of-truth data from `datasets/` and `evals/` so pipeline counters stay synchronized with the corpus.
+
+The generator fails fast with explicit errors when required dataset paths are missing.
+Output is deterministic (based on source-file fingerprint), which allows CI to assert snapshots are up to date.

@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import re
 from collections import Counter
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -155,21 +155,64 @@ def raw_skill_url(skill_name: str) -> str:
     return f"{REPO_RAW}/{skill_name}/SKILL.md"
 
 
-def build_dataset(root: Path) -> dict:
-    manifests = read_jsonl(root / "datasets/manifests/audits.jsonl")
+def require_file(path: Path) -> Path:
+    if not path.is_file():
+        raise SystemExit(f"[build_site] Required file not found: {path}")
+    return path
 
-    normalized_findings_dir = root / "datasets/normalized/findings"
+
+def require_directory(path: Path) -> Path:
+    if not path.is_dir():
+        raise SystemExit(f"[build_site] Required directory not found: {path}")
+    return path
+
+
+def fingerprint_files(root: Path, files: list[Path]) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(set(files)):
+        rel = path.relative_to(root).as_posix()
+        digest.update(rel.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()[:16]
+
+
+def build_dataset(root: Path) -> dict:
+    manifest_path = require_file(root / "datasets/manifests/audits.jsonl")
+    manifests = read_jsonl(manifest_path)
+
+    normalized_findings_dir = require_directory(root / "datasets/normalized/findings")
+    normalized_findings_files = sorted(normalized_findings_dir.glob("*.jsonl"))
+    if not normalized_findings_files:
+        raise SystemExit(f"[build_site] No normalized finding files found in: {normalized_findings_dir}")
     normalized_findings = [
         finding
-        for jsonl_path in sorted(normalized_findings_dir.glob("*.jsonl"))
+        for jsonl_path in normalized_findings_files
         for finding in read_jsonl(jsonl_path)
     ]
-    finding_by_id = {item.get("finding_id", ""): item for item in normalized_findings}
+    finding_by_id = {
+        item["finding_id"]: item
+        for item in normalized_findings
+        if item.get("finding_id")
+    }
 
-    normalized_audits_count = sum(1 for _ in (root / "datasets/normalized/audits").glob("*.json"))
-    segments_count = sum(1 for _ in (root / "datasets/segments").glob("*.jsonl"))
-    vuln_cards_dir = root / "datasets/distilled/vuln-cards"
+    normalized_audits_dir = require_directory(root / "datasets/normalized/audits")
+    normalized_audits_files = sorted(normalized_audits_dir.glob("*.json"))
+    normalized_audits_count = len(normalized_audits_files)
+
+    segments_dir = require_directory(root / "datasets/segments")
+    segment_files = sorted(segments_dir.glob("*.jsonl"))
+    segments_count = len(segment_files)
+
+    vuln_cards_dir = require_directory(root / "datasets/distilled/vuln-cards")
     vuln_card_paths = sorted(p for p in vuln_cards_dir.glob("*.md") if p.name != "README.md")
+    fix_patterns_dir = require_directory(root / "datasets/distilled/fix-patterns")
+    test_recipes_dir = require_directory(root / "datasets/distilled/test-recipes")
+    fix_pattern_files = sorted(fix_patterns_dir.glob("*.md"))
+    test_recipe_files = sorted(test_recipes_dir.glob("*.md"))
+    scorecards_dir = require_directory(root / "evals/scorecards")
+    scorecard_files = sorted(scorecards_dir.glob("v*.md"))
 
     vuln_cards: list[VulnCard] = []
     for card_path in vuln_card_paths:
@@ -192,18 +235,31 @@ def build_dataset(root: Path) -> dict:
             )
         )
 
-    deterministic_scorecard, realworld_scorecard = pick_latest_scorecards(root / "evals/scorecards")
+    deterministic_scorecard, realworld_scorecard = pick_latest_scorecards(scorecards_dir)
+    source_fingerprint = fingerprint_files(
+        root,
+        [
+            manifest_path,
+            *normalized_findings_files,
+            *normalized_audits_files,
+            *segment_files,
+            *vuln_card_paths,
+            *fix_pattern_files,
+            *test_recipe_files,
+            *scorecard_files,
+        ],
+    )
 
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source_fingerprint": source_fingerprint,
         "counts": {
             "cataloged_audits": len(manifests),
             "segmented_audits": segments_count,
             "normalized_audits": normalized_audits_count,
             "normalized_findings": len(normalized_findings),
             "distilled_vuln_cards": len(vuln_cards),
-            "distilled_fix_patterns": count_md_files(root / "datasets/distilled/fix-patterns"),
-            "distilled_test_recipes": count_md_files(root / "datasets/distilled/test-recipes"),
+            "distilled_fix_patterns": count_md_files(fix_patterns_dir),
+            "distilled_test_recipes": count_md_files(test_recipes_dir),
             "skill_modules": len(MODULES),
             "skills_total_with_router": len(MODULES) + 1,
         },
@@ -427,7 +483,7 @@ def build_index_html(data: dict, domain: str | None) -> str:
   </main>
 
   <footer>
-    <span>Generated from repo data: {e(data['generated_at'])}</span>
+    <span>Source fingerprint: {e(data['source_fingerprint'])}</span>
     <a href="data/site-data.json">site-data.json</a>
   </footer>
 </body>
@@ -492,7 +548,7 @@ def build_vuln_cards_html(data: dict) -> str:
   </main>
 
   <footer>
-    <span>Generated from repo data: {e(data['generated_at'])}</span>
+    <span>Source fingerprint: {e(data['source_fingerprint'])}</span>
     <a href="../data/site-data.json">site-data.json</a>
   </footer>
 </body>

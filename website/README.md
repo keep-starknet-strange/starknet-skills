@@ -14,6 +14,9 @@ python3 scripts/site/build_site.py --domain starkskills.org
 - `vuln-cards/index.html`: browsable vulnerability card table.
 - `data/site-data.json`: raw generated metrics and links.
 
+These files are intentionally committed so reviewers can inspect snapshots in PRs.
+Freshness is enforced in CI by regenerating and diff-checking these artifacts in `.github/workflows/quality.yml`.
+
 ## Deployment
 
 GitHub Pages workflow: `.github/workflows/site.yml`.
