@@ -137,23 +137,56 @@ def _upgrade_snippets(lower: str) -> list[str]:
 
 
 def _iter_functions(lower: str) -> list[tuple[str, str, str]]:
+    # Parse function signatures with balanced parentheses to avoid truncating nested tuple types.
     functions: list[tuple[str, str, str]] = []
-    for match in re.finditer(r"fn\s+([a-z_][a-z0-9_]*)\s*\(([^)]*)\)\s*\{", lower, flags=re.IGNORECASE):
+    for match in re.finditer(
+        r"\bfn\s+([a-z_][a-z0-9_]*)\s*(?:<[^>\n]*>)?\s*\(",
+        lower,
+        flags=re.IGNORECASE,
+    ):
         fn_name = match.group(1)
-        signature = match.group(2)
-        body_start = match.end()
-        depth = 1
-        i = body_start
-        while i < len(lower) and depth > 0:
+        signature_start = match.end() - 1  # points to '('
+        i = signature_start
+        sig_depth = 0
+        while i < len(lower):
             ch = lower[i]
+            if ch == "(":
+                sig_depth += 1
+            elif ch == ")":
+                sig_depth -= 1
+                if sig_depth == 0:
+                    break
+            i += 1
+        if sig_depth != 0:
+            continue
+        signature_end = i
+        signature = lower[signature_start + 1 : signature_end]
+
+        body_open = signature_end + 1
+        while body_open < len(lower) and lower[body_open].isspace():
+            body_open += 1
+        if lower[body_open : body_open + 2] == "->":
+            body_open += 2
+            while body_open < len(lower) and lower[body_open] != "{":
+                body_open += 1
+        while body_open < len(lower) and lower[body_open].isspace():
+            body_open += 1
+        if body_open >= len(lower) or lower[body_open] != "{":
+            continue
+
+        body_start = body_open + 1
+        depth = 1
+        j = body_start
+        while j < len(lower) and depth > 0:
+            ch = lower[j]
             if ch == "{":
                 depth += 1
             elif ch == "}":
                 depth -= 1
-            i += 1
+            j += 1
         if depth != 0:
             continue
-        functions.append((fn_name, signature, lower[body_start : i - 1]))
+        functions.append((fn_name, signature, lower[body_start : j - 1]))
     return functions
 
 
@@ -210,16 +243,6 @@ def detect_upgrade_class_hash_without_nonzero_guard(code: str) -> bool:
     if not snippets:
         return False
 
-    # OZ UpgradeableComponent::upgrade() already checks non-zero class hash internally.
-    uses_oz_upgradeable_component = any(
-        marker in lower
-        for marker in (
-            "upgradeablecomponent",
-            "openzeppelin_upgrades",
-            "openzeppelin::upgrades",
-        )
-    )
-
     for snippet in snippets:
         has_direct_syscall = "replace_class_syscall" in snippet
         has_component_upgrade = "upgradeable.upgrade" in snippet
@@ -228,6 +251,22 @@ def detect_upgrade_class_hash_without_nonzero_guard(code: str) -> bool:
         if "new_class_hash" not in snippet:
             continue
         has_nonzero_guard = _has_nonzero_class_hash_guard(snippet)
+        uses_oz_upgradeable_component = (
+            "upgradeablecomponent" in snippet
+            or "openzeppelin_upgrades" in snippet
+            or "openzeppelin::upgrades" in snippet
+            or (
+                has_component_upgrade
+                and any(
+                    marker in lower
+                    for marker in (
+                        "upgradeablecomponent",
+                        "openzeppelin_upgrades",
+                        "openzeppelin::upgrades",
+                    )
+                )
+            )
+        )
 
         if has_direct_syscall and not has_nonzero_guard:
             return True
@@ -295,13 +334,113 @@ def detect_constructor_dead_param(code: str) -> bool:
     if constructor_sig is None or body is None:
         return False
 
-    params = re.findall(r"([a-z_][a-z0-9_]*)\s*:\s*contractaddress", constructor_sig)
+    params = re.findall(
+        r"([a-z_][a-z0-9_]*)\s*:\s*(contractaddress|felt252|u256|classhash)",
+        constructor_sig,
+    )
     if not params:
         return False
 
-    for param in params:
-        if not re.search(rf"\b{param}\b", body):
+    stripped_body = re.sub(r"//[^\n]*", "", body)
+    for param, _param_type in params:
+        if param.startswith("_"):
+            continue
+        if not re.search(rf"\b{param}\b", stripped_body):
             return True
+    return False
+
+
+def detect_irrevocable_admin(code: str) -> bool:
+    lower = code.lower()
+    constructor_sig, body = _extract_fn_signature_and_body(lower, "constructor")
+    if constructor_sig is None or body is None:
+        return False
+
+    # Ownable component generally exposes ownership rotation through generated impls.
+    if "ownablecomponent" in lower or "ownablemixinimpl" in lower:
+        return False
+
+    params = re.findall(r"([a-z_][a-z0-9_]*)\s*:\s*contractaddress", constructor_sig)
+    if not params:
+        return False
+    admin_params = [p for p in params if any(k in p for k in ("admin", "owner", "governor", "upgrade"))]
+    if not admin_params:
+        return False
+
+    seeded_admin = False
+    for param in admin_params:
+        if re.search(rf"\b\w+\.write\(\s*{param}\b", body) or re.search(
+            rf"\b(initializer|_grant_role)\([^)]*\b{param}\b", body
+        ):
+            seeded_admin = True
+            break
+    if not seeded_admin:
+        return False
+
+    rotation_name_tokens = ("admin", "owner", "governor", "upgrade")
+    rotation_prefixes = (
+        "set_",
+        "update_",
+        "change_",
+        "rotate_",
+        "transfer_",
+        "renounce_",
+        "register_",
+        "remove_",
+    )
+    for fn_name, _sig, fn_body in _iter_functions(lower):
+        if fn_name == "constructor":
+            continue
+        if fn_name.startswith(rotation_prefixes) and any(token in fn_name for token in rotation_name_tokens):
+            return False
+        if any(
+            marker in fn_body
+            for marker in (
+                "transfer_ownership",
+                "renounce_ownership",
+                "set_upgrade_admin",
+                "set_admin",
+                "change_admin",
+                "rotate_admin",
+            )
+        ):
+            return False
+    return True
+
+
+def _fields_written(body: str) -> set[str]:
+    return set(re.findall(r"self\.([a-z_][a-z0-9_]*)\.write\(", body))
+
+
+def detect_one_shot_registration(code: str) -> bool:
+    lower = code.lower()
+    functions = _iter_functions(lower)
+    if not functions:
+        return False
+
+    field_writers: dict[str, set[str]] = defaultdict(set)
+    for fn_name, _sig, fn_body in functions:
+        for field in _fields_written(fn_body):
+            field_writers[field].add(fn_name)
+
+    for fn_name, _sig, fn_body in functions:
+        if not fn_name.startswith("register_"):
+            continue
+        written_fields = _fields_written(fn_body)
+        if not written_fields:
+            continue
+
+        for field in written_fields:
+            has_write_once_guard = bool(
+                re.search(rf"self\.{field}\.read\(\)[^;\n]{{0,120}}is_non_zero", fn_body)
+                or re.search(rf"self\.{field}\.read\(\)[^;\n]{{0,120}}!=\s*0", fn_body)
+                or re.search(rf"self\.{field}\.read\(\)[^;\n]{{0,140}}(already|registered|not_zero)", fn_body)
+            )
+            if not has_write_once_guard:
+                continue
+            writers = field_writers.get(field, set())
+            if all(w in {fn_name, "constructor"} for w in writers):
+                return True
     return False
 
 
@@ -310,24 +449,130 @@ def detect_fees_recipient_zero_dos(code: str) -> bool:
     if "fees_recipient" not in lower:
         return False
 
-    writes_fees_recipient = bool(re.search(r"\b\w+\.write\(\s*fees_recipient\b", lower))
-    if not writes_fees_recipient:
+    functions = _iter_functions(lower)
+    if not functions:
         return False
 
-    has_nonzero_guard = bool(
-        re.search(r"assert\([^)]*fees_recipient[^)]*is_non_zero", lower)
-        or re.search(r"assert\([^)]*fees_recipient[^)]*!=\s*0", lower)
-        or re.search(r"if\s*\([^)]*fees_recipient\.is_zero\(\)\s*\)\s*\{[\s\S]{0,120}(panic|assert|revert)", lower)
-    )
-    if has_nonzero_guard:
-        return False
+    def has_nonzero_guard(fn_body: str) -> bool:
+        return bool(
+            re.search(r"assert!?\([^)]*fees_recipient[^)]*is_non_zero", fn_body)
+            or re.search(r"assert!?\([^)]*fees_recipient[^)]*!=\s*0", fn_body)
+            or re.search(r"assert!?\([^)]*fees_recipient\.is_zero\(\)[^)]*==\s*false", fn_body)
+            or re.search(r"if\s*\([^)]*fees_recipient\.is_zero\(\)\s*\)\s*\{[\s\S]{0,120}(panic|assert|revert|return)", fn_body)
+            or re.search(r"if\s+fees_recipient\.is_zero\(\)\s*\{[\s\S]{0,120}(panic|assert|revert|return)", fn_body)
+        )
 
-    downstream_usage = bool(
-        re.search(r"(transfer|send|call_contract_syscall)\([^)]*fees_recipient", lower)
-        or re.search(r"contractaddressinto{[^}]*value:\s*fees_recipient", lower)
-        or re.search(r"self\.\w*fees_recipient\w*\.read\(\)", lower)
-    )
-    return downstream_usage
+    has_unguarded_write = False
+    has_downstream_sink = False
+    for _fn_name, _sig, fn_body in functions:
+        writes_fees_recipient = bool(re.search(r"\b\w+\.write\(\s*fees_recipient\b", fn_body))
+        if writes_fees_recipient and not has_nonzero_guard(fn_body):
+            has_unguarded_write = True
+        if re.search(r"(transfer|send|call_contract_syscall)\([^)]*fees_recipient", fn_body):
+            has_downstream_sink = True
+        if re.search(r"\bself\.\w*fees_recipient\w*\.read\(\)", fn_body) and re.search(
+            r"(transfer|send|call_contract_syscall)\(",
+            fn_body,
+        ):
+            has_downstream_sink = True
+
+    return has_unguarded_write and has_downstream_sink
+
+
+CALL_KEYWORDS = {
+    "if",
+    "match",
+    "assert",
+    "panic",
+    "return",
+    "loop",
+    "while",
+    "for",
+}
+
+
+def _called_functions(body: str, known_functions: set[str]) -> list[tuple[str, int]]:
+    calls: list[tuple[str, int]] = []
+    for m in re.finditer(r"\b([a-z_][a-z0-9_]*)\s*\(", body):
+        name = m.group(1)
+        if name in CALL_KEYWORDS:
+            continue
+        if name in known_functions:
+            calls.append((name, m.start()))
+    return calls
+
+
+def _is_abi_exposed(lower: str, fn_name: str) -> bool:
+    escaped = re.escape(fn_name)
+    if re.search(
+        rf"#\[\s*external(?:\([^\]]*\))?\s*\][\s\S]{{0,220}}\bfn\s+{escaped}\s*\(",
+        lower,
+        flags=re.IGNORECASE,
+    ):
+        return True
+    for match in re.finditer(
+        r"#\[\s*abi\s*\(\s*embed_v0\s*\)\s*\]\s*impl\b[^{]*\{",
+        lower,
+        flags=re.IGNORECASE,
+    ):
+        block_start = match.end() - 1
+        depth = 0
+        i = block_start
+        while i < len(lower):
+            ch = lower[i]
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    block = lower[block_start + 1 : i]
+                    if re.search(rf"\bfn\s+{escaped}\s*\(", block, flags=re.IGNORECASE):
+                        return True
+                    break
+            i += 1
+    return False
+
+
+def _has_interaction_path(
+    fn_name: str,
+    fn_bodies: dict[str, str],
+    cache: dict[str, bool],
+    visiting: set[str],
+) -> bool:
+    if fn_name in cache:
+        return cache[fn_name]
+    if fn_name in visiting:
+        return False
+    body = fn_bodies.get(fn_name, "")
+    direct = "safe_transfer_from" in body or "_transfer_item(" in body
+    if direct:
+        cache[fn_name] = True
+        return True
+
+    visiting.add(fn_name)
+    known = set(fn_bodies)
+    for callee, _ in _called_functions(body, known):
+        if _has_interaction_path(callee, fn_bodies, cache, visiting):
+            visiting.remove(fn_name)
+            cache[fn_name] = True
+            return True
+    visiting.remove(fn_name)
+    cache[fn_name] = False
+    return False
+
+
+def _has_explicit_reentrancy_guard(body: str) -> bool:
+    if re.search(r"\bnon_reentrant\s*\(", body):
+        return True
+    if re.search(r"\bassert_no_reentrancy\s*\(", body):
+        return True
+    if re.search(r"if\s+[^\n{;]*\bentered\b[^\n{;]*\{[\s\S]{0,120}(panic|assert|revert|return)", body):
+        return True
+    if re.search(r"\bentered\b\s*[:=]{1,2}\s*(true|1)", body):
+        return True
+    if re.search(r"assert!?\([^)]*\bentered\b[^)]*(==\s*false|==\s*0|!=\s*true)", body):
+        return True
+    return False
 
 
 def detect_no_access_control_mutation(code: str) -> bool:
@@ -398,6 +643,8 @@ def detect_no_access_control_mutation(code: str) -> bool:
                 continue
         if "ref self" not in signature:
             continue
+        if not _is_abi_exposed(lower, fn_name):
+            continue
         if not any(marker in body for marker in mutation_markers):
             continue
         has_access_guard = any(marker in body for marker in access_markers) or bool(
@@ -414,13 +661,21 @@ def detect_cei_violation_erc1155(code: str) -> bool:
     if "safe_transfer_from" not in lower and "_transfer_item(" not in lower:
         return False
 
-    for _fn_name, _signature, body in _iter_functions(lower):
-        interaction_positions = [
-            pos for pos in (body.find("safe_transfer_from"), body.find("_transfer_item(")) if pos != -1
-        ]
+    functions = _iter_functions(lower)
+    if not functions:
+        return False
+    fn_bodies = {name: body for name, _sig, body in functions}
+    known = set(fn_bodies)
+    interaction_cache: dict[str, bool] = {}
+
+    for fn_name, _signature, body in functions:
+        interaction_positions = [pos for pos in (body.find("safe_transfer_from"), body.find("_transfer_item(")) if pos != -1]
+        for callee, call_pos in _called_functions(body, known):
+            if _has_interaction_path(callee, fn_bodies, interaction_cache, set()):
+                interaction_positions.append(call_pos)
         if not interaction_positions:
             continue
-        if "reentrancy" in body or "non_reentrant" in body or "entered" in body:
+        if _has_explicit_reentrancy_guard(body):
             continue
 
         transfer_pos = min(interaction_positions)
@@ -452,6 +707,8 @@ DETECTORS = {
     "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": detect_upgrade_class_hash_without_nonzero_guard,
     "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": detect_critical_address_init_without_nonzero_guard,
     "CONSTRUCTOR_DEAD_PARAM": detect_constructor_dead_param,
+    "IRREVOCABLE_ADMIN": detect_irrevocable_admin,
+    "ONE_SHOT_REGISTRATION": detect_one_shot_registration,
     "FEES_RECIPIENT_ZERO_DOS": detect_fees_recipient_zero_dos,
     "NO_ACCESS_CONTROL_MUTATION": detect_no_access_control_mutation,
     "CEI_VIOLATION_ERC1155": detect_cei_violation_erc1155,
@@ -597,6 +854,7 @@ def main() -> int:
     parser.add_argument("--title", default="", help="Optional markdown H1 title override")
     parser.add_argument("--min-precision", type=float, default=0.9)
     parser.add_argument("--min-recall", type=float, default=0.9)
+    parser.add_argument("--min-class-recall", type=float, default=0.0)
     args = parser.parse_args()
 
     cases_path = Path(args.cases)
@@ -639,10 +897,32 @@ def main() -> int:
         )
     )
 
+    per_class: dict[str, dict[str, int]] = defaultdict(lambda: {"tp": 0, "fp": 0, "fn": 0, "tn": 0})
+    for row in results:
+        class_id = str(row["class_id"])
+        per_class[class_id][str(row["outcome"])] += 1
+    class_recall_violations: list[tuple[str, float]] = []
+    if args.min_class_recall > 0.0:
+        for class_id in sorted(per_class):
+            tp_c = per_class[class_id]["tp"]
+            fn_c = per_class[class_id]["fn"]
+            has_positive_cases = tp_c + fn_c > 0
+            if not has_positive_cases:
+                continue
+            class_recall = recall(tp_c, fn_c)
+            if class_recall < args.min_class_recall:
+                class_recall_violations.append((class_id, class_recall))
+
     if overall_precision < args.min_precision or overall_recall < args.min_recall:
         print(
             f"FAILED: precision={overall_precision:.3f} recall={overall_recall:.3f} "
             f"thresholds=({args.min_precision:.3f}, {args.min_recall:.3f})"
+        )
+        return 1
+    if class_recall_violations:
+        viol = ", ".join(f"{cid}={val:.3f}" for cid, val in class_recall_violations)
+        print(
+            f"FAILED: class recall below threshold {args.min_class_recall:.3f}: {viol}"
         )
         return 1
 

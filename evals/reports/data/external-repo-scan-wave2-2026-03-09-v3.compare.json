@@ -1,6 +1,6 @@
 {
-  "baseline": "/Users/espejelomar/StarkNet/ai-agents-starknet/starknet-skills/evals/reports/data/external-repo-scan-wave2-2026-03-09-v2.json",
-  "rerun": "/Users/espejelomar/StarkNet/ai-agents-starknet/starknet-skills/evals/reports/data/external-repo-scan-wave2-2026-03-09-v3.json",
+  "baseline": "evals/reports/data/external-repo-scan-wave2-2026-03-09-v2.json",
+  "rerun": "evals/reports/data/external-repo-scan-wave2-2026-03-09-v3.json",
   "baseline_findings": 31,
   "rerun_findings": 30,
   "delta_findings": -1,

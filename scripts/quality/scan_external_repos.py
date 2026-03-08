@@ -6,6 +6,7 @@ import argparse
 import json
 import shutil
 import subprocess
+import sys
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -122,6 +123,12 @@ def render_markdown(
     findings: list[dict[str, object]],
     output_json: Path,
 ) -> str:
+    json_path = output_json.as_posix()
+    try:
+        json_path = output_json.resolve().relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        json_path = output_json.name
+
     lines: list[str] = []
     lines.append(f"# External Repo Detector Sweep ({scan_id})")
     lines.append("")
@@ -129,7 +136,7 @@ def render_markdown(
     lines.append("")
     lines.append("Machine-readable artifact:")
     lines.append("")
-    lines.append(f"- `{output_json.as_posix()}`")
+    lines.append(f"- `{json_path}`")
     lines.append("")
     lines.append("## Scope")
     lines.append("")
@@ -209,18 +216,24 @@ def main() -> int:
 
     repo_summaries: list[dict[str, object]] = []
     findings: list[dict[str, object]] = []
+    failures: list[dict[str, str]] = []
 
     for spec in repo_specs:
-        repo_dir, resolved_ref = clone_repo(spec, workdir)
-        summary, repo_findings = scan_repo(
-            spec=spec,
-            repo_dir=repo_dir,
-            resolved_ref=resolved_ref,
-            detector_map=detector_map,
-            excluded_markers=excluded_markers,
-        )
-        repo_summaries.append(summary)
-        findings.extend(repo_findings)
+        try:
+            repo_dir, resolved_ref = clone_repo(spec, workdir)
+            summary, repo_findings = scan_repo(
+                spec=spec,
+                repo_dir=repo_dir,
+                resolved_ref=resolved_ref,
+                detector_map=detector_map,
+                excluded_markers=excluded_markers,
+            )
+            repo_summaries.append(summary)
+            findings.extend(repo_findings)
+        except Exception as exc:
+            msg = str(exc).splitlines()[0][:400]
+            print(f"WARNING: skipping {spec.slug}: {msg}", file=sys.stderr)
+            failures.append({"repo": spec.slug, "ref": spec.ref or "", "error": msg})
 
     class_counts = Counter(str(row["class_id"]) for row in findings)
     repo_counts = Counter(str(row["repo"]) for row in findings)
@@ -243,6 +256,7 @@ def main() -> int:
             "prod_cairo_files": sum(int(r["prod_cairo_files"]) for r in repo_summaries),
             "prod_hits": len(findings),
         },
+        "failures": failures,
         "findings": findings,
     }
     output_json.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")

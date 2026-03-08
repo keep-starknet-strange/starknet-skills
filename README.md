@@ -69,6 +69,10 @@ Direct router URL:
 - Human-labeled external scan scorecards:
   - [v0.2.0-cairo-auditor-external-triage.md](evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
   - [cairo-auditor-external-trend.md](evals/scorecards/cairo-auditor-external-trend.md)
+- Frozen manual gold recall:
+  - [v0.2.0-cairo-auditor-manual-19-gold-recall.md](evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.md)
+- Sierra-native parallel signal (auxiliary, non-gating):
+  - [sierra-parallel-low-profile-2026-03-09.md](evals/reports/sierra-parallel-low-profile-2026-03-09.md)
 - Canonical benchmark surface and maintenance notes live in [cairo-auditor/README.md](cairo-auditor/README.md).
 
 ## Data Pipeline

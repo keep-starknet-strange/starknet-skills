@@ -48,6 +48,12 @@ CLASS_DESCRIPTIONS: dict[str, str] = {
     "CEI_VIOLATION_ERC1155": (
         "Function performs ERC1155 safe_transfer_from external interaction before critical state updates, enabling callback reentrancy risk."
     ),
+    "IRREVOCABLE_ADMIN": (
+        "Contract seeds privileged admin/owner authority at initialization but exposes no rotation/transfer/revocation path."
+    ),
+    "ONE_SHOT_REGISTRATION": (
+        "Critical dependency address registration is write-once with no operational recovery/update route if initial value is wrong or compromised."
+    ),
 }
 
 

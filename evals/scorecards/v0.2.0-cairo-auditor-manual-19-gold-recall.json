@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-03-08T23:21:41+00:00",
+  "gold_count": 19,
+  "matched_count": 19,
+  "missing_count": 0,
+  "overall_recall": 1.0,
+  "min_recall": 0.0,
+  "min_class_recall": 0.0,
+  "class_recall": {
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": 1.0,
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": 1.0,
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": 1.0
+  },
+  "class_violations": []
+}

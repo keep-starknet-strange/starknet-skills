@@ -64,6 +64,19 @@ jobs:
           python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/reports/data/external-triage-label.schema.json \
             --jsonl evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/reports/data/manual-19-gold.schema.json \
+            --jsonl evals/reports/data/manual-19-gold.jsonl
+
+      - name: Manual-19 gold recall smoke
+        run: |
+          python scripts/quality/check_manual_gold_recall.py \
+            --gold evals/reports/data/manual-19-gold.jsonl \
+            --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v3.findings.jsonl \
+            --output-md /tmp/manual-19-gold-recall.md \
+            --output-json /tmp/manual-19-gold-recall.json \
+            --min-recall 0.80 \
+            --min-class-recall 0.60
 
       - name: Validate manifest JSONL
         run: |

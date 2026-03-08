@@ -29,6 +29,7 @@
   - class-level TP/FP/FN/TN metrics
   - scorecard output to `evals/scorecards/*.md`
   - precision/recall threshold gate for CI
+  - per-class recall threshold gate for CI
 
 - `score_external_triage.py` scores human-reviewed external scan findings:
   - label pack:
@@ -41,3 +42,19 @@
   - clones target repositories at provided refs
   - scans production `.cairo` files (test/mock paths excluded by default)
   - emits machine-readable scan artifact + optional markdown summary
+  - isolates per-repo clone/build failures (best-effort scan continues)
+
+- `compare_scan_artifacts.py` compares two external scan JSON artifacts:
+  - emits class-level deltas + added/removed finding sets
+  - writes portable repo-relative paths (no local machine path leakage)
+
+- `check_manual_gold_recall.py` validates detector recall against frozen manual positives:
+  - gold set:
+    - `evals/reports/data/manual-19-gold.jsonl`
+  - computes overall and per-class recall
+  - enforces recall thresholds in CI
+
+- `sierra_parallel_signal.py` computes a Sierra-native auxiliary signal:
+  - builds Scarb projects for target repos
+  - scans generated Sierra artifacts for external/state marker frequencies
+  - emits side-by-side comparison context with detector hit counts
