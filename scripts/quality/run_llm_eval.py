@@ -36,6 +36,9 @@ CLASS_DESCRIPTIONS: dict[str, str] = {
     "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": (
         "Constructor/initializer stores critical addresses without explicit non-zero assertions."
     ),
+    "CONSTRUCTOR_DEAD_PARAM": (
+        "Constructor accepts a parameter that is never used in constructor logic, indicating misleading or dead initialization surface."
+    ),
 }
 
 

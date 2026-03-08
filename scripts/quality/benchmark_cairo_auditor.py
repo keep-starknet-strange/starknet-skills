@@ -136,6 +136,42 @@ def _upgrade_snippets(lower: str) -> list[str]:
     return snippets
 
 
+def _extract_fn_signature_and_body(lower: str, fn_name: str) -> tuple[str | None, str | None]:
+    match = re.search(rf"fn\s+{fn_name}\s*\(([^)]*)\)\s*\{{", lower, flags=re.IGNORECASE)
+    if not match:
+        return None, None
+
+    signature = match.group(1)
+    body_start = match.end()
+    depth = 1
+    i = body_start
+    while i < len(lower) and depth > 0:
+        ch = lower[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+        i += 1
+
+    if depth != 0:
+        return signature, None
+    return signature, lower[body_start : i - 1]
+
+
+def _has_nonzero_class_hash_guard(snippet: str) -> bool:
+    return bool(
+        re.search(r"assert\([^)]*new_class_hash[^)]*is_non_zero", snippet)
+        or re.search(r"assert\([^)]*new_class_hash[^)]*!=\s*0", snippet)
+        or re.search(r"assert\([^)]*!\s*new_class_hash\.is_zero\(\)", snippet)
+        or re.search(r"assert\([^)]*new_class_hash\.is_zero\(\)[^)]*==\s*false", snippet)
+        or re.search(r"if\s*\([^)]*new_class_hash[^)]*is_non_zero", snippet)
+        or re.search(r"if\s*\([^)]*new_class_hash[^)]*!=\s*0", snippet)
+        or re.search(r"if\s*\([^)]*new_class_hash\.is_zero\(\)\s*\)\s*\{[\s\S]{0,180}(panic|assert|revert)", snippet)
+        or re.search(r"if\s+new_class_hash[^:\n]{0,80}is_non_zero", snippet)
+        or re.search(r"if\s+new_class_hash[^:\n]{0,80}!=\s*0", snippet)
+    )
+
+
 def detect_immediate_upgrade_without_timelock(code: str) -> bool:
     lower = code.lower()
     snippets = _upgrade_snippets(lower)
@@ -168,65 +204,54 @@ def detect_upgrade_class_hash_without_nonzero_guard(code: str) -> bool:
     if not snippets:
         return False
 
+    # OZ UpgradeableComponent::upgrade() already checks non-zero class hash internally.
+    uses_oz_upgradeable_component = "upgradeablecomponent" in lower or "openzeppelin" in lower
+
     for snippet in snippets:
-        has_upgrade_call = (
-            "replace_class_syscall" in snippet or "upgradeable.upgrade" in snippet
-        )
-        if not has_upgrade_call:
+        has_direct_syscall = "replace_class_syscall" in snippet
+        has_component_upgrade = "upgradeable.upgrade" in snippet
+        if not has_direct_syscall and not has_component_upgrade:
             continue
         if "new_class_hash" not in snippet:
             continue
-        has_nonzero_guard = bool(
-            re.search(
-                r"assert\([^)]*new_class_hash[^)]*(is_non_zero|is_zero|!=\s*0)", snippet
-            )
-            or re.search(r"if\s*\([^)]*new_class_hash[^)]*(is_non_zero|is_zero|!=\s*0)", snippet)
-            or re.search(
-                r"if\s+new_class_hash[^:\n]{0,80}(is_non_zero|is_zero|!=\s*0)", snippet
-            )
-        )
-        if not has_nonzero_guard:
+        has_nonzero_guard = _has_nonzero_class_hash_guard(snippet)
+
+        if has_direct_syscall and not has_nonzero_guard:
+            return True
+        if has_component_upgrade and not has_nonzero_guard and not uses_oz_upgradeable_component:
             return True
     return False
 
 
 def detect_critical_address_init_without_nonzero_guard(code: str) -> bool:
     lower = code.lower()
-    if "fn constructor" not in lower:
+    constructor_sig, body = _extract_fn_signature_and_body(lower, "constructor")
+    if constructor_sig is None or body is None:
         return False
-
-    signature_match = re.search(
-        r"fn\s+constructor\s*\(([^)]*)\)\s*\{", lower, flags=re.IGNORECASE
-    )
-    if not signature_match:
-        return False
-    constructor_sig = signature_match.group(1)
 
     params = re.findall(r"([a-z_][a-z0-9_]*)\s*:\s*contractaddress", constructor_sig)
     if not params:
         return False
 
-    body_match = re.search(
-        r"fn\s+constructor\s*\([^)]*\)\s*\{([\s\S]{0,1600})\}",
-        lower,
-        flags=re.IGNORECASE,
-    )
-    if not body_match:
-        return False
-    body = body_match.group(1)
-
-    critical_markers = (
+    privileged_markers = (
         "owner",
         "admin",
         "manager",
-        "registry",
+        "coordinator",
+        "governor",
+        "operator",
+        "pauser",
+        "upgrade",
+    )
+    high_impact_dependency_markers = (
+        "reclaim",
         "vault",
         "token",
         "oracle",
-        "reclaim",
         "router",
         "dispatcher",
     )
+    critical_markers = privileged_markers + high_impact_dependency_markers
     critical_params = [p for p in params if any(marker in p for marker in critical_markers)]
     if not critical_params:
         return False
@@ -251,6 +276,22 @@ def detect_critical_address_init_without_nonzero_guard(code: str) -> bool:
     return False
 
 
+def detect_constructor_dead_param(code: str) -> bool:
+    lower = code.lower()
+    constructor_sig, body = _extract_fn_signature_and_body(lower, "constructor")
+    if constructor_sig is None or body is None:
+        return False
+
+    params = re.findall(r"([a-z_][a-z0-9_]*)\s*:\s*contractaddress", constructor_sig)
+    if not params:
+        return False
+
+    for param in params:
+        if not re.search(rf"\b{param}\b", body):
+            return True
+    return False
+
+
 DETECTORS = {
     "AA-SELF-CALL-SESSION": detect_aa_self_call_session,
     "UNCHECKED_FEE_BOUND": detect_unchecked_fee_bound,
@@ -259,6 +300,7 @@ DETECTORS = {
     "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": detect_immediate_upgrade_without_timelock,
     "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": detect_upgrade_class_hash_without_nonzero_guard,
     "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": detect_critical_address_init_without_nonzero_guard,
+    "CONSTRUCTOR_DEAD_PARAM": detect_constructor_dead_param,
 }
 
 
