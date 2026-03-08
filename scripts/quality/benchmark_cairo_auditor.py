@@ -341,16 +341,34 @@ def detect_no_access_control_mutation(code: str) -> bool:
         "pause",
         "unpause",
         "configure_",
-        "create_",
         "grant_",
         "revoke_",
     )
+    privileged_markers = (
+        "admin",
+        "owner",
+        "role",
+        "manager",
+        "governor",
+        "pauser",
+        "upgrade",
+        "class_hash",
+        "token",
+        "bridge",
+        "fee",
+        "config",
+        "allowlist",
+        "whitelist",
+        "permission",
+    )
     access_markers = (
+        "assert_only_",
         "assert_only_owner",
         "assert_only_role",
         "ownable.assert_only_owner",
         "accesscontrol.assert_only_role",
         "access_control.assert_only_role",
+        "has_role(",
         "get_caller_address() ==",
         "get_caller_address()!=",
         "assert!(get_caller_address() ==",
@@ -372,6 +390,12 @@ def detect_no_access_control_mutation(code: str) -> bool:
             continue
         if not fn_name.startswith(risky_prefixes):
             continue
+        if fn_name.startswith("register_"):
+            contextual_high_risk = any(marker in fn_name for marker in privileged_markers) or any(
+                marker in body for marker in privileged_markers
+            )
+            if not contextual_high_risk:
+                continue
         if "ref self" not in signature:
             continue
         if not any(marker in body for marker in mutation_markers):

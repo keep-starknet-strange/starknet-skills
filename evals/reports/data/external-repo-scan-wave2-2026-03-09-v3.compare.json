@@ -1,0 +1,27 @@
+{
+  "baseline": "/Users/espejelomar/StarkNet/ai-agents-starknet/starknet-skills/evals/reports/data/external-repo-scan-wave2-2026-03-09-v2.json",
+  "rerun": "/Users/espejelomar/StarkNet/ai-agents-starknet/starknet-skills/evals/reports/data/external-repo-scan-wave2-2026-03-09-v3.json",
+  "baseline_findings": 31,
+  "rerun_findings": 30,
+  "delta_findings": -1,
+  "baseline_by_class": {
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": 10,
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": 17,
+    "NO_ACCESS_CONTROL_MUTATION": 3,
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": 1
+  },
+  "rerun_by_class": {
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": 10,
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": 17,
+    "NO_ACCESS_CONTROL_MUTATION": 2,
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": 1
+  },
+  "removed": [
+    {
+      "repo": "karnotxyz/starknet_bridge",
+      "file": "starknet_bridge/src/bridge/token_bridge.cairo",
+      "class_id": "NO_ACCESS_CONTROL_MUTATION"
+    }
+  ],
+  "added": []
+}

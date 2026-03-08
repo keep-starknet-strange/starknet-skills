@@ -1,0 +1,52 @@
+{
+  "baseline": "/Users/espejelomar/StarkNet/ai-agents-starknet/starknet-skills/evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09.json",
+  "rerun": "/Users/espejelomar/StarkNet/ai-agents-starknet/starknet-skills/evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v3.json",
+  "baseline_findings": 32,
+  "rerun_findings": 27,
+  "delta_findings": -5,
+  "baseline_by_class": {
+    "CEI_VIOLATION_ERC1155": 1,
+    "CONSTRUCTOR_DEAD_PARAM": 1,
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": 14,
+    "FEES_RECIPIENT_ZERO_DOS": 1,
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": 8,
+    "NO_ACCESS_CONTROL_MUTATION": 6,
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": 1
+  },
+  "rerun_by_class": {
+    "CONSTRUCTOR_DEAD_PARAM": 1,
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": 14,
+    "FEES_RECIPIENT_ZERO_DOS": 1,
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": 8,
+    "NO_ACCESS_CONTROL_MUTATION": 2,
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": 1
+  },
+  "removed": [
+    {
+      "repo": "ForgeYields/starknet_vault_kit",
+      "file": "packages/vault/src/redeem_request/redeem_request.cairo",
+      "class_id": "CEI_VIOLATION_ERC1155"
+    },
+    {
+      "repo": "ForgeYields/starknet_vault_kit",
+      "file": "packages/vault/src/redeem_request/redeem_request.cairo",
+      "class_id": "NO_ACCESS_CONTROL_MUTATION"
+    },
+    {
+      "repo": "StarkVote/starkvote",
+      "file": "contracts/src/poll.cairo",
+      "class_id": "NO_ACCESS_CONTROL_MUTATION"
+    },
+    {
+      "repo": "StarkVote/starkvote",
+      "file": "contracts/src/voter_set_registry.cairo",
+      "class_id": "NO_ACCESS_CONTROL_MUTATION"
+    },
+    {
+      "repo": "medialane-io/medialane-contracts",
+      "file": "contracts/Medialane-Protocol/src/core/medialane.cairo",
+      "class_id": "NO_ACCESS_CONTROL_MUTATION"
+    }
+  ],
+  "added": []
+}
