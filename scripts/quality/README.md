@@ -36,3 +36,8 @@
   - computes TP/FP/FN/TN, precision, recall from `tp`/`fp` outcomes
   - emits release scorecard (`evals/scorecards/v*.md`) and trend table
   - enforces minimum precision/recall thresholds in CI
+
+- `scan_external_repos.py` runs detector sweeps against public Cairo repos:
+  - clones target repositories at provided refs
+  - scans production `.cairo` files (test/mock paths excluded by default)
+  - emits machine-readable scan artifact + optional markdown summary
