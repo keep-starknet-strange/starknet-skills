@@ -620,7 +620,8 @@ def build_index_html(data: dict, domain: str | None) -> str:
         [
             f'<span class="stat-pill">{fmt_int(counts["cataloged_audits"])} audits</span>',
             f'<span class="stat-pill">{fmt_int(counts["normalized_findings"])} findings</span>',
-            f'<span class="stat-pill">{fmt_int(counts["skills_total_with_router"])} skills</span>',
+            f'<span class="stat-pill">{fmt_int(counts["skill_modules"])} modules</span>',
+            '<span class="stat-pill">router</span>',
         ]
     )
 
@@ -632,7 +633,7 @@ def build_index_html(data: dict, domain: str | None) -> str:
             pipeline_step(2, "segment", fmt_int(counts["segmented_audits"]), "segmented corpora"),
             pipeline_step(3, "normalize", fmt_int(counts["normalized_findings"]), "normalized findings"),
             pipeline_step(4, "distill", fmt_int(counts["distilled_vuln_cards"]), "vuln cards"),
-            pipeline_step(5, "skillize", fmt_int(counts["skills_total_with_router"]), "published skills"),
+            pipeline_step(5, "skillize", fmt_int(counts["skill_modules"]), "published modules"),
         ]
     )
 
@@ -713,7 +714,7 @@ def build_index_html(data: dict, domain: str | None) -> str:
       </div>
     </section>
 
-    <section class="section reveal" id="showcase">
+    <section class="section section-card reveal" id="showcase">
       <div class="section-head">
         <div>
           <p class="section-kicker">Example</p>
