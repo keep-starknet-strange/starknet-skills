@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="starkskills">
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+  <rect x="56" y="56" width="1088" height="518" rx="20" fill="#101010" stroke="#242424"/>
+  <text x="88" y="140" font-family="'JetBrains Mono', monospace" font-size="26" fill="#00d4aa" xml:space="preserve">███████╗████████╗ █████╗ ██████╗ ██╗  ██╗███████╗██╗  ██╗██╗██╗     ██╗     ███████╗&#10;██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██║ ██╔╝██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝&#10;███████╗   ██║   ███████║██████╔╝█████╔╝ ███████╗█████╔╝ ██║██║     ██║     ███████╗</text>
+  <text x="88" y="340" font-family="'JetBrains Mono', monospace" font-size="38" fill="#e0e0e0">Cairo and Starknet skills for agents.</text>
+  <text x="88" y="392" font-family="Inter, system-ui, sans-serif" font-size="26" fill="#a0a0a0">Plain markdown skills, audit data, and direct links.</text>
+  <text x="88" y="500" font-family="'JetBrains Mono', monospace" font-size="24" fill="#00d4aa">starkskills.org</text>
+</svg>

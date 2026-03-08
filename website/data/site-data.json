@@ -7,8 +7,8 @@
     "normalized_audits": 26,
     "normalized_findings": 217,
     "segmented_audits": 26,
-    "skill_modules": 8,
-    "skills_total_with_router": 9
+    "skill_modules": 7,
+    "skills_total_with_router": 8
   },
   "latest_scorecards": {
     "deterministic": {
@@ -32,6 +32,7 @@
     "contributing": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/CONTRIBUTING.md",
     "full_evals_workflow": "https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/full-evals.yml",
     "heldout_policy": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/heldout/README.md",
+    "license": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/LICENSE",
     "pipeline_readme": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/README.md",
     "quality_workflow": "https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/quality.yml",
     "repo": "https://github.com/keep-starknet-strange/starknet-skills",
@@ -46,6 +47,7 @@
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/SKILL.md",
       "name": "cairo-auditor",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md",
+      "sigil": "AUD",
       "skill_path": "cairo-auditor/SKILL.md"
     },
     {
@@ -53,6 +55,7 @@
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-contract-authoring/SKILL.md",
       "name": "cairo-contract-authoring",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md",
+      "sigil": "AUTH",
       "skill_path": "cairo-contract-authoring/SKILL.md"
     },
     {
@@ -60,6 +63,7 @@
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-testing/SKILL.md",
       "name": "cairo-testing",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md",
+      "sigil": "TEST",
       "skill_path": "cairo-testing/SKILL.md"
     },
     {
@@ -67,6 +71,7 @@
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-optimization/SKILL.md",
       "name": "cairo-optimization",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md",
+      "sigil": "OPT",
       "skill_path": "cairo-optimization/SKILL.md"
     },
     {
@@ -74,6 +79,7 @@
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-toolchain/SKILL.md",
       "name": "cairo-toolchain",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-toolchain/SKILL.md",
+      "sigil": "OPS",
       "skill_path": "cairo-toolchain/SKILL.md"
     },
     {
@@ -81,6 +87,7 @@
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/account-abstraction/SKILL.md",
       "name": "account-abstraction",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/account-abstraction/SKILL.md",
+      "sigil": "AA",
       "skill_path": "account-abstraction/SKILL.md"
     },
     {
@@ -88,14 +95,8 @@
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/starknet-network-facts/SKILL.md",
       "name": "starknet-network-facts",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/starknet-network-facts/SKILL.md",
+      "sigil": "NET",
       "skill_path": "starknet-network-facts/SKILL.md"
-    },
-    {
-      "description": "OpenZeppelin Cairo notes and footguns",
-      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/openzeppelin-cairo/SKILL.md",
-      "name": "openzeppelin-cairo",
-      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/openzeppelin-cairo/SKILL.md",
-      "skill_path": "openzeppelin-cairo/SKILL.md"
     }
   ],
   "source_fingerprint": "60b6cb3d0450fcd6",
