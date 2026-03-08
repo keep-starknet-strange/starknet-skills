@@ -23,6 +23,7 @@ class Case:
 
 def load_cases(path: Path) -> list[Case]:
     cases: list[Case] = []
+    seen_case_ids: set[str] = set()
     for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
@@ -35,16 +36,22 @@ def load_cases(path: Path) -> list[Case]:
             raise ValueError(f"line {i}: missing keys: {sorted(missing)}")
         if not isinstance(raw["expected_detect"], bool):
             raise ValueError(f"line {i}: expected_detect must be bool")
+        for key in ("case_id", "class_id", "source", "code"):
+            if not isinstance(raw[key], str):
+                raise ValueError(f"line {i}: {key} must be string")
+        if raw["case_id"] in seen_case_ids:
+            raise ValueError(f"line {i}: duplicate case_id: {raw['case_id']}")
+        seen_case_ids.add(raw["case_id"])
+        if raw.get("source_url") is not None and not isinstance(raw["source_url"], str):
+            raise ValueError(f"line {i}: source_url must be string when present")
         cases.append(
             Case(
-                case_id=str(raw["case_id"]),
-                class_id=str(raw["class_id"]),
+                case_id=raw["case_id"],
+                class_id=raw["class_id"],
                 expected_detect=raw["expected_detect"],
-                source=str(raw["source"]),
-                source_url=(
-                    str(raw["source_url"]) if raw.get("source_url") is not None else None
-                ),
-                code=str(raw["code"]),
+                source=raw["source"],
+                source_url=raw.get("source_url"),
+                code=raw["code"],
             )
         )
     return cases
@@ -73,10 +80,12 @@ def detect_unchecked_fee_bound(code: str) -> bool:
         return False
     if "swap_fee" not in lower and "fee_bps" not in lower:
         return False
+
     has_forward = bool(
         re.search(r"(swap_fee|fee_bps)\s*\.into\(\)", lower)
         or re.search(r"\.write\((swap_fee|fee_bps)\)", lower)
-        or re.search(r"\b(swap_fee|fee_bps)\b", lower)
+        or re.search(r"\blet\s+\w+\s*=\s*(swap_fee|fee_bps)\b", lower)
+        or re.search(r"\b(array!|vec!\s*\[)[^\n]*(swap_fee|fee_bps)", lower)
     )
     has_bound = bool(
         re.search(r"assert\([^)]*(swap_fee|fee_bps)[^)]*(<=|<)", lower)

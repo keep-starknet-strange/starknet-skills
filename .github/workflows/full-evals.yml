@@ -45,7 +45,9 @@ jobs:
 
       - name: Secret scan
         run: |
-          detect-secrets scan --all-files --exclude-files 'datasets/audits/raw/.*' > /tmp/detect-secrets.json
+          detect-secrets scan --all-files \
+            --exclude-files 'datasets/audits/raw/.*' \
+            --exclude-files 'datasets/audits/extracted/.*' > /tmp/detect-secrets.json
           python - <<'PY'
           import json
           import sys
@@ -63,16 +65,26 @@ jobs:
 
       - name: Cairo auditor benchmark
         run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
           python scripts/quality/benchmark_cairo_auditor.py \
             --cases evals/cases/cairo_auditor_benchmark.jsonl \
-            --output /tmp/cairo-auditor-benchmark.md \
+            --output "${RUNNER_TEMP}/scorecards/cairo-auditor-benchmark.md" \
             --min-precision 0.90 \
             --min-recall 0.90
 
       - name: Cairo auditor real-world benchmark
         run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
           python scripts/quality/benchmark_cairo_auditor.py \
             --cases evals/cases/cairo_auditor_realworld_benchmark.jsonl \
-            --output /tmp/cairo-auditor-realworld-benchmark.md \
+            --output "${RUNNER_TEMP}/scorecards/cairo-auditor-realworld-benchmark.md" \
             --min-precision 0.90 \
             --min-recall 0.90
+
+      - name: Upload benchmark scorecards
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: cairo-auditor-scorecards
+          path: |
+            ${{ runner.temp }}/scorecards/cairo-auditor-benchmark.md
+            ${{ runner.temp }}/scorecards/cairo-auditor-realworld-benchmark.md

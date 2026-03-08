@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 import urllib.parse
 import urllib.request
@@ -165,12 +166,7 @@ def ensure_pdf_tools() -> None:
 
 
 def shutil_which(name: str) -> str | None:
-    return subprocess.run(
-        ["bash", "-lc", f"command -v {name}"],
-        check=False,
-        capture_output=True,
-        text=True,
-    ).stdout.strip() or None
+    return shutil.which(name)
 
 
 def download_pdf(url: str, output_path: Path) -> str:
