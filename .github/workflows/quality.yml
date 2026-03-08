@@ -50,20 +50,50 @@ jobs:
 
       - name: Segment smoke tests
         run: |
+          cat > /tmp/segment_audit_a.txt <<'EOF'
+          L-01 Example finding
+          File(s): contract.cairo
+          Description: Example issue.
+          Recommendation: Example fix.
+          EOF
+          cat > /tmp/segment_audit_b.txt <<'EOF'
+          1.2.3 Example section
+          Body line
+          EOF
           python scripts/audit-pipeline/segment_text.py \
-            --audit-id csc_vesu_update_2025_03 \
-            --input datasets/audits/extracted/Vesu_Update_Audit_Report.txt \
+            --audit-id smoke_audit_a \
+            --input /tmp/segment_audit_a.txt \
             --output /tmp/csc.segmented.jsonl
           python scripts/audit-pipeline/segment_text.py \
-            --audit-id erim_nostra_pools_2024_01 \
-            --input datasets/audits/extracted/Nostra_Pools_Security_Review_by_0xerim.txt \
+            --audit-id smoke_audit_b \
+            --input /tmp/segment_audit_b.txt \
             --output /tmp/erim.segmented.jsonl
+          test -s /tmp/csc.segmented.jsonl
+          test -s /tmp/erim.segmented.jsonl
 
       - name: Generate manifest smoke test
         run: |
+          mkdir -p datasets/audits/raw datasets/audits/extracted /tmp
+          printf 'dummy-raw' > datasets/audits/raw/smoke_ci.pdf
+          printf 'dummy-extracted' > datasets/audits/extracted/smoke_ci.txt
+          cat > /tmp/manifest.seed.json <<'EOF'
+          [
+            {
+              "audit_id": "smoke_ci_2026_03",
+              "project": "Smoke",
+              "auditor": "CI",
+              "date": "2026-03-08",
+              "source_url": "https://example.com/smoke.pdf",
+              "source_type": "direct_pdf",
+              "raw_path": "datasets/audits/raw/smoke_ci.pdf",
+              "extracted_path": "datasets/audits/extracted/smoke_ci.txt"
+            }
+          ]
+          EOF
           python scripts/audit-pipeline/generate_manifest.py \
-            --seed datasets/manifests/audit_metadata.seed.json \
+            --seed /tmp/manifest.seed.json \
             --output /tmp/audits.generated.jsonl
+          test -s /tmp/audits.generated.jsonl
 
       - name: Held-out leakage check
         run: python scripts/audit-pipeline/check_no_heldout_leak.py
