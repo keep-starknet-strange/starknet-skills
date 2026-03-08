@@ -21,3 +21,18 @@
     - required sections
     - quick start in each module skill
     - progressive-disclosure markdown links from entry skills
+
+- `benchmark_cairo_auditor.py` runs a deterministic benchmark on Cairo snippets:
+  - case packs:
+    - `evals/cases/cairo_auditor_benchmark.jsonl`
+    - `evals/cases/cairo_auditor_realworld_benchmark.jsonl`
+  - class-level TP/FP/FN/TN metrics
+  - scorecard output to `evals/scorecards/*.md`
+  - precision/recall threshold gate for CI
+
+- `score_external_triage.py` scores human-reviewed external scan findings:
+  - label pack:
+    - `evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl`
+  - computes TP/FP/FN/TN, precision, recall from `tp`/`fp` outcomes
+  - emits release scorecard (`evals/scorecards/v*.md`) and trend table
+  - enforces minimum precision/recall thresholds in CI

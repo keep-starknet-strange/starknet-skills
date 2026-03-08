@@ -28,6 +28,9 @@
     "status_summary": {
       "type": "object",
       "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "notes": {
+      "type": "string"
     }
   },
   "additionalProperties": false

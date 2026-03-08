@@ -1,0 +1,369 @@
+:root {
+  --bg: #070b14;
+  --bg-soft: #0f1628;
+  --panel: #131d33;
+  --text: #eaf1ff;
+  --muted: #94a4c8;
+  --accent: #7f8cff;
+  --accent-2: #42c6ff;
+  --border: #223253;
+  --ok: #22c55e;
+  --shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  background:
+    radial-gradient(1200px 550px at 90% -10%, rgba(127, 140, 255, 0.2), transparent 60%),
+    radial-gradient(900px 400px at 0% 0%, rgba(66, 198, 255, 0.18), transparent 58%),
+    var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+}
+
+a {
+  color: var(--accent-2);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.hero,
+.subpage-hero,
+main,
+footer {
+  width: min(1100px, calc(100% - 3rem));
+  margin: 0 auto;
+}
+
+.hero,
+.subpage-hero {
+  padding: 3.8rem 0 1.8rem;
+}
+
+.badge-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.badge {
+  display: inline-block;
+  border: 1px solid var(--border);
+  background: rgba(127, 140, 255, 0.15);
+  color: var(--text);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.badge-soft {
+  background: rgba(66, 198, 255, 0.12);
+}
+
+.hero h1,
+.subpage-hero h1 {
+  font-size: clamp(2rem, 4vw, 3.15rem);
+  max-width: 16ch;
+  margin-bottom: 1rem;
+}
+
+.hero-subtitle,
+.subpage-hero p {
+  margin: 0;
+  color: var(--muted);
+  max-width: 75ch;
+}
+
+.domain-note {
+  margin-top: 0.9rem;
+  color: var(--accent-2);
+  font-size: 0.95rem;
+}
+
+.install-grid {
+  margin-top: 1.8rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.9rem;
+}
+
+.install-grid article,
+.section,
+.scorecard,
+.module-card,
+.pipeline-grid article {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+  box-shadow: var(--shadow);
+}
+
+.install-grid article {
+  padding: 1rem;
+}
+
+.install-grid h2 {
+  font-size: 0.95rem;
+  margin-bottom: 0.55rem;
+}
+
+pre {
+  margin: 0;
+  padding: 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  overflow-x: auto;
+}
+
+code {
+  font-family: SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+.section {
+  padding: 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.75rem;
+}
+
+.section-head h2 {
+  font-size: 1.2rem;
+}
+
+.workflow {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.workflow span {
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.45rem 0.65rem;
+  color: var(--accent-2);
+  background: rgba(66, 198, 255, 0.08);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 0.76rem;
+}
+
+.scorecard {
+  margin-top: 1rem;
+  padding: 0.95rem;
+}
+
+.scorecard h3 {
+  font-size: 0.95rem;
+  margin-bottom: 0.7rem;
+}
+
+.scorecard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 0.7rem;
+}
+
+.scorecard-grid div {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: rgba(127, 140, 255, 0.08);
+}
+
+.scorecard-grid span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.scorecard-grid strong {
+  font-size: 1.1rem;
+}
+
+.module-grid,
+.pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 0.75rem;
+}
+
+.module-card,
+.pipeline-grid article {
+  padding: 0.85rem;
+}
+
+.module-card h3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.98rem;
+}
+
+.status {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ok);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+}
+
+.module-card p {
+  color: var(--muted);
+  margin: 0.62rem 0;
+}
+
+.card-links {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.pipeline-grid h3 {
+  font-size: 0.9rem;
+  color: var(--accent-2);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.pipeline-grid p {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+}
+
+.pipeline-footnote {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.trust ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.trust li {
+  margin-bottom: 0.4rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.65rem 0.45rem;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.9rem;
+}
+
+th {
+  color: var(--muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pill {
+  display: inline-block;
+  margin: 0 0.28rem 0.28rem 0;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(127, 140, 255, 0.11);
+  font-size: 0.73rem;
+}
+
+.pill-muted {
+  opacity: 0.6;
+}
+
+.finding-link {
+  display: inline-block;
+  margin: 0 0.28rem 0.25rem 0;
+  font-size: 0.82rem;
+  border-bottom: 1px dashed rgba(66, 198, 255, 0.45);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+footer {
+  padding: 1.2rem 0 2.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+@media (max-width: 860px) {
+  .hero,
+  .subpage-hero,
+  main,
+  footer {
+    width: min(1100px, calc(100% - 2rem));
+  }
+
+  .workflow {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
+
+  .scorecard-grid {
+    grid-template-columns: repeat(3, minmax(70px, 1fr));
+  }
+
+  footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

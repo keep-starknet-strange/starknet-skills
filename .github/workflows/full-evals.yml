@@ -1,0 +1,179 @@
+name: Full Evals
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
+  pull_request:
+    types:
+      - labeled
+      - synchronize
+      - reopened
+
+jobs:
+  full-evals:
+    permissions:
+      contents: read
+      models: read
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-evals')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps
+        run: python -m pip install jsonschema==4.23.0 pyyaml==6.0.2 detect-secrets==1.5.0
+
+      - name: Run parity quality checks
+        run: python scripts/quality/parity_check.py
+
+      - name: Validate manifests + uniqueness
+        run: |
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema datasets/manifests/audit-manifest.schema.json \
+            --jsonl datasets/manifests/audits.jsonl
+          python scripts/audit-pipeline/check_unique_ids.py \
+            --jsonl datasets/manifests/audits.jsonl \
+            --keys audit_id source_url raw_path extracted_path raw_sha256
+          python scripts/audit-pipeline/validate_json.py \
+            --schema datasets/normalized/audit.schema.json \
+            --glob 'datasets/normalized/audits/*.json'
+          for file in datasets/normalized/findings/*.jsonl; do
+            python scripts/audit-pipeline/validate_jsonl.py \
+              --schema datasets/normalized/finding.schema.json \
+              --jsonl "$file"
+          done
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/benchmark-case.schema.json \
+            --jsonl evals/cases/cairo_auditor_benchmark.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/benchmark-case.schema.json \
+            --jsonl evals/cases/cairo_auditor_realworld_benchmark.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/benchmark-case.schema.json \
+            --jsonl evals/heldout/cairo_auditor_llm_eval_cases.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/reports/data/external-triage-label.schema.json \
+            --jsonl evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl
+
+      - name: Held-out leakage guard
+        run: python scripts/audit-pipeline/check_no_heldout_leak.py
+
+      - name: Secret scan
+        run: |
+          detect-secrets scan --all-files \
+            --exclude-files '.git/.*' \
+            --exclude-files 'datasets/audits/raw/.*' \
+            --exclude-files 'datasets/audits/extracted/.*' \
+            --exclude-files 'datasets/manifests/audit_metadata.seed.json' \
+            --exclude-files 'evals/reports/data/.*' \
+            --exclude-files 'website/data/.*' > /tmp/detect-secrets.json
+          python - <<'PY'
+          import json
+          import sys
+
+          with open("/tmp/detect-secrets.json", "r", encoding="utf-8") as handle:
+              report = json.load(handle)
+          findings = report.get("results", {})
+          finding_count = sum(len(v) for v in findings.values())
+          print(f"detect-secrets findings={finding_count}")
+          if finding_count > 0:
+              for path, items in findings.items():
+                  if items:
+                      print(f"{path}: {len(items)} potential secrets")
+              sys.exit(1)
+          PY
+
+      - name: Cairo auditor benchmark
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          python scripts/quality/benchmark_cairo_auditor.py \
+            --cases evals/cases/cairo_auditor_benchmark.jsonl \
+            --output "${RUNNER_TEMP}/scorecards/cairo-auditor-benchmark.md" \
+            --version v0.2.0 \
+            --min-precision 0.90 \
+            --min-recall 0.90
+
+      - name: Cairo auditor real-world benchmark
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          python scripts/quality/benchmark_cairo_auditor.py \
+            --cases evals/cases/cairo_auditor_realworld_benchmark.jsonl \
+            --output "${RUNNER_TEMP}/scorecards/cairo-auditor-realworld-benchmark.md" \
+            --version v0.2.0 \
+            --title "v0.2.0 Cairo Auditor Real-World Benchmark" \
+            --min-precision 0.90 \
+            --min-recall 0.90
+
+      - name: Cairo auditor external triage scorecard
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          python scripts/quality/score_external_triage.py \
+            --labels evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl \
+            --release v0.2.0 \
+            --output-md "${RUNNER_TEMP}/scorecards/cairo-auditor-external-triage.md" \
+            --output-json "${RUNNER_TEMP}/scorecards/cairo-auditor-external-triage.json" \
+            --trend-md "${RUNNER_TEMP}/scorecards/cairo-auditor-external-trend.md" \
+            --min-precision 0.70 \
+            --min-recall 0.90
+
+      - name: Probe GitHub Models availability
+        id: models_probe
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          body='{"messages":[{"role":"user","content":"Return {\"ok\":true} in JSON."}],"model":"openai/gpt-4o","temperature":0}'
+          code=$(curl -sS -o /tmp/models-probe.json -w "%{http_code}" \
+            "https://models.github.ai/inference/chat/completions" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -d "$body")
+          if [ "$code" = "200" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "GitHub Models probe: available"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "GitHub Models probe unavailable (HTTP $code), skipping LLM held-out eval."
+            sed -n '1,40p' /tmp/models-probe.json || true
+          fi
+
+      - name: LLM held-out eval
+        if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && steps.models_probe.outputs.available == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          python scripts/quality/run_llm_eval.py \
+            --cases evals/heldout/cairo_auditor_llm_eval_cases.jsonl \
+            --output-json "${RUNNER_TEMP}/scorecards/cairo-auditor-llm-heldout.json" \
+            --output-md "${RUNNER_TEMP}/scorecards/cairo-auditor-llm-heldout.md" \
+            --model openai/gpt-4o \
+            --min-precision 0.75 \
+            --min-recall 0.75
+
+      - name: "LLM held-out eval (skipped: GitHub Models unavailable)"
+        if: ${{ steps.models_probe.outputs.available != 'true' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+        run: echo "Skipping LLM held-out eval because GitHub Models is unavailable for this run."
+
+      - name: Upload benchmark scorecards
+        if: always()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: cairo-auditor-scorecards
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/scorecards/cairo-auditor-benchmark.md
+            ${{ runner.temp }}/scorecards/cairo-auditor-realworld-benchmark.md
+            ${{ runner.temp }}/scorecards/cairo-auditor-external-triage.md
+            ${{ runner.temp }}/scorecards/cairo-auditor-external-trend.md
+            ${{ runner.temp }}/scorecards/cairo-auditor-external-triage.json
+            ${{ runner.temp }}/scorecards/cairo-auditor-llm-heldout.md
+            ${{ runner.temp }}/scorecards/cairo-auditor-llm-heldout.json
