@@ -48,8 +48,10 @@ def parse_date(raw: str | None) -> str | None:
         return None
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", text):
         return text
+    if re.fullmatch(r"\d{4}-\d{2}", text):
+        return text
     if re.fullmatch(r"\d{4}", text):
-        return f"{text}-01-01"
+        return text
     return None
 
 
@@ -63,13 +65,8 @@ def optional_text(value: object) -> str | None:
 def normalize_url(url: str) -> str:
     cleaned = url.strip()
     if cleaned.startswith("https://github.com/") and "/blob/" in cleaned:
-        parts = cleaned.split("/")
-        blob_idx = parts.index("blob")
-        owner = parts[3]
-        repo = parts[4]
-        ref = parts[blob_idx + 1]
-        path = "/".join(parts[blob_idx + 2 :])
-        cleaned = f"https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{path}"
+        separator = "&" if "?" in cleaned else "?"
+        cleaned = f"{cleaned}{separator}raw=1"
     return cleaned.replace(" ", "%20")
 
 
@@ -86,7 +83,13 @@ def classify_source_type(original_url: str, normalized_url: str) -> str:
 
 
 def is_audited(status: str) -> bool:
-    return "audited" in status.lower() and "in progress" not in status.lower()
+    normalized = re.sub(r"\s+", " ", status).strip().casefold()
+    return (
+        re.search(r"\baudited\b", normalized) is not None
+        and "in progress" not in normalized
+        and "not audited" not in normalized
+        and "unaudited" not in normalized
+    )
 
 
 def load_catalog(path: Path) -> list[CatalogRow]:
@@ -140,6 +143,20 @@ def choose_audit_id(row: CatalogRow, used: set[str]) -> str:
     return candidate
 
 
+def load_existing_manifest_records(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    records: list[dict[str, Any]] = []
+    for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        rec = json.loads(line)
+        if not isinstance(rec, dict):
+            raise ValueError(f"{path}: line {i} must be object")
+        records.append(rec)
+    return records
+
+
 def ensure_pdf_tools() -> None:
     has_pdftotext = shutil_which("pdftotext") is not None
     has_mutool = shutil_which("mutool") is not None
@@ -156,13 +173,15 @@ def shutil_which(name: str) -> str | None:
     ).stdout.strip() or None
 
 
-def download_pdf(url: str, output_path: Path) -> None:
+def download_pdf(url: str, output_path: Path) -> str:
     request = urllib.request.Request(url=url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=DEFAULT_TIMEOUT_SECONDS) as response:
         payload = response.read()
     if not payload.startswith(b"%PDF-"):
         raise ValueError("downloaded payload is not a PDF")
+    source_sha256 = hashlib.sha256(payload).hexdigest()
     output_path.write_bytes(payload)
+    return source_sha256
 
 
 def extract_text(raw_pdf_path: Path, extracted_txt_path: Path) -> None:
@@ -199,6 +218,7 @@ def to_seed_record(
     source_type: str,
     raw_relpath: str,
     extracted_relpath: str,
+    source_sha256: str,
 ) -> dict[str, Any]:
     usage_rights = row.usage_rights or "public_reference_only"
     if usage_rights not in {
@@ -223,6 +243,7 @@ def to_seed_record(
         "repo_url": row.repository,
         "raw_path": raw_relpath,
         "extracted_path": extracted_relpath,
+        "source_sha256": source_sha256,
         "license": row.license or "unknown",
         "usage_rights": usage_rights,
         "redaction_status": redaction_status,
@@ -261,19 +282,38 @@ def main() -> int:
     ensure_pdf_tools()
 
     repo_root = Path(__file__).resolve().parents[2]
+    manifest_path = repo_root / "datasets" / "manifests" / "audits.jsonl"
     raw_dir = repo_root / "datasets" / "audits" / "raw"
     extracted_dir = repo_root / "datasets" / "audits" / "extracted"
     raw_dir.mkdir(parents=True, exist_ok=True)
     extracted_dir.mkdir(parents=True, exist_ok=True)
 
     rows = load_catalog(Path(args.catalog))
+    existing_records = load_existing_manifest_records(manifest_path)
+    existing_id_by_source_url: dict[str, str] = {}
     used_audit_ids: set[str] = set()
+    seen_content_key_to_id: dict[str, str] = {}
+    for rec in existing_records:
+        audit_id = rec.get("audit_id")
+        if isinstance(audit_id, str):
+            used_audit_ids.add(audit_id)
+        source_url = rec.get("source_url")
+        if isinstance(source_url, str) and isinstance(audit_id, str):
+            existing_id_by_source_url[source_url] = audit_id
+        raw_sha = rec.get("raw_sha256")
+        extracted_sha = rec.get("extracted_sha256")
+        if isinstance(audit_id, str) and isinstance(raw_sha, str) and isinstance(extracted_sha, str):
+            seen_content_key_to_id[f"{raw_sha}:{extracted_sha}"] = audit_id
+
     seed_rows: list[dict[str, Any]] = []
     report_rows: list[dict[str, Any]] = []
     success_count = 0
 
     for row in rows:
-        audit_id = choose_audit_id(row, used_audit_ids)
+        if row.source_url and row.source_url in existing_id_by_source_url:
+            audit_id = existing_id_by_source_url[row.source_url]
+        else:
+            audit_id = choose_audit_id(row, used_audit_ids)
         report: dict[str, Any] = {
             "audit_id": audit_id,
             "project": row.project,
@@ -315,9 +355,15 @@ def main() -> int:
 
         raw_path = raw_dir / f"{audit_id}.pdf"
         extracted_path = extracted_dir / f"{audit_id}.txt"
+        source_sha256 = ""
+        reused_existing_artifacts = False
         try:
-            download_pdf(normalized_url, raw_path)
-            extract_text(raw_path, extracted_path)
+            if raw_path.exists() and extracted_path.exists():
+                reused_existing_artifacts = True
+                source_sha256 = sha256_file(raw_path)
+            else:
+                source_sha256 = download_pdf(normalized_url, raw_path)
+                extract_text(raw_path, extracted_path)
         except Exception as exc:  # noqa: BLE001 - per-row failure should not abort full ingest
             raw_path.unlink(missing_ok=True)
             extracted_path.unlink(missing_ok=True)
@@ -326,17 +372,36 @@ def main() -> int:
             report_rows.append(report)
             continue
 
+        raw_sha256 = sha256_file(raw_path)
+        extracted_sha256 = sha256_file(extracted_path)
+        content_key = f"{raw_sha256}:{extracted_sha256}"
+        duplicate_of = seen_content_key_to_id.get(content_key)
+        if duplicate_of is not None and duplicate_of != audit_id:
+            report["result"] = "skipped"
+            report["reason"] = f"duplicate_content_of:{duplicate_of}"
+            report["raw_sha256"] = raw_sha256
+            report["extracted_sha256"] = extracted_sha256
+            report_rows.append(report)
+            if not reused_existing_artifacts:
+                raw_path.unlink(missing_ok=True)
+                extracted_path.unlink(missing_ok=True)
+            continue
+
+        seen_content_key_to_id[content_key] = audit_id
         rec = to_seed_record(
             row,
             audit_id=audit_id,
             source_type=source_type,
             raw_relpath=raw_path.relative_to(repo_root).as_posix(),
             extracted_relpath=extracted_path.relative_to(repo_root).as_posix(),
+            source_sha256=source_sha256,
         )
 
         report["result"] = "ingested"
-        report["raw_sha256"] = sha256_file(raw_path)
-        report["extracted_sha256"] = sha256_file(extracted_path)
+        report["raw_sha256"] = raw_sha256
+        report["extracted_sha256"] = extracted_sha256
+        if reused_existing_artifacts:
+            report["reason"] = "reused_existing_artifacts"
         report_rows.append(report)
         seed_rows.append(rec)
         success_count += 1

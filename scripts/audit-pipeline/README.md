@@ -14,12 +14,18 @@ python3 scripts/audit-pipeline/generate_manifest.py \
 
 Seed rows require provenance rights fields:
 
+- `source_sha256`
 - `license`
 - `usage_rights`
 - `redaction_status`
 - `extractor_version`
 
 ## 0) Ingest from a catalog list (wave imports)
+
+Prerequisites:
+
+- `pdftotext` (Poppler) or `mutool` (MuPDF) installed and available in `PATH`.
+- `ingest_catalog.py` exits early if neither extractor is present.
 
 ```bash
 python3 scripts/audit-pipeline/ingest_catalog.py \
@@ -32,6 +38,7 @@ Notes:
 
 - Only rows marked audited are attempted.
 - Unsupported sources (e.g., HTML index pages, Drive links) are recorded in the report with explicit skip reasons.
+- Content duplicates are deduplicated before seed generation (`duplicate_content_of:<audit_id>` in report).
 
 ## 2) Segment extracted text
 

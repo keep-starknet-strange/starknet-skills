@@ -18,28 +18,28 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    rows: list[dict] = []
+    rows: list[tuple[int, dict[str, object]]] = []
     for i, line in enumerate(Path(args.jsonl).read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
         rec = json.loads(line)
         if not isinstance(rec, dict):
             raise ValueError(f"line {i}: top-level JSON value must be object")
-        rows.append(rec)
+        rows.append((i, rec))
 
     failures = 0
     for key in args.keys:
         seen: dict[str, int] = {}
-        for idx, rec in enumerate(rows, start=1):
+        for line_no, rec in rows:
             value = rec.get(key)
             if value is None:
                 continue
             text = str(value)
             if text in seen:
                 failures += 1
-                print(f"duplicate {key}: '{text}' at line {seen[text]} and line {idx}")
+                print(f"duplicate {key}: '{text}' at line {seen[text]} and line {line_no}")
             else:
-                seen[text] = idx
+                seen[text] = line_no
 
     if failures:
         print(f"FAILED: {failures} duplicate key violations")

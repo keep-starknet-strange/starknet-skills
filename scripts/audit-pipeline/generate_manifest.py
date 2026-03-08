@@ -6,6 +6,7 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import re
 from pathlib import Path
 
 REQUIRED_SEED_KEYS = {
@@ -16,11 +17,14 @@ REQUIRED_SEED_KEYS = {
     "source_type",
     "raw_path",
     "extracted_path",
+    "source_sha256",
     "license",
     "usage_rights",
     "redaction_status",
     "extractor_version",
 }
+DATE_RE = re.compile(r"^\d{4}(-\d{2})?(-\d{2})?$")
+SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 
 
 def sha256_file(path: Path) -> str:
@@ -72,10 +76,14 @@ def validate_seed_rows(rows: object) -> list[dict]:
             not isinstance(date_value, str) or not date_value.strip()
         ):
             raise ValueError(f"seed row {idx} has empty/invalid date")
+        if isinstance(date_value, str) and DATE_RE.fullmatch(date_value) is None:
+            raise ValueError(f"seed row {idx} has invalid date format: {date_value}")
         if not row["source_url"].startswith("https://"):
             raise ValueError(
                 f"seed row {idx} source_url must use https://: {row['source_url']}"
             )
+        if SHA256_RE.fullmatch(row["source_sha256"]) is None:
+            raise ValueError(f"seed row {idx} invalid source_sha256")
         if row["usage_rights"] not in {
             "public_redistributable",
             "public_reference_only",
@@ -129,7 +137,6 @@ def main() -> int:
         rec["extracted_path"] = extracted_path.relative_to(repo_root_resolved).as_posix()
         rec["raw_sha256"] = sha256_file(raw_path)
         rec["extracted_sha256"] = sha256_file(extracted_path)
-        rec["source_sha256"] = rec["raw_sha256"]
         rec["ingested_at"] = now
         generated.append(rec)
 
