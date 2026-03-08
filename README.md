@@ -91,8 +91,10 @@ cairo-auditor real-world benchmark:
 Scorecards:
 - [v0.2.0-cairo-auditor-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-benchmark.md)
 - [v0.2.0-cairo-auditor-realworld-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md)
+- [v0.5.0-contract-skill-benchmark.md](evals/scorecards/v0.5.0-contract-skill-benchmark.md)
 - [v0.4.0-contract-skill-benchmark.md](evals/scorecards/v0.4.0-contract-skill-benchmark.md)
 - [contract-skill-benchmark-trend.md](evals/scorecards/contract-skill-benchmark-trend.md)
+- [contract-kpi-publication-gate.md](evals/scorecards/contract-kpi-publication-gate.md)
 - [v0.2.0-cairo-auditor-external-triage.md](evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
 - [cairo-auditor-external-trend.md](evals/scorecards/cairo-auditor-external-trend.md)
 
@@ -102,7 +104,7 @@ Skills are authored from audit-backed source material, then checked against dete
 
 Current workflow status:
 - `quality.yml` is the required per-PR gate
-- `full-evals.yml` runs on schedule, workflow dispatch, or explicitly labeled PRs
+- `full-evals.yml` runs on schedule/workflow dispatch and auto-triggers for PRs touching `SKILL.md`, `references/**`, `evals/**`, or `scripts/quality/**`
 - external triage trends live under [`evals/scorecards/`](evals/scorecards)
 
 ## Website

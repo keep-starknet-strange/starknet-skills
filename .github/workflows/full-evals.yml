@@ -2,20 +2,33 @@ name: Full Evals
 
 on:
   workflow_dispatch:
+    inputs:
+      enforce_kpi_release_gate:
+        description: "Fail workflow if contract KPI publication gate is not met"
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: "0 2 * * *"
   pull_request:
     types:
-      - labeled
+      - opened
       - synchronize
       - reopened
+      - ready_for_review
+    paths:
+      - "SKILL.md"
+      - "**/SKILL.md"
+      - "**/references/**"
+      - "evals/**"
+      - "scripts/quality/**"
+      - ".github/workflows/full-evals.yml"
 
 jobs:
   full-evals:
     permissions:
       contents: read
       models: read
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-evals')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -75,6 +88,9 @@ jobs:
           python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/reports/data/external-triage-label.schema.json \
             --jsonl evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/reports/data/security-review-signoff.schema.json \
+            --jsonl evals/scorecards/security-review-signoffs.contract-skill-benchmark.jsonl
 
       - name: Held-out leakage guard
         run: python scripts/audit-pipeline/check_no_heldout_leak.py
@@ -131,13 +147,21 @@ jobs:
           python scripts/quality/benchmark_contract_skills.py \
             --cases evals/cases/contract_skill_benchmark.jsonl \
             --output "${RUNNER_TEMP}/scorecards/contract-skill-benchmark.md" \
-            --version v0.4.0 \
-            --title "v0.4.0 Contract Skill Benchmark" \
+            --version v0.5.0 \
+            --title "v0.5.0 Contract Skill Benchmark" \
             --min-precision 0.95 \
             --min-recall 0.95 \
-            --min-evaluated 22 \
+            --min-evaluated 60 \
             --enforce-min-evaluated \
             --require-tools
+
+      - name: Contract benchmark mutation suite
+        run: |
+          python scripts/quality/mutation_test_contract_benchmark.py \
+            --cases evals/cases/contract_skill_benchmark.jsonl \
+            --min-precision 1.0 \
+            --min-recall 1.0 \
+            --min-evaluated 60
 
       - name: Contract benchmark trend
         run: |
@@ -145,8 +169,24 @@ jobs:
           python scripts/quality/render_contract_benchmark_trend.py \
             --scorecards-glob 'evals/scorecards/v*-contract-skill-benchmark.md' \
             --output "${RUNNER_TEMP}/scorecards/contract-skill-benchmark-trend.md" \
-            --min-cases 22 \
+            --min-cases 60 \
             --min-consecutive 2
+
+      - name: Contract KPI publication gate
+        env:
+          ENFORCE_KPI_GATE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.enforce_kpi_release_gate == 'true' }}
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          args=""
+          if [ "${ENFORCE_KPI_GATE}" = "true" ]; then
+            args="--enforce"
+          fi
+          python scripts/quality/check_contract_kpi_release_gate.py \
+            --trend "${RUNNER_TEMP}/scorecards/contract-skill-benchmark-trend.md" \
+            --signoffs evals/scorecards/security-review-signoffs.contract-skill-benchmark.jsonl \
+            --output "${RUNNER_TEMP}/scorecards/contract-kpi-publication-gate.md" \
+            --min-consecutive 2 \
+            ${args}
 
       - name: Cairo auditor external triage scorecard
         run: |
@@ -210,6 +250,7 @@ jobs:
             ${{ runner.temp }}/scorecards/cairo-auditor-realworld-benchmark.md
             ${{ runner.temp }}/scorecards/contract-skill-benchmark.md
             ${{ runner.temp }}/scorecards/contract-skill-benchmark-trend.md
+            ${{ runner.temp }}/scorecards/contract-kpi-publication-gate.md
             ${{ runner.temp }}/scorecards/cairo-auditor-external-triage.md
             ${{ runner.temp }}/scorecards/cairo-auditor-external-trend.md
             ${{ runner.temp }}/scorecards/cairo-auditor-external-triage.json

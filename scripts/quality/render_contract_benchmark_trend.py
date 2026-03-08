@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 VERSION_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)-contract-skill-benchmark\.md$")
-MIN_REPORTABLE_CASES = 22
+MIN_REPORTABLE_CASES = 60
 
 
 @dataclass

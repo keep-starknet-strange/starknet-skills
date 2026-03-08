@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-MIN_REPORTABLE_CASES = 22
+MIN_REPORTABLE_CASES = 60
 
 
 @dataclass
@@ -26,6 +26,7 @@ class PatternRule:
 class Case:
     case_id: str
     skill_id: str
+    security_class: str
     fixture: str
     expected_pass: bool
     run_build: bool
@@ -39,6 +40,7 @@ class Case:
 class CaseResult:
     case_id: str
     skill_id: str
+    security_class: str
     expected_pass: bool
     predicted_pass: bool
     outcome: str
@@ -98,6 +100,10 @@ def load_cases(path: Path) -> list[Case]:
         if test_filter is not None and not isinstance(test_filter, str):
             raise ValueError(f"line {line_no}: test_filter must be string when present")
 
+        security_class = raw.get("security_class", "uncategorized")
+        if not isinstance(security_class, str) or not security_class.strip():
+            raise ValueError(f"line {line_no}: security_class must be non-empty string when present")
+
         must_match = parse_rules(raw["must_match"], line_no, "must_match")
         must_not_match = parse_rules(raw["must_not_match"], line_no, "must_not_match")
 
@@ -105,6 +111,7 @@ def load_cases(path: Path) -> list[Case]:
             Case(
                 case_id=raw["case_id"],
                 skill_id=raw["skill_id"],
+                security_class=security_class.strip(),
                 fixture=raw["fixture"],
                 expected_pass=raw["expected_pass"],
                 run_build=raw["run_build"],
@@ -263,6 +270,7 @@ def evaluate_case(
         return CaseResult(
             case_id=case.case_id,
             skill_id=case.skill_id,
+            security_class=case.security_class,
             expected_pass=case.expected_pass,
             predicted_pass=False,
             outcome=map_outcome(expected_pass=case.expected_pass, predicted_pass=False),
@@ -278,6 +286,7 @@ def evaluate_case(
         return CaseResult(
             case_id=case.case_id,
             skill_id=case.skill_id,
+            security_class=case.security_class,
             expected_pass=case.expected_pass,
             predicted_pass=False,
             outcome=map_outcome(expected_pass=case.expected_pass, predicted_pass=False),
@@ -319,6 +328,7 @@ def evaluate_case(
     return CaseResult(
         case_id=case.case_id,
         skill_id=case.skill_id,
+        security_class=case.security_class,
         expected_pass=case.expected_pass,
         predicted_pass=predicted_pass,
         outcome=outcome,
@@ -399,6 +409,20 @@ def compute_metrics(results: list[CaseResult]) -> tuple[dict[str, int], int, int
     return totals, evaluated, skipped, precision, recall
 
 
+def compute_security_class_metrics(results: list[CaseResult]) -> dict[str, dict[str, int]]:
+    class_totals: dict[str, dict[str, int]] = {}
+    for result in results:
+        if result.outcome == "skip":
+            continue
+        bucket = class_totals.setdefault(
+            result.security_class,
+            {"tp": 0, "tn": 0, "fp": 0, "fn": 0, "cases": 0},
+        )
+        bucket["cases"] += 1
+        bucket[result.outcome] += 1
+    return class_totals
+
+
 def render_markdown(
     *,
     title: str,
@@ -414,6 +438,7 @@ def render_markdown(
     have_scarb: bool,
     have_snforge: bool,
     min_reportable_cases: int,
+    class_totals: dict[str, dict[str, int]],
 ) -> str:
     accuracy = 1.0 if evaluated == 0 else (totals["tp"] + totals["tn"]) / evaluated
     smoke_only = evaluated < min_reportable_cases
@@ -440,18 +465,41 @@ def render_markdown(
         f"- FP: `{totals['fp']}`",
         f"- FN: `{totals['fn']}`",
         f"- Skipped: `{skipped}`",
-        "",
-        "## Case Results",
-        "",
-        "| Case | Skill | Expected | Predicted | Outcome | Build | Tests | Static | Notes |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
+
+    lines.extend(
+        [
+            "",
+            "## Class Coverage",
+            "",
+            "| Security Class | Cases | TP | TN | FP | FN |",
+            "| --- | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
+
+    for security_class in sorted(class_totals):
+        counts = class_totals[security_class]
+        lines.append(
+            "| "
+            f"`{security_class}` | `{counts['cases']}` | `{counts['tp']}` | `{counts['tn']}` | "
+            f"`{counts['fp']}` | `{counts['fn']}` |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Case Results",
+            "",
+            "| Case | Class | Skill | Expected | Predicted | Outcome | Build | Tests | Static | Notes |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
 
     for result in results:
         notes = "<br>".join(result.notes) if result.notes else ""
         lines.append(
             "| "
-            f"`{result.case_id}` | `{result.skill_id}` | "
+            f"`{result.case_id}` | `{result.security_class}` | `{result.skill_id}` | "
             f"`{result.expected_pass}` | `{result.predicted_pass}` | `{result.outcome}` | "
             f"`{result.build_ok}` | `{result.tests_ok}` | `{result.static_ok}` | {notes} |"
         )
@@ -464,6 +512,7 @@ def render_markdown(
             f"- Tools: scarb={'yes' if have_scarb else 'no'}, snforge={'yes' if have_snforge else 'no'}.",
             "- Positive cases must compile/test and satisfy all static policy assertions.",
             "- Negative cases validate that policy checks fail on intentionally insecure patterns.",
+            "- Cases are organized by security class to make regressions attributable.",
             f"- Sample policy: fewer than {min_reportable_cases} evaluated cases is smoke-only and should not be reported as broad skill quality.",
         ]
     )
@@ -481,10 +530,10 @@ def parse_args() -> argparse.Namespace:
         help="JSONL case pack path",
     )
     parser.add_argument("--output", required=True, help="Output markdown scorecard path")
-    parser.add_argument("--version", default="v0.3.0", help="Version label for scorecard")
+    parser.add_argument("--version", default="v0.5.0", help="Version label for scorecard")
     parser.add_argument(
         "--title",
-        default="v0.3.0 Contract Skill Benchmark",
+        default="v0.5.0 Contract Skill Benchmark",
         help="Scorecard title",
     )
     parser.add_argument("--min-precision", type=float, default=1.0, help="Minimum precision threshold")
@@ -546,6 +595,7 @@ def main() -> int:
         results.append(result)
 
     totals, evaluated, skipped, prec, rec = compute_metrics(results)
+    class_totals = compute_security_class_metrics(results)
 
     generated_at = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     markdown = render_markdown(
@@ -562,6 +612,7 @@ def main() -> int:
         have_scarb=have_scarb,
         have_snforge=have_snforge,
         min_reportable_cases=args.min_evaluated,
+        class_totals=class_totals,
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

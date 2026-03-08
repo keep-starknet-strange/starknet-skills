@@ -21,6 +21,10 @@
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9-]{2,80}$"
     },
+    "security_class": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{1,80}$"
+    },
     "fixture": {
       "type": "string",
       "minLength": 1

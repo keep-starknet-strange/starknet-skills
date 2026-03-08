@@ -51,13 +51,24 @@
     - `scarb build`
     - `snforge test`
     - source-level must-match / must-not-match regex assertions
+    - security-class coverage reporting (`auth`, `timelock`, `upgrade_safety`, etc.)
   - emits scorecard markdown and enforces precision/recall thresholds
   - supports reportable-gate thresholds (`--min-evaluated`, `--enforce-min-evaluated`)
-  - defaults to `22` minimum evaluated cases for reportable interpretation
+  - defaults to `60` minimum evaluated cases for reportable interpretation
   - fails on zero evaluated cases unless `--allow-empty-evaluated` is explicitly set
+
+- `mutation_test_contract_benchmark.py` validates rule strength by mutating secure fixtures:
+  - removes/flips selected guards in secure fixtures
+  - runs benchmark after each mutation
+  - requires benchmark failure for every mutation (guard-regression detection)
 
 - `render_contract_benchmark_trend.py` builds release trend reporting for contract benchmarks:
   - scans `evals/scorecards/v*-contract-skill-benchmark.md`
   - marks releases as reportable/non-reportable via minimum case policy
   - tracks consecutive reportable releases for KPI publication readiness
   - emits `evals/scorecards/contract-skill-benchmark-trend.md`
+
+- `check_contract_kpi_release_gate.py` enforces KPI publication policy:
+  - requires minimum consecutive reportable releases
+  - requires explicit security reviewer signoff for latest release
+  - emits `evals/scorecards/contract-kpi-publication-gate.md`
