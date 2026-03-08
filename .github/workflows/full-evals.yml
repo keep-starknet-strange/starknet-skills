@@ -156,6 +156,7 @@ jobs:
             --require-tools
 
       - name: Contract benchmark mutation suite
+        timeout-minutes: 30
         run: |
           python scripts/quality/mutation_test_contract_benchmark.py \
             --cases evals/cases/contract_skill_benchmark.jsonl \

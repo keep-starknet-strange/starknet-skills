@@ -80,6 +80,12 @@ def parse_args() -> argparse.Namespace:
         default=600,
         help="Timeout passed through to benchmark runner",
     )
+    parser.add_argument(
+        "--process-timeout-seconds",
+        type=int,
+        default=1800,
+        help="Maximum wall-clock timeout for each benchmark subprocess",
+    )
     return parser.parse_args()
 
 
@@ -91,6 +97,7 @@ def run_benchmark(
     min_recall: float,
     min_evaluated: int,
     timeout_seconds: int,
+    process_timeout_seconds: int,
 ) -> tuple[int, str]:
     with tempfile.NamedTemporaryFile(prefix="mutation-contract-bench-", suffix=".md") as handle:
         cmd = [
@@ -115,18 +122,33 @@ def run_benchmark(
             "--timeout-seconds",
             str(timeout_seconds),
         ]
-        proc = subprocess.run(
-            cmd,
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-        )
-        output = ((proc.stdout or "") + (proc.stderr or "")).strip()
-        return proc.returncode, output
+        try:
+            proc = subprocess.run(
+                cmd,
+                cwd=repo_root,
+                capture_output=True,
+                text=True,
+                timeout=process_timeout_seconds,
+            )
+            output = ((proc.stdout or "") + (proc.stderr or "")).strip()
+            return proc.returncode, output
+        except subprocess.TimeoutExpired as exc:
+            output = ((exc.stdout or "") + (exc.stderr or "")).strip()
+            timeout_note = (
+                f"FAIL: benchmark subprocess timed out after {process_timeout_seconds}s"
+            )
+            combined = f"{timeout_note}\n{output}".strip()
+            return 124, combined
 
 
 def apply_mutation(original_text: str, mutation: Mutation) -> str:
-    mutated_text, count = re.subn(mutation.pattern, mutation.replacement, original_text, count=1, flags=re.MULTILINE)
+    mutated_text, count = re.subn(
+        mutation.pattern,
+        mutation.replacement,
+        original_text,
+        count=1,
+        flags=re.DOTALL,
+    )
     if count != 1:
         raise RuntimeError(
             f"mutation {mutation.mutation_id}: pattern not found in {mutation.path}"
@@ -153,6 +175,7 @@ def main() -> int:
                 min_recall=args.min_recall,
                 min_evaluated=args.min_evaluated,
                 timeout_seconds=args.timeout_seconds,
+                process_timeout_seconds=args.process_timeout_seconds,
             )
             if code == 0:
                 failures.append(

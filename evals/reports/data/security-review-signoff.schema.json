@@ -22,7 +22,8 @@
     },
     "approved_at": {
       "type": "string",
-      "minLength": 10
+      "minLength": 10,
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
     },
     "notes": {
       "type": "string"

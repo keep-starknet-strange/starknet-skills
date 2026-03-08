@@ -12,6 +12,7 @@ from pathlib import Path
 
 LATEST_RELEASE_RE = re.compile(r"- Latest release:\s+`([^`]+)`")
 STREAK_RE = re.compile(r"- Consecutive reportable releases \(latest-first\):\s+`(\d+)`")
+APPROVED_AT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 
 @dataclass
@@ -88,7 +89,11 @@ def load_signoffs(path: Path) -> list[SecuritySignoff]:
             raise RuntimeError(f"{path}:{line_no}: invalid reviewer")
         if not isinstance(raw["approved"], bool):
             raise RuntimeError(f"{path}:{line_no}: approved must be bool")
-        if not isinstance(raw["approved_at"], str) or not raw["approved_at"]:
+        if (
+            not isinstance(raw["approved_at"], str)
+            or len(raw["approved_at"]) < 10
+            or APPROVED_AT_RE.match(raw["approved_at"]) is None
+        ):
             raise RuntimeError(f"{path}:{line_no}: invalid approved_at")
         notes = raw.get("notes", "")
         if not isinstance(notes, str):
