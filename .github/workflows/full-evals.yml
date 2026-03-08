@@ -12,6 +12,8 @@ on:
 
 jobs:
   full-evals:
+    permissions:
+      contents: read
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-evals')
     runs-on: ubuntu-latest
     steps:
@@ -36,7 +38,7 @@ jobs:
             --jsonl datasets/manifests/audits.jsonl
           python scripts/audit-pipeline/check_unique_ids.py \
             --jsonl datasets/manifests/audits.jsonl \
-            --keys audit_id source_url raw_path extracted_path
+            --keys audit_id source_url raw_path extracted_path raw_sha256
 
       - name: Held-out leakage guard
         run: python scripts/audit-pipeline/check_no_heldout_leak.py
