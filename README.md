@@ -66,6 +66,9 @@ Direct router URL:
 - Deterministic smoke scorecards:
   - [v0.2.0-cairo-auditor-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-benchmark.md)
   - [v0.2.0-cairo-auditor-realworld-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md)
+- Human-labeled external scan scorecards:
+  - [v0.2.0-cairo-auditor-external-triage.md](evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
+  - [cairo-auditor-external-trend.md](evals/scorecards/cairo-auditor-external-trend.md)
 - Canonical benchmark surface and maintenance notes live in [cairo-auditor/README.md](cairo-auditor/README.md).
 
 ## Data Pipeline
