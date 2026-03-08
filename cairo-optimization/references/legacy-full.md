@@ -250,6 +250,16 @@ let h = hades_permutation(x, y, 2);
 - **`.tool-versions`:** Pin Scarb and Starknet Foundry versions with ASDF for reproducible builds.
 - **Keep dependencies updated:** Newer Scarb/Foundry versions include gas optimizations and compiler improvements.
 
+### Deterministic Benchmark Rule Authoring
+
+When encoding optimization checks in `evals/cases/contract_skill_benchmark.jsonl`:
+
+- Prefer operation-level patterns over variable names.
+  - Better: `\\bamount\\s*/\\s*2\\b`
+  - Brittle: `let\\s+q\\s*=\\s*amount\\s*/\\s*2\\s*;`
+- Keep each rule tied to one optimization claim (single failure reason).
+- Add paired secure/insecure fixtures so the same rule can pass and fail deterministically.
+
 ---
 
 ## BoundedInt Optimization

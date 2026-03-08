@@ -15,6 +15,8 @@
 4. Surface hardening
 - Minimize public selectors.
 - Add strict argument validation and auth checks.
+- For timelocked paths, source time from `get_block_timestamp()` only.
+- For upgrade paths, reject zero class hash values.
 
 5. Test-first tightening
 - Add unit tests for nominal/failure paths.
@@ -23,3 +25,7 @@
 6. Security review
 - Run `cairo-auditor` in default mode.
 - Patch findings and add regression tests.
+
+7. Distill findings into skills
+- Encode each fixed class of issue in `../references/legacy-full.md`.
+- Add/adjust deterministic checks in `../../evals/cases/contract_skill_benchmark.jsonl`.

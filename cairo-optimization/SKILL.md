@@ -29,6 +29,7 @@ Apply only after tests pass and behavior is locked.
 2. Profile target paths with `python3 scripts/profile.py profile`.
 3. Apply one optimization class at a time.
 4. Re-run tests and compare resource deltas.
+5. Encode stable optimization rules in `../evals/cases/contract_skill_benchmark.jsonl` to prevent regressions.
 
 ## Workflow
 

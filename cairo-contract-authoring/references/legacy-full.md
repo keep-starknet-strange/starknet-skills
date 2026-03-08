@@ -23,6 +23,44 @@ Before finalizing implementation for security-sensitive logic, cross-check:
 - `../../datasets/distilled/fix-patterns/`
 - `../../datasets/distilled/vuln-cards/`
 
+## Upgrade/Auth Hardening Rules
+
+### Timelock Time Source
+
+Never accept `now` as a user argument for timelock checks.
+
+```cairo
+// BAD
+fn execute_upgrade(ref self: ContractState, now: u64) {
+    assert!(now >= self.executable_after.read(), "timelock");
+}
+
+// GOOD
+use starknet::get_block_timestamp;
+
+fn execute_upgrade(ref self: ContractState) {
+    let now = get_block_timestamp();
+    assert!(now >= self.executable_after.read(), "timelock");
+}
+```
+
+### State Mutation Access Posture
+
+For every storage-mutating `#[external(v0)]` function, declare the posture explicitly:
+
+- guarded path (`assert_only_owner` / role check), or
+- intentionally public path with an inline comment justifying public mutability.
+
+Silent implicit posture is not acceptable in security-sensitive modules.
+
+### Non-Zero Upgrade Hash Guard
+
+Reject zero class hash in both schedule and immediate-upgrade flows:
+
+```cairo
+assert!(new_class_hash != 0, "class_hash_zero");
+```
+
 ## Contract Structure
 
 Every Starknet contract follows this skeleton:

@@ -17,3 +17,7 @@
 4. Document
 - Record before/after metrics in the PR.
 - Link to the optimization class used from references.
+
+5. Lock the learning
+- Add or update deterministic contract benchmark cases for the optimized pattern.
+- Prefer operation-level static rules (for example, `amount / 2`) over variable-name-coupled patterns.
