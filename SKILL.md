@@ -16,7 +16,6 @@ Use this file to choose the smallest relevant module.
 - For build/declare/deploy/release operations: [cairo-toolchain](cairo-toolchain/SKILL.md)
 - For account abstraction rules and risks: [account-abstraction](account-abstraction/SKILL.md)
 - For Starknet network constraints: [starknet-network-facts](starknet-network-facts/SKILL.md)
-- For OpenZeppelin Cairo usage and footguns: [openzeppelin-cairo](openzeppelin-cairo/SKILL.md)
 
 ## Routing Policy
 

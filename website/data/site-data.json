@@ -7,8 +7,8 @@
     "normalized_audits": 26,
     "normalized_findings": 217,
     "segmented_audits": 26,
-    "skill_modules": 8,
-    "skills_total_with_router": 9
+    "skill_modules": 7,
+    "skills_total_with_router": 8
   },
   "latest_scorecards": {
     "deterministic": {
@@ -49,7 +49,7 @@
       "skill_path": "cairo-auditor/SKILL.md"
     },
     {
-      "description": "Safe implementation patterns",
+      "description": "Language + contract implementation patterns",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-contract-authoring/SKILL.md",
       "name": "cairo-contract-authoring",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md",
@@ -63,7 +63,7 @@
       "skill_path": "cairo-testing/SKILL.md"
     },
     {
-      "description": "Performance/resource hardening",
+      "description": "Profiling + performance/resource hardening",
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-optimization/SKILL.md",
       "name": "cairo-optimization",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md",
@@ -89,13 +89,6 @@
       "name": "starknet-network-facts",
       "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/starknet-network-facts/SKILL.md",
       "skill_path": "starknet-network-facts/SKILL.md"
-    },
-    {
-      "description": "OZ Cairo composition footguns",
-      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/openzeppelin-cairo/SKILL.md",
-      "name": "openzeppelin-cairo",
-      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/openzeppelin-cairo/SKILL.md",
-      "skill_path": "openzeppelin-cairo/SKILL.md"
     }
   ],
   "source_fingerprint": "006478c492ec0915",

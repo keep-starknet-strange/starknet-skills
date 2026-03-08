@@ -21,13 +21,12 @@ REPO_SLUG_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 
 MODULES: list[tuple[str, str]] = [
     ("cairo-auditor", "Deterministic + workflow-guided security review"),
-    ("cairo-contract-authoring", "Safe implementation patterns"),
+    ("cairo-contract-authoring", "Language + contract implementation patterns"),
     ("cairo-testing", "Unit/integration/invariant strategy"),
-    ("cairo-optimization", "Performance/resource hardening"),
+    ("cairo-optimization", "Profiling + performance/resource hardening"),
     ("cairo-toolchain", "Build/declare/deploy/verify ops"),
     ("account-abstraction", "Account/session-key threat patterns"),
     ("starknet-network-facts", "Chain semantics and constraints"),
-    ("openzeppelin-cairo", "OZ Cairo composition footguns"),
 ]
 
 

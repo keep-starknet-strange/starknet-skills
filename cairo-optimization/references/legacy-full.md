@@ -1,8 +1,9 @@
-# Cairo Optimization
+
+# Coding Cairo
+
+> **Attribution:** Originally authored by [feltroidprime](https://github.com/feltroidprime) ([cairo-skills](https://github.com/feltroidprime/cairo-skills), synced from commit `7fde29f`).
 
 Rules and patterns for writing efficient Cairo code. Sourced from audit findings and production profiling.
-
-> **Attribution:** Originally authored by [feltroidprime](https://github.com/feltroidprime) ([cairo-skills](https://github.com/feltroidprime/cairo-skills)). Imported into starknet-skills.
 
 ## When to Use
 
@@ -13,9 +14,7 @@ Rules and patterns for writing efficient Cairo code. Sourced from audit findings
 - Using `BoundedInt` for zero-overhead arithmetic with compile-time bounds
 - Choosing integer types (u128 vs u256, BoundedInt vs native types)
 
-## When NOT to Use
-
-**Not for:** Profiling/benchmarking (use benchmarking-cairo if available)
+**Not for:** Manual profiling setup without this module workflow (use `profiling.md` in this directory)
 
 ## Quick Reference — All Rules
 
@@ -32,6 +31,7 @@ Rules and patterns for writing efficient Cairo code. Sourced from audit findings
 | 9 | Storage slot packing | One slot per field | `StorePacking` trait |
 | 10 | BoundedInt for limbs | Bitwise ops / raw u128 math | `bounded_int::{div_rem, mul, add}` |
 | 11 | Fast 2-input Poseidon | `poseidon_hash_span([x,y])` | `hades_permutation(x, y, 2)` |
+| 12 | Bulk felt252→BoundedInt | `downcast` / `try_into` (4 steps) | `u128s_from_felt252` + `upcast` (2 steps) |
 
 ## Always / Never Rules
 
@@ -120,7 +120,7 @@ while i != n { ... i += 1; }
 
 ```cairo
 // BAD
-let mut result: Array = array![];
+let mut result: Array<felt252> = array![];
 let mut i = 0;
 while i != length {
     result.append(*data.at(start + i));
@@ -224,37 +224,25 @@ fn felt252_to_two_u96(value: felt252) -> (u96, u96) {
 
 ```cairo
 // GOOD — div_rem by 2 extracts LSB, quotient is right-shifted value
-let (qu1, bit0) = bounded_int::div_rem(u1, TWO_NZ); // bit0 in {0,1}
+let (qu1, bit0) = bounded_int::div_rem(u1, TWO_NZ);  // bit0 in {0,1}
 let (qu2, bit1) = bounded_int::div_rem(u2, TWO_NZ);
-let selector = add(bit0, mul(bit1, TWO_UI)); // selector in {0..3}
+let selector = add(bit0, mul(bit1, TWO_UI));  // selector in {0..3}
 ```
 
 See [garaga/selectors.cairo](https://github.com/keep-starknet-strange/garaga/blob/main/src/src/ec/selectors.cairo) and [cairo-perfs-snippets](https://github.com/feltroidprime/cairo-perfs-snippets) for production examples.
-
-### 11. Always use `hades_permutation` for 2-input Poseidon hashes
-
-`poseidon_hash_span` has overhead for span construction. For exactly two inputs, use the permutation directly.
-
-```cairo
-// BAD
-let hash = poseidon_hash_span(array![x, y].span());
-
-// GOOD
-let (hash, _, _) = hades_permutation(x, y, 2);
-```
 
 ## Code Quality
 
 - **DRY:** Extract repeated validation into helper functions. If two functions validate-then-write the same struct, extract a shared `_set_config()`.
 - **`scarb fmt`:** Run before every commit.
-- **`.tool-versions`:** Pin Scarb (2.15.1) and Starknet Foundry (0.56.0) versions with ASDF for reproducible builds.
+- **`.tool-versions`:** Pin Scarb and Starknet Foundry versions with ASDF for reproducible builds.
 - **Keep dependencies updated:** Newer Scarb/Foundry versions include gas optimizations and compiler improvements.
 
 ---
 
 ## BoundedInt Optimization
 
-`BoundedInt<MIN, MAX>` encodes value constraints in the type system, eliminating runtime overflow checks. Use the CLI tool (`bounded_int_calc.py` in this skill directory) to compute bounds — do NOT calculate manually.
+`BoundedInt<MIN, MAX>` encodes value constraints in the type system, eliminating runtime overflow checks. Use the CLI tool to compute bounds — do NOT calculate manually.
 
 ### Critical Architecture Decision: Avoid Downcast
 
@@ -279,8 +267,8 @@ The `downcast` operation adds a range check that **dominates the savings** from 
 ```cairo
 // BAD: Converts at every call (downcast overhead kills performance)
 pub fn add_mod(a: u16, b: u16) -> u16 {
-    let a: Zq = downcast(a).expect('overflow'); // EXPENSIVE
-    let b: Zq = downcast(b).expect('overflow'); // EXPENSIVE
+    let a: Zq = downcast(a).expect('overflow');  // EXPENSIVE
+    let b: Zq = downcast(b).expect('overflow');  // EXPENSIVE
     let sum: ZqSum = add(a, b);
     let (_q, rem) = bounded_int_div_rem(sum, nz_q);
     upcast(rem)
@@ -342,9 +330,9 @@ use corelib_imports::bounded_int::{
 };
 use corelib_imports::bounded_int::bounded_int::{SubHelper, add, sub, mul};
 
-type Val = BoundedInt<0, 99>;          // [0, 99]
-type ValSum = BoundedInt<0, 198>;      // [0, 198]
-type ValConst = UnitInt<100>;          // singleton {100}
+type Val = BoundedInt<0, 99>;           // [0, 99]
+type ValSum = BoundedInt<0, 198>;       // [0, 198]
+type ValConst = UnitInt<100>;           // singleton {100}
 
 impl AddValImpl of AddHelper<Val, Val> {
     type Result = ValSum;
@@ -405,8 +393,8 @@ python3 bounded_int_calc.py mul 0 12288 0 12288 --name MulZqImpl
 ```cairo
 // sub_mod: (a - b) mod Q via SHIFT
 pub fn sub_mod(a: Zq, b: Zq) -> Zq {
-    let a_plus_q: BoundedInt<12289, 24577> = add(a, Q_CONST); // shift by +Q
-    let diff: BoundedInt<1, 24577> = sub(a_plus_q, b);        // now non-negative
+    let a_plus_q: BoundedInt<12289, 24577> = add(a, Q_CONST);  // shift by +Q
+    let diff: BoundedInt<1, 24577> = sub(a_plus_q, b);           // now non-negative
     let (_q, rem) = bounded_int_div_rem(diff, nz_q());
     rem
 }
@@ -424,6 +412,51 @@ pub fn fused_sub_mul_mod(a: Zq, b: Zq, c: Zq) -> Zq {
 
 Rule: SHIFT = `ceil(|min_possible_value| / modulus) * modulus`. Adding SHIFT preserves the result mod Q (since SHIFT ≡ 0 mod Q) while making all values non-negative.
 
+### felt252 → BoundedInt: Prefer u128 Decomposition Over Downcast
+
+`u128s_from_felt252` is a native VM operation (2 steps/call). `downcast` (used by `try_into()`) performs a range check (4 steps/call). When converting many felt252 values to BoundedInt, decompose to u128 first, then upcast to `BoundedInt<0, u128_max>`. You lose tight compile-time bounds but save 2 steps per conversion — significant at scale.
+
+Benchmarked per-call costs (isolated loop, 512 iterations, varying input):
+
+| Libfunc | Steps/call | Source |
+|---------|-----------|--------|
+| `u128s_from_felt252` | 2 | 1,024 flat / 512 calls |
+| `downcast` (try_into) | 4 | 2,048 flat / 512 calls |
+| `bounded_int_div_rem` | 7 | 3,584 flat / 512 calls (same both) |
+
+| Approach | Per-conversion cost | Sierra bloat | Notes |
+|----------|-------------------|--------------|-------|
+| `try_into().unwrap()` | 4 steps (downcast) | **O(N^2)** — panic drops all live vars | Never in unrolled code |
+| `match try_into() { Some/None }` | 4 steps (downcast) | OK | No panic but pays downcast cost |
+| `u128s_from_felt252` + `upcast` | 2 steps | OK | **Preferred** — native decomposition |
+
+End-to-end impact (512-point NTT verify): u128 approach saves 1,024 steps / ~1.6M L2 gas (4.4%) vs match-based downcast.
+
+```cairo
+use corelib_imports::integer::{U128sFromFelt252Result, u128s_from_felt252};
+
+type U128AsBounded = BoundedInt<0, 340282366920938463463374607431768211455>;
+
+#[inline(always)]
+fn felt252_as_u128(x: felt252) -> u128 {
+    match u128s_from_felt252(x) {
+        U128sFromFelt252Result::Narrow(low) => low,
+        U128sFromFelt252Result::Wide((_, low)) => low,
+    }
+}
+
+// Convert felt252 to BoundedInt via u128 (no range-check overhead)
+let r: U128AsBounded = upcast(felt252_as_u128(value + SHIFT));
+let (_, r) = bounded_int_div_rem(r, NZ_Q);  // DivRemHelper<U128AsBounded, QConst>
+```
+
+**Trade-off:** `U128AsBounded` has max=2^128-1 instead of the tight shifted bound. The `DivRemHelper` quotient type is wider, but `bounded_int_div_rem` cost is the same. Fine for most cases — only matters if downstream code needs tight bounds on the quotient.
+
+**When to use which:**
+- **Bulk conversions (generated/unrolled code):** Always `u128s_from_felt252` + `upcast`
+- **One-off boundary conversions (deserialization):** `downcast` is fine — per-call overhead negligible
+- **Never in hot paths:** `try_into().unwrap()` — panic path causes quadratic Sierra bloat
+
 ### Common BoundedInt Mistakes
 
 - **Downcast at every function call** — the biggest performance killer. Use `BoundedInt` types throughout, not just inside arithmetic functions.
@@ -436,3 +469,4 @@ Rule: SHIFT = `ceil(|min_possible_value| / modulus) * modulus`. Adding SHIFT pre
 - **Using `UnitInt` vs `BoundedInt` for constants** — use `UnitInt<N>` for singleton constants like divisors.
 - **Using `div_rem` vs `bounded_int_div_rem`** — the function is `bounded_int_div_rem`, not `div_rem`.
 - **Bounds exceed u128::max** — BoundedInt bounds are hard-capped at 2^128. Larger values crash the Sierra specializer: 'Provided generic argument is unsupported.'
+- **Using `downcast`/`try_into` for bulk felt252 → BoundedInt** — use `u128s_from_felt252` + `upcast` instead (2 vs 4 steps/call). See "felt252 → BoundedInt" section above.

@@ -10,7 +10,6 @@ Modules:
 - ./cairo-toolchain/SKILL.md
 - ./account-abstraction/SKILL.md
 - ./starknet-network-facts/SKILL.md
-- ./openzeppelin-cairo/SKILL.md
 
 Data:
 - ./datasets/audits/README.md

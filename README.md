@@ -9,7 +9,7 @@
   <a href="https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/full-evals.yml">
     <img alt="full evals" src="https://img.shields.io/github/actions/workflow/status/keep-starknet-strange/starknet-skills/full-evals.yml?branch=main&label=full%20evals&color=0969da" />
   </a>
-  <img alt="modules" src="https://img.shields.io/badge/modules-8-7c3aed" />
+  <img alt="modules" src="https://img.shields.io/badge/modules-7-7c3aed" />
   <img alt="ingested audits" src="https://img.shields.io/badge/ingested%20audits-manifest--backed-f59e0b" />
   <img alt="deterministic smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-22c55e" />
   <img alt="agent eval" src="https://img.shields.io/badge/agent%20eval-in%20progress-f59e0b" />
@@ -18,8 +18,6 @@
 # starknet-skills
 
 Production-grade Cairo/Starknet skills for secure coding, auditing, and regression-safe releases.
-
-Operational tool usage belongs in `starknet-agentic`/`starkzap`; this repo is the reasoning + security knowledge layer.
 
 ## Install & Use
 
@@ -53,13 +51,12 @@ Direct router URL:
 | Module | Focus | Status |
 | --- | --- | --- |
 | [cairo-auditor](cairo-auditor/SKILL.md) | Deterministic + workflow-guided security review | Stable |
-| [cairo-contract-authoring](cairo-contract-authoring/SKILL.md) | Safe implementation patterns | Stable |
+| [cairo-contract-authoring](cairo-contract-authoring/SKILL.md) | Language + contract implementation patterns | Stable |
 | [cairo-testing](cairo-testing/SKILL.md) | Unit/integration/invariant strategy | Stable |
-| [cairo-optimization](cairo-optimization/SKILL.md) | Performance/resource hardening | Stable |
+| [cairo-optimization](cairo-optimization/SKILL.md) | Profiling + performance/resource hardening | Stable |
 | [cairo-toolchain](cairo-toolchain/SKILL.md) | Build/declare/deploy/verify ops | Stable |
 | [account-abstraction](account-abstraction/SKILL.md) | Account/session-key threat patterns | Stable |
 | [starknet-network-facts](starknet-network-facts/SKILL.md) | Chain semantics and constraints | Stable |
-| [openzeppelin-cairo](openzeppelin-cairo/SKILL.md) | OZ Cairo composition footguns | Stable |
 
 ## Benchmarks
 
