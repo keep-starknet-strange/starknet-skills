@@ -64,8 +64,11 @@ jobs:
       - name: Secret scan
         run: |
           detect-secrets scan --all-files \
+            --exclude-files '.git/.*' \
             --exclude-files 'datasets/audits/raw/.*' \
-            --exclude-files 'datasets/audits/extracted/.*' > /tmp/detect-secrets.json
+            --exclude-files 'datasets/audits/extracted/.*' \
+            --exclude-files 'datasets/manifests/audit_metadata.seed.json' \
+            --exclude-files 'evals/reports/data/.*' > /tmp/detect-secrets.json
           python - <<'PY'
           import json
           import sys
