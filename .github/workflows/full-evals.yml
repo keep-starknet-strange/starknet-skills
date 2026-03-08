@@ -140,7 +140,7 @@ jobs:
             --min-precision 0.75 \
             --min-recall 0.75
 
-      - name: LLM held-out eval (skipped: GitHub Models unavailable)
+      - name: "LLM held-out eval (skipped: GitHub Models unavailable)"
         if: ${{ steps.models_probe.outputs.available != 'true' }}
         run: echo "Skipping LLM held-out eval because GitHub Models is unavailable for this run."
 
