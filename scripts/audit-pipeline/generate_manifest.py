@@ -26,14 +26,21 @@ def main() -> int:
     seed_path = Path(args.seed)
     out_path = Path(args.output)
     repo_root = Path(__file__).resolve().parents[2]
+    repo_root_resolved = repo_root.resolve()
 
     rows = json.loads(seed_path.read_text())
     generated = []
     now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
 
     for row in rows:
-        raw_path = repo_root / row["raw_path"]
-        extracted_path = repo_root / row["extracted_path"]
+        raw_path = (repo_root_resolved / row["raw_path"]).resolve()
+        extracted_path = (repo_root_resolved / row["extracted_path"]).resolve()
+        try:
+            raw_path.relative_to(repo_root_resolved)
+            extracted_path.relative_to(repo_root_resolved)
+        except ValueError as exc:
+            raise ValueError(f"seed path escapes repo root for audit_id={row.get('audit_id')}") from exc
+
         if not raw_path.exists():
             raise FileNotFoundError(f"Missing raw artifact: {raw_path}")
         if not extracted_path.exists():

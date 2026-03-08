@@ -57,5 +57,5 @@
     "reproducibility": { "type": "string", "enum": ["not_reproduced", "reasoned", "confirmed_by_report", "confirmed_by_fix"] },
     "notes": { "type": "string" }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

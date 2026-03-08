@@ -85,6 +85,12 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   fi
 
   normalized_url="$(normalize_url "$url")"
+  if [[ ! "$normalized_url" =~ ^https:// ]]; then
+    echo "SKIP: non-HTTPS URL rejected: $normalized_url" >&2
+    ((failed+=1))
+    continue
+  fi
+
   filename="$(basename "${url%%\?*}")"
   filename="${filename//%20/ }"
   filename="${filename// /_}"
