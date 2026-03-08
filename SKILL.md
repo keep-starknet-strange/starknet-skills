@@ -9,14 +9,14 @@ Use this file to choose the smallest relevant module.
 
 ## Start Here
 
-- For contract security review: `cairo-auditor/SKILL.md`
-- For writing new contracts: `cairo-contract-authoring/SKILL.md`
-- For testing and fuzzing: `cairo-testing/SKILL.md`
-- For gas/perf optimization: `cairo-optimization/SKILL.md`
-- For build/declare/deploy/release operations: `cairo-toolchain/SKILL.md`
-- For account abstraction rules and risks: `account-abstraction/SKILL.md`
-- For Starknet network constraints: `starknet-network-facts/SKILL.md`
-- For OpenZeppelin Cairo usage and footguns: `openzeppelin-cairo/SKILL.md`
+- For contract security review: [cairo-auditor](cairo-auditor/SKILL.md)
+- For writing new contracts: [cairo-contract-authoring](cairo-contract-authoring/SKILL.md)
+- For testing and fuzzing: [cairo-testing](cairo-testing/SKILL.md)
+- For gas/perf optimization: [cairo-optimization](cairo-optimization/SKILL.md)
+- For build/declare/deploy/release operations: [cairo-toolchain](cairo-toolchain/SKILL.md)
+- For account abstraction rules and risks: [account-abstraction](account-abstraction/SKILL.md)
+- For Starknet network constraints: [starknet-network-facts](starknet-network-facts/SKILL.md)
+- For OpenZeppelin Cairo usage and footguns: [openzeppelin-cairo](openzeppelin-cairo/SKILL.md)
 
 ## Routing Policy
 

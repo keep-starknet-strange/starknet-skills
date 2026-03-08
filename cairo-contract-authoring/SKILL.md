@@ -34,9 +34,9 @@ Use this as the entrypoint for implementation decisions; load references only as
 
 ## Workflow
 
-- Main authoring flow: `workflows/default.md`
+- Main authoring flow: [default workflow](workflows/default.md)
 
 ## References
 
-- Detailed authoring reference: `references/legacy-full.md`
-- Module index: `references/README.md`
+- Detailed authoring reference: [legacy reference](references/legacy-full.md)
+- Module index: [references index](references/README.md)

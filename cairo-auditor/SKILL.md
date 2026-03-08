@@ -33,7 +33,19 @@ Workflow skill for systematic Cairo contract security review.
 - `deep`: default + adversarial reasoning pass + strict false-positive gate.
 - `targeted`: explicit file-path review for fast PR iteration.
 
+## Quick Start
+
+1. Select mode (`default`, `deep`, or `targeted`).
+2. Discover in-scope Cairo files and exclude tests/mocks/vendor code.
+3. Run vectorized scan and false-positive gate.
+4. Emit prioritized findings and required regression tests.
+
 ## Workflow
+
+Detailed workflows:
+
+- [default workflow](workflows/default.md)
+- [deep workflow](workflows/deep.md)
 
 1. Discover in-scope Cairo files.
 2. Run vectorized scans using vulnerability patterns in `references/vulnerability-db/`.
@@ -74,6 +86,7 @@ Each finding must include:
 
 ## Evidence Sources
 
+- module references index: [references index](references/README.md)
 - canonical patterns: `references/vulnerability-db/`
 - audit-derived records: `../datasets/normalized/findings/`
 - distilled security cards: `../datasets/distilled/vuln-cards/`

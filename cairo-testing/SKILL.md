@@ -33,10 +33,10 @@ Use this entrypoint to choose test scope and sequence, then load specific patter
 
 ## Workflow
 
-- Main testing flow: `workflows/default.md`
+- Main testing flow: [default workflow](workflows/default.md)
 
 ## References
 
-- Detailed testing reference: `references/legacy-full.md`
-- Module index: `references/README.md`
+- Detailed testing reference: [legacy reference](references/legacy-full.md)
+- Module index: [references index](references/README.md)
 - Security regression recipes: `../datasets/distilled/test-recipes/`

@@ -10,8 +10,10 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[2]
+LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+\.md)\)")
 
 
 @dataclass
@@ -111,6 +113,47 @@ def main() -> int:
                     ),
                 )
             )
+
+    # 6) Trail of Bits-style authoring contract (explicit parity signal).
+    non_root_skills = sorted(p for p in ROOT.rglob("SKILL.md") if p.parent != ROOT)
+    tob_errors: list[str] = []
+    for skill in non_root_skills:
+        content = skill.read_text(encoding="utf-8")
+        lines = content.splitlines()
+        if len(lines) > 500:
+            tob_errors.append(f"{skill}: exceeds 500 lines")
+        if "## When to Use" not in content or "## When NOT to Use" not in content:
+            tob_errors.append(f"{skill}: missing required section(s)")
+        if "auditor" in skill.as_posix() and "## Rationalizations to Reject" not in content:
+            tob_errors.append(f"{skill}: missing Rationalizations to Reject")
+        if "## Quick Start" not in content:
+            tob_errors.append(f"{skill}: missing Quick Start")
+
+        body = content.split("---", 2)[-1]
+        local_links = [
+            m.group(1)
+            for m in LINK_RE.finditer(body)
+            if not m.group(1).startswith(("http://", "https://"))
+        ]
+        if not local_links:
+            tob_errors.append(f"{skill}: no local markdown links for progressive disclosure")
+
+    if not tob_errors:
+        results.append(
+            CheckResult(
+                "trailofbits-authoring-parity",
+                "PASS",
+                f"{len(non_root_skills)} module SKILLs satisfy sections/quickstart/progressive-disclosure checks",
+            )
+        )
+    else:
+        results.append(
+            CheckResult(
+                "trailofbits-authoring-parity",
+                "FAIL",
+                "; ".join(tob_errors),
+            )
+        )
 
     # Print summary.
     width = max(len(r.name) for r in results)

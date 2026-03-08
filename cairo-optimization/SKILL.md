@@ -32,9 +32,9 @@ Apply only after tests pass and behavior is locked.
 
 ## Workflow
 
-- Main optimization flow: `workflows/default.md`
+- Main optimization flow: [default workflow](workflows/default.md)
 
 ## References
 
-- Detailed optimization rules: `references/legacy-full.md`
-- Module index: `references/README.md`
+- Detailed optimization rules: [legacy reference](references/legacy-full.md)
+- Module index: [references index](references/README.md)

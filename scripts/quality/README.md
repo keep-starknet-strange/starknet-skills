@@ -17,3 +17,7 @@
   - README install/use onboarding present
   - `cairo-testing` docs match installed `snforge` CLI behavior
   - `cairo-toolchain` docs match installed `sncast` CLI behavior
+  - explicit Trail of Bits-style authoring parity:
+    - required sections
+    - quick start in each module skill
+    - progressive-disclosure markdown links from entry skills

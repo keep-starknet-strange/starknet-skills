@@ -34,9 +34,9 @@ Use this entrypoint for deployment/release sequencing; load command details from
 
 ## Workflow
 
-- Main deployment workflow: `workflows/default.md`
+- Main deployment workflow: [default workflow](workflows/default.md)
 
 ## References
 
-- Detailed toolchain commands: `references/legacy-full.md`
-- Module index: `references/README.md`
+- Detailed toolchain commands: [legacy reference](references/legacy-full.md)
+- Module index: [references index](references/README.md)
