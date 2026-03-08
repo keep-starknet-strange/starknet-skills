@@ -3,141 +3,237 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Starkskills | Starknet Skills</title>
-  <meta name="description" content="Starknet and Cairo skills, audit data, and reference links." />
+  <title>starkskills</title>
+  <meta name="description" content="Cairo and Starknet skills, audit data, and direct links." />
+  <meta name="theme-color" content="#0a0a0a" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/site.css" />
+  <link rel="canonical" href="https://starkskills.org" />
+  <meta property="og:url" content="https://starkskills.org" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="starkskills" />
+  <meta property="og:description" content="Cairo and Starknet skills, audit data, and direct links." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="starkskills" />
+  <meta name="twitter:description" content="Cairo and Starknet skills, audit data, and direct links." />
+  <meta property="og:image" content="https://starkskills.org/assets/og-card.svg" />
+  <meta name="twitter:image" content="https://starkskills.org/assets/og-card.svg" />
 </head>
 <body>
-  <div class="ambient ambient-a" aria-hidden="true"></div>
-  <div class="ambient ambient-b" aria-hidden="true"></div>
-
   <header class="topbar">
-    <a class="brand" href="https://github.com/keep-starknet-strange/starknet-skills" target="_blank" rel="noreferrer">starkskills</a>
-    <nav>
-      <a href="vuln-cards/">Vuln Cards</a>
-      <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/SKILL.md" target="_blank" rel="noreferrer">cairo-auditor</a>
-      <a href="https://github.com/keep-starknet-strange/starknet-skills" target="_blank" rel="noreferrer">GitHub</a>
+    <a class="brand" href="#top">starkskills</a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="#skills">skills</a>
+      <a href="#data">pipeline</a>
+      <a href="#scorecard">scorecard</a>
+      <a href="#verify">docs</a>
     </nav>
+    <a class="nav-icon" href="https://github.com/keep-starknet-strange/starknet-skills" target="_blank" rel="noreferrer" aria-label="Open GitHub repository">gh</a>
   </header>
 
-  <main class="shell">
-    <section class="hero panel reveal">
-      <div class="hero-chips">
-        <span class="chip">Starknet Skills</span>
-        <span class="chip chip-soft">cairo-auditor</span>
-        <span class="chip chip-domain">Domain: <strong>starkskills.org</strong></span>
+  <main class="shell" id="top">
+    <section class="hero reveal">
+      <pre class="ascii-logo" aria-label="STARKSKILLS">███████╗████████╗ █████╗ ██████╗ ██╗  ██╗███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██║ ██╔╝██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+███████╗   ██║   ███████║██████╔╝█████╔╝ ███████╗█████╔╝ ██║██║     ██║     ███████╗
+╚════██║   ██║   ██╔══██║██╔══██╗██╔═██╗ ╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+███████║   ██║   ██║  ██║██║  ██║██║  ██╗███████║██║  ██╗██║███████╗███████╗███████║
+╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝</pre>
+      <h1>Cairo and Starknet skills for agents.</h1>
+      <p class="hero-copy">Plain markdown skills, audit data, and direct links.</p>
+      <div class="stats-bar">
+        <span class="stat-pill">24 audits</span>
+<span class="stat-pill">217 findings</span>
+<span class="stat-pill">8 skills</span>
       </div>
-      <h1>Starknet skills for agents.</h1>
-      <p class="hero-subtitle">
-        <strong>24</strong> audits,
-        <strong>217</strong> findings,
-        <strong>9</strong> skills.
-      </p>
-      <div class="hero-metrics">
-        <article>
-          <span>Audits</span>
-          <strong>24</strong>
-        </article>
-        <article>
-          <span>Findings</span>
-          <strong>217</strong>
-        </article>
-        <article>
-          <span>Skills</span>
-          <strong>9</strong>
-        </article>
-      </div>
-      <div class="install-grid">
-        <article class="install-card">
-          <h2>Claude</h2>
-          <pre><code>/plugin marketplace add keep-starknet-strange/starknet-skills
-/plugin menu</code></pre>
-        </article>
-        <article class="install-card">
-          <h2>Raw URL</h2>
-          <pre><code>https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md</code></pre>
-        </article>
-        <article class="install-card">
-          <h2>Git clone</h2>
-          <pre><code>git clone https://github.com/keep-starknet-strange/starknet-skills.git</code></pre>
-        </article>
-      </div>
-    </section>
-
-    <section class="section panel reveal">
-      <div class="section-head">
-        <h2>cairo-auditor</h2>
-        <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/SKILL.md" target="_blank" rel="noreferrer">Open SKILL.md</a>
-      </div>
-      <div class="flagship-layout">
-        <div>
-          <p>
-            Audit workflow for Cairo contracts: discover in-scope files, scan patterns,
-            verify findings, and write the report.
-          </p>
-          <ul class="workflow">
-            <li>discover</li>
-            <li>scan</li>
-            <li>verify</li>
-            <li>report</li>
-          </ul>
+      <div class="hero-install">
+        <article class="command-card command-card--primary reveal"><div class="command-head"><div><h2>Raw URL</h2><p>Use the router skill directly.</p></div><button class="copy-button" type="button" data-copy="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md" aria-label="Copy Raw URL">copy</button></div><pre><code>https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md</code></pre></article>
+        <div class="command-stack">
+          <article class="command-card reveal"><div class="command-head"><div><h2>Claude</h2><p>Install in Claude.</p></div><button class="copy-button" type="button" data-copy="/plugin marketplace add keep-starknet-strange/starknet-skills
+/plugin menu" aria-label="Copy Claude">copy</button></div><pre><code>/plugin marketplace add keep-starknet-strange/starknet-skills
+/plugin menu</code></pre></article>
+<article class="command-card reveal"><div class="command-head"><div><h2>Git clone</h2><p>Clone the repo locally.</p></div><button class="copy-button" type="button" data-copy="git clone https://github.com/keep-starknet-strange/starknet-skills.git" aria-label="Copy Git clone">copy</button></div><pre><code>git clone https://github.com/keep-starknet-strange/starknet-skills.git</code></pre></article>
         </div>
-        <aside class="scorecard panel-soft"><p class="eyebrow">Latest scorecard</p><h3>cairo-auditor</h3><div class="scorecard-grid"><div><span>Cases</span><strong>17</strong></div><div><span>Precision</span><strong>1.0</strong></div><div><span>Recall</span><strong>1.0</strong></div></div><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md" target="_blank" rel="noreferrer">Open scorecard</a></aside>
       </div>
     </section>
 
-    <section class="section reveal">
+    <section class="section reveal" id="showcase">
       <div class="section-head">
-        <h2>Modules</h2>
-        <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/SKILL.md" target="_blank" rel="noreferrer">Router</a>
+        <div>
+          <p class="section-kicker">Example</p>
+          <h2>cairo-auditor</h2>
+        </div>
+        <div class="section-links">
+          <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/SKILL.md" target="_blank" rel="noreferrer">skill</a>
+          <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/README.md" target="_blank" rel="noreferrer">readme</a>
+        </div>
+      </div>
+      <p class="section-copy">One example module. Discover files, scan patterns, verify findings, write the report.</p>
+      <ul class="workflow" aria-label="Audit workflow">
+        <li><span>01</span> discover</li>
+        <li><span>02</span> scan</li>
+        <li><span>03</span> verify</li>
+        <li><span>04</span> report</li>
+      </ul>
+    </section>
+
+    <section class="section reveal" id="skills">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">Skills</p>
+          <h2>Index</h2>
+        </div>
+        <div class="section-links">
+          <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/SKILL.md" target="_blank" rel="noreferrer">router</a>
+          <button class="copy-button inline-copy" type="button" data-copy="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md">copy router url</button>
+        </div>
       </div>
       <div class="module-grid">
-        <article class="module-card reveal"><div class="module-top"><h3>cairo-auditor</h3><span class="status">stable</span></div><p>Audit workflow for Cairo contracts</p><div class="card-links"><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md" target="_blank" rel="noreferrer">Raw SKILL.md</a><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/SKILL.md" target="_blank" rel="noreferrer">Repo</a></div></article>
-<article class="module-card reveal"><div class="module-top"><h3>cairo-contract-authoring</h3><span class="status">stable</span></div><p>Contract implementation patterns</p><div class="card-links"><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md" target="_blank" rel="noreferrer">Raw SKILL.md</a><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-contract-authoring/SKILL.md" target="_blank" rel="noreferrer">Repo</a></div></article>
-<article class="module-card reveal"><div class="module-top"><h3>cairo-testing</h3><span class="status">stable</span></div><p>Unit, integration, and invariant testing</p><div class="card-links"><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md" target="_blank" rel="noreferrer">Raw SKILL.md</a><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-testing/SKILL.md" target="_blank" rel="noreferrer">Repo</a></div></article>
-<article class="module-card reveal"><div class="module-top"><h3>cairo-optimization</h3><span class="status">stable</span></div><p>Performance and resource usage</p><div class="card-links"><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md" target="_blank" rel="noreferrer">Raw SKILL.md</a><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-optimization/SKILL.md" target="_blank" rel="noreferrer">Repo</a></div></article>
-<article class="module-card reveal"><div class="module-top"><h3>cairo-toolchain</h3><span class="status">stable</span></div><p>Build, declare, deploy, and verify</p><div class="card-links"><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-toolchain/SKILL.md" target="_blank" rel="noreferrer">Raw SKILL.md</a><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-toolchain/SKILL.md" target="_blank" rel="noreferrer">Repo</a></div></article>
-<article class="module-card reveal"><div class="module-top"><h3>account-abstraction</h3><span class="status">stable</span></div><p>Accounts, sessions, and threat patterns</p><div class="card-links"><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/account-abstraction/SKILL.md" target="_blank" rel="noreferrer">Raw SKILL.md</a><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/account-abstraction/SKILL.md" target="_blank" rel="noreferrer">Repo</a></div></article>
-<article class="module-card reveal"><div class="module-top"><h3>starknet-network-facts</h3><span class="status">stable</span></div><p>Network semantics and constraints</p><div class="card-links"><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/starknet-network-facts/SKILL.md" target="_blank" rel="noreferrer">Raw SKILL.md</a><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/starknet-network-facts/SKILL.md" target="_blank" rel="noreferrer">Repo</a></div></article>
-<article class="module-card reveal"><div class="module-top"><h3>openzeppelin-cairo</h3><span class="status">stable</span></div><p>OpenZeppelin Cairo notes and footguns</p><div class="card-links"><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/openzeppelin-cairo/SKILL.md" target="_blank" rel="noreferrer">Raw SKILL.md</a><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/openzeppelin-cairo/SKILL.md" target="_blank" rel="noreferrer">Repo</a></div></article>
+        <article class="module-card reveal" data-href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md"><div class="module-head"><span class="module-sigil">AUD</span><span class="status">stable</span></div><h3><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md" target="_blank" rel="noreferrer">cairo-auditor</a></h3><p>Audit workflow for Cairo contracts</p><div class="module-actions"><button class="icon-button copy-button" type="button" data-copy="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md" aria-label="Copy raw URL for cairo-auditor">cp</button><a class="icon-button" href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open raw SKILL.md for cairo-auditor">raw</a><a class="icon-button" href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open GitHub page for cairo-auditor">gh</a></div></article>
+<article class="module-card reveal" data-href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md"><div class="module-head"><span class="module-sigil">AUTH</span><span class="status">stable</span></div><h3><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md" target="_blank" rel="noreferrer">cairo-contract-authoring</a></h3><p>Contract implementation patterns</p><div class="module-actions"><button class="icon-button copy-button" type="button" data-copy="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md" aria-label="Copy raw URL for cairo-contract-authoring">cp</button><a class="icon-button" href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open raw SKILL.md for cairo-contract-authoring">raw</a><a class="icon-button" href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-contract-authoring/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open GitHub page for cairo-contract-authoring">gh</a></div></article>
+<article class="module-card reveal" data-href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md"><div class="module-head"><span class="module-sigil">TEST</span><span class="status">stable</span></div><h3><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md" target="_blank" rel="noreferrer">cairo-testing</a></h3><p>Unit, integration, and invariant testing</p><div class="module-actions"><button class="icon-button copy-button" type="button" data-copy="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md" aria-label="Copy raw URL for cairo-testing">cp</button><a class="icon-button" href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open raw SKILL.md for cairo-testing">raw</a><a class="icon-button" href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-testing/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open GitHub page for cairo-testing">gh</a></div></article>
+<article class="module-card reveal" data-href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md"><div class="module-head"><span class="module-sigil">OPT</span><span class="status">stable</span></div><h3><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md" target="_blank" rel="noreferrer">cairo-optimization</a></h3><p>Performance and resource usage</p><div class="module-actions"><button class="icon-button copy-button" type="button" data-copy="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md" aria-label="Copy raw URL for cairo-optimization">cp</button><a class="icon-button" href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open raw SKILL.md for cairo-optimization">raw</a><a class="icon-button" href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-optimization/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open GitHub page for cairo-optimization">gh</a></div></article>
+<article class="module-card reveal" data-href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-toolchain/SKILL.md"><div class="module-head"><span class="module-sigil">OPS</span><span class="status">stable</span></div><h3><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-toolchain/SKILL.md" target="_blank" rel="noreferrer">cairo-toolchain</a></h3><p>Build, declare, deploy, and verify</p><div class="module-actions"><button class="icon-button copy-button" type="button" data-copy="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-toolchain/SKILL.md" aria-label="Copy raw URL for cairo-toolchain">cp</button><a class="icon-button" href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-toolchain/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open raw SKILL.md for cairo-toolchain">raw</a><a class="icon-button" href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-toolchain/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open GitHub page for cairo-toolchain">gh</a></div></article>
+<article class="module-card reveal" data-href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/account-abstraction/SKILL.md"><div class="module-head"><span class="module-sigil">AA</span><span class="status">stable</span></div><h3><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/account-abstraction/SKILL.md" target="_blank" rel="noreferrer">account-abstraction</a></h3><p>Accounts, sessions, and threat patterns</p><div class="module-actions"><button class="icon-button copy-button" type="button" data-copy="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/account-abstraction/SKILL.md" aria-label="Copy raw URL for account-abstraction">cp</button><a class="icon-button" href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/account-abstraction/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open raw SKILL.md for account-abstraction">raw</a><a class="icon-button" href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/account-abstraction/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open GitHub page for account-abstraction">gh</a></div></article>
+<article class="module-card reveal" data-href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/starknet-network-facts/SKILL.md"><div class="module-head"><span class="module-sigil">NET</span><span class="status">stable</span></div><h3><a href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/starknet-network-facts/SKILL.md" target="_blank" rel="noreferrer">starknet-network-facts</a></h3><p>Network semantics and constraints</p><div class="module-actions"><button class="icon-button copy-button" type="button" data-copy="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/starknet-network-facts/SKILL.md" aria-label="Copy raw URL for starknet-network-facts">cp</button><a class="icon-button" href="https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/starknet-network-facts/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open raw SKILL.md for starknet-network-facts">raw</a><a class="icon-button" href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/starknet-network-facts/SKILL.md" target="_blank" rel="noreferrer" aria-label="Open GitHub page for starknet-network-facts">gh</a></div></article>
       </div>
     </section>
 
-    <section class="section panel reveal">
+    <section class="section reveal" id="data">
       <div class="section-head">
-        <h2>Data</h2>
-        <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/README.md" target="_blank" rel="noreferrer">Pipeline</a>
+        <div>
+          <p class="section-kicker">Pipeline</p>
+          <h2>Data flow</h2>
+        </div>
+        <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/README.md" target="_blank" rel="noreferrer">datasets</a>
       </div>
       <div class="pipeline-grid">
-        <article><h3>ingest</h3><p>24 audits from manifests.</p></article>
-        <article><h3>segment</h3><p>26 segmented corpora.</p></article>
-        <article><h3>normalize</h3><p>26 audits and 217 findings.</p></article>
-        <article><h3>distill</h3><p>3 vuln cards, 3 fix patterns, 3 test recipes.</p></article>
-        <article><h3>skillize</h3><p>9 skills.</p></article>
+        <article class="pipeline-step reveal"><div class="step-index">01</div><h3>ingest</h3><div class="step-stat">24</div><p>audit manifests</p></article>
+<article class="pipeline-step reveal"><div class="step-index">02</div><h3>segment</h3><div class="step-stat">26</div><p>segmented corpora</p></article>
+<article class="pipeline-step reveal"><div class="step-index">03</div><h3>normalize</h3><div class="step-stat">217</div><p>normalized findings</p></article>
+<article class="pipeline-step reveal"><div class="step-index">04</div><h3>distill</h3><div class="step-stat">3</div><p>vuln cards</p></article>
+<article class="pipeline-step reveal"><div class="step-index">05</div><h3>skillize</h3><div class="step-stat">8</div><p>published skills</p></article>
       </div>
-      <p class="pipeline-footnote">Counts are generated from repository data at build time.</p>
+      <p class="section-note">Counts are generated from repo data at build time.</p>
     </section>
 
-    <section class="section panel trust reveal">
+    <section class="section section-score reveal" id="scorecard"><div class="section-head"><div><p class="section-kicker">Scorecard</p><h2>Latest run</h2></div><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md" target="_blank" rel="noreferrer">open scorecard</a></div><div class="score-grid"><article class="score-metric reveal"><p>cases</p><strong class="count-up" data-value="17">17</strong></article><article class="score-metric reveal"><p>precision</p><strong class="count-up" data-value="1.0">1.0</strong><span class="metric-ok" aria-hidden="true"></span></article><article class="score-metric reveal"><p>recall</p><strong class="count-up" data-value="1.0">1.0</strong><span class="metric-ok" aria-hidden="true"></span></article></div><p class="section-note">Real-world benchmark snapshot from the repo.</p></section>
+
+    <section class="section reveal" id="verify">
       <div class="section-head">
-        <h2>Links</h2>
-        <a href="vuln-cards/">Vuln cards</a>
+        <div>
+          <p class="section-kicker">Verify</p>
+          <h2>Repo links</h2>
+        </div>
+        <a href="vuln-cards/">vuln cards</a>
       </div>
-      <ul>
-        <li><a href="https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/quality.yml" target="_blank" rel="noreferrer">Quality gate CI</a></li>
-        <li><a href="https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/full-evals.yml" target="_blank" rel="noreferrer">Full evals workflow</a></li>
-        <li><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/heldout/README.md" target="_blank" rel="noreferrer">Held-out evaluation policy</a></li>
-        <li><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">Contributing guide</a></li>
-      </ul>
+      <div class="verify-grid">
+        <a class="verify-link reveal" href="https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/quality.yml" target="_blank" rel="noreferrer"><span class="verify-name">quality</span><span class="verify-meta">ci</span></a>
+<a class="verify-link reveal" href="https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/full-evals.yml" target="_blank" rel="noreferrer"><span class="verify-name">evals</span><span class="verify-meta">workflow</span></a>
+<a class="verify-link reveal" href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/heldout/README.md" target="_blank" rel="noreferrer"><span class="verify-name">held-out</span><span class="verify-meta">policy</span></a>
+<a class="verify-link reveal" href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer"><span class="verify-name">contributing</span><span class="verify-meta">guide</span></a>
+<a class="verify-link reveal" href="vuln-cards/" target="_blank" rel="noreferrer"><span class="verify-name">vuln cards</span><span class="verify-meta">index</span></a>
+<a class="verify-link reveal" href="data/site-data.json" target="_blank" rel="noreferrer"><span class="verify-name">site data</span><span class="verify-meta">json</span></a>
+      </div>
     </section>
   </main>
 
   <footer class="footer">
-    <span>Source fingerprint: 59f8d52b23264f05</span>
-    <a href="data/site-data.json">site-data.json</a>
+    <div class="footer-links">
+      <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
+      <a href="https://github.com/keep-starknet-strange/starknet-skills" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">Contributing</a>
+    </div>
+    <div class="fingerprint">$ fingerprint 60b6cb3d0450fcd6</div>
   </footer>
+
+  <script>
+(() => {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const setCopied = (button) => {
+    const previous = button.textContent;
+    button.textContent = 'copied';
+    button.classList.add('is-copied');
+    window.setTimeout(() => {
+      button.textContent = previous;
+      button.classList.remove('is-copied');
+    }, 2000);
+  };
+
+  document.addEventListener('click', async (event) => {
+    const copyButton = event.target.closest('.copy-button');
+    if (copyButton) {
+      const text = copyButton.getAttribute('data-copy');
+      if (text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(copyButton);
+        } catch (_error) {
+          copyButton.textContent = 'failed';
+          window.setTimeout(() => {
+            copyButton.textContent = copyButton.classList.contains('icon-button') ? 'cp' : 'copy';
+          }, 1500);
+        }
+      }
+      return;
+    }
+
+    const card = event.target.closest('.module-card[data-href]');
+    if (card && !event.target.closest('a, button')) {
+      const href = card.getAttribute('data-href');
+      if (href) {
+        window.open(href, '_blank', 'noopener,noreferrer');
+      }
+    }
+  });
+
+  if (prefersReducedMotion) {
+    document.querySelectorAll('.reveal').forEach((element) => element.classList.add('is-visible'));
+    return;
+  }
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      revealObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach((element) => revealObserver.observe(element));
+
+  const countObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const element = entry.target;
+      const target = Number(element.getAttribute('data-value'));
+      if (!Number.isFinite(target)) {
+        countObserver.unobserve(element);
+        return;
+      }
+      const decimals = String(target).includes('.') ? 1 : 0;
+      const duration = 450;
+      const start = performance.now();
+      const tick = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const value = target * progress;
+        element.textContent = value.toFixed(decimals);
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          element.textContent = target.toFixed(decimals);
+        }
+      };
+      requestAnimationFrame(tick);
+      countObserver.unobserve(element);
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.count-up[data-value]').forEach((element) => countObserver.observe(element));
+})();
+</script>
 </body>
 </html>
