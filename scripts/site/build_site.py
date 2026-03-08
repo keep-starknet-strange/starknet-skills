@@ -425,7 +425,8 @@ def site_url(domain: str | None, path: str = "") -> str | None:
 
 def head_meta(title: str, description: str, css_path: str, domain: str | None, page_path: str) -> str:
     canonical = site_url(domain, page_path)
-    og_image = site_url(domain, "assets/og-card.svg")
+    og_image = site_url(domain, "assets/og-card.png")
+    favicon = site_url(domain, "assets/favicon.svg")
     meta = [
         '  <meta charset="utf-8" />',
         '  <meta name="viewport" content="width=device-width, initial-scale=1" />',
@@ -437,6 +438,8 @@ def head_meta(title: str, description: str, css_path: str, domain: str | None, p
         '  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet" />',
         f'  <link rel="stylesheet" href="{e(css_path)}" />',
     ]
+    if favicon:
+        meta.append(f'  <link rel="icon" href="{e(favicon)}" type="image/svg+xml" />')
     if canonical:
         meta.extend(
             [
@@ -699,7 +702,7 @@ def build_index_html(data: dict, domain: str | None) -> str:
       <a href="#skills">skills</a>
       <a href="#data">pipeline</a>
       {scorecard_nav}
-      <a href="#verify">docs</a>
+      <a href="#verify">verify</a>
     </nav>
     <a class="nav-icon" href="{e(links['repo'])}" target="_blank" rel="noreferrer" aria-label="Open GitHub repository">gh</a>
   </header>
@@ -834,7 +837,7 @@ def build_vuln_cards_html(data: dict, domain: str | None) -> str:
     <a class="brand" href="../">starkskills</a>
     <nav class="site-nav" aria-label="Secondary navigation">
       <a href="../#skills">skills</a>
-      <a href="../#verify">docs</a>
+      <a href="../#verify">verify</a>
       <a href="../">home</a>
     </nav>
     <a class="nav-icon" href="{e(links['vuln_cards_dir'])}" target="_blank" rel="noreferrer" aria-label="Open vulnerability cards directory">gh</a>
