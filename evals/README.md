@@ -6,6 +6,7 @@ Evaluation cases and scorecards for skill quality regression tracking.
 
 - `cases/`: held-out cases for detection and remediation quality.
 - `heldout/`: explicit hold-out policy and reserved sets excluded from distillation.
+- `reports/`: external repository scan reports and triage notes.
 - `scorecards/`: run outputs and aggregate metrics by version.
 
 ## Minimum Gate
