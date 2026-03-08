@@ -1,11 +1,11 @@
 # Contract Skill Benchmark Trend
 
-Generated: 2026-03-08T22:37:32Z
+Generated: 2026-03-08T22:48:21Z
 Scorecard glob: `evals/scorecards/v*-contract-skill-benchmark.md`
 
 ## Policy
 
-- Minimum cases for a reportable run: `20`
+- Minimum cases for a reportable run: `22`
 - Minimum consecutive reportable releases for KPI publication: `2`
 - Latest release: `v0.4.0`
 - Consecutive reportable releases (latest-first): `1`

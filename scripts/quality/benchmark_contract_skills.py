@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-MIN_REPORTABLE_CASES = 20
+MIN_REPORTABLE_CASES = 22
 
 
 @dataclass
@@ -520,7 +520,11 @@ def main() -> int:
     output_path.write_text(markdown, encoding="utf-8")
 
     if evaluated == 0:
-        print("WARNING: no evaluated cases (all skipped)")
+        message = "FAIL: no evaluated cases (all skipped)"
+        if args.enforce_min_evaluated:
+            print(f"{message}; min_evaluated gate is enforced")
+            return 1
+        print(f"WARNING: {message}; benchmark is non-reportable")
         return 0
 
     if prec < args.min_precision or rec < args.min_recall:

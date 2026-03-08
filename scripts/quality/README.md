@@ -43,12 +43,17 @@
   - fixture projects:
     - `evals/contracts/secure_owned_vault/`
     - `evals/contracts/insecure_owned_vault/`
+    - `evals/contracts/secure_upgrade_controller/`
+    - `evals/contracts/insecure_upgrade_controller/`
+    - `evals/contracts/secure_math_patterns/`
+    - `evals/contracts/insecure_math_patterns/`
   - checks:
     - `scarb build`
     - `snforge test`
     - source-level must-match / must-not-match regex assertions
   - emits scorecard markdown and enforces precision/recall thresholds
   - supports reportable-gate thresholds (`--min-evaluated`, `--enforce-min-evaluated`)
+  - defaults to `22` minimum evaluated cases for reportable interpretation
 
 - `render_contract_benchmark_trend.py` builds release trend reporting for contract benchmarks:
   - scans `evals/scorecards/v*-contract-skill-benchmark.md`

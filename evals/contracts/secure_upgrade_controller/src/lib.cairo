@@ -5,7 +5,7 @@ fn can_execute(now: u64, eta: u64) -> bool {
 #[starknet::contract]
 mod TimelockedUpgrade {
     use core::num::traits::Zero;
-    use starknet::{ContractAddress, get_caller_address};
+    use starknet::{ContractAddress, get_block_timestamp, get_caller_address};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
 
     #[storage]
@@ -42,8 +42,9 @@ mod TimelockedUpgrade {
     }
 
     #[external(v0)]
-    fn execute_upgrade(ref self: ContractState, now: u64) {
+    fn execute_upgrade(ref self: ContractState) {
         assert_only_owner(@self);
+        let now = get_block_timestamp();
         let eta = self.executable_after.read();
         assert!(now >= eta, "timelock");
         let pending = self.pending_class_hash.read();

@@ -47,14 +47,14 @@ python scripts/quality/benchmark_contract_skills.py \
   --version v0.4.0 \
   --min-precision 0.95 \
   --min-recall 0.95 \
-  --min-evaluated 20 \
+  --min-evaluated 22 \
   --enforce-min-evaluated \
   --require-tools
 ```
 
 Interpretation guidance for contract benchmark metrics:
 
-- If evaluated cases are fewer than `20`, treat results as a deterministic smoke gate only.
+- If evaluated cases are fewer than `22`, treat results as a deterministic smoke gate only.
 - Smoke-gate pass means fixture checks are wired correctly and caught seeded regressions.
 - Smoke-gate pass does **not** justify broad claims like "overall skill quality is 100%."
 - Publishable KPI status requires at least `2` consecutive reportable releases (tracked in trend scorecard).
@@ -65,7 +65,7 @@ Render contract benchmark trend report:
 python scripts/quality/render_contract_benchmark_trend.py \
   --scorecards-glob 'evals/scorecards/v*-contract-skill-benchmark.md' \
   --output evals/scorecards/contract-skill-benchmark-trend.md \
-  --min-cases 20 \
+  --min-cases 22 \
   --min-consecutive 2
 ```
 

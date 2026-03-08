@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 VERSION_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)-contract-skill-benchmark\.md$")
+MIN_REPORTABLE_CASES = 22
 
 
 @dataclass
@@ -34,7 +35,12 @@ def parse_args() -> argparse.Namespace:
         default="evals/scorecards/contract-skill-benchmark-trend.md",
         help="Output markdown path",
     )
-    parser.add_argument("--min-cases", type=int, default=20, help="Minimum cases for reportable runs")
+    parser.add_argument(
+        "--min-cases",
+        type=int,
+        default=MIN_REPORTABLE_CASES,
+        help="Minimum cases for reportable runs",
+    )
     parser.add_argument(
         "--min-consecutive",
         type=int,
@@ -93,6 +99,13 @@ def fmt_float(value: float | None) -> str:
     return f"{value:.3f}"
 
 
+def display_path(path: Path, repo_root: Path) -> str:
+    try:
+        return path.relative_to(repo_root).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
 def main() -> int:
     args = parse_args()
     repo_root = Path(__file__).resolve().parents[2]
@@ -103,8 +116,8 @@ def main() -> int:
     else:
         scorecard_paths = sorted(repo_root.glob(scorecard_glob))
 
+    scorecard_paths = [path for path in scorecard_paths if VERSION_RE.match(path.name)]
     entries = [parse_scorecard(path) for path in scorecard_paths]
-    entries = [entry for entry in entries if VERSION_RE.match(entry.path.name)]
     entries_sorted = sorted(entries, key=lambda entry: entry.version_tuple)
 
     if not entries_sorted:
@@ -139,7 +152,7 @@ def main() -> int:
 
     for entry in entries_desc:
         reportable = entry.cases is not None and entry.cases >= args.min_cases
-        rel = entry.path.relative_to(repo_root).as_posix()
+        rel = display_path(entry.path, repo_root)
         lines.append(
             "| "
             f"`{entry.version}` | `{entry.cases if entry.cases is not None else 'n/a'}` | "
