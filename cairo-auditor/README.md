@@ -1,14 +1,18 @@
+<p align="center">
+  <img alt="cairo-auditor hero" src="../assets/cairo-auditor-hero.svg" width="100%" />
+</p>
+
 # cairo-auditor
+
+Flagship Cairo/Starknet security review skill.
 
 <p>
   <img alt="mode default" src="https://img.shields.io/badge/mode-default-0969da" />
-  <img alt="mode deep" src="https://img.shields.io/badge/mode-deep-8250df" />
+  <img alt="mode deep" src="https://img.shields.io/badge/mode-deep-7c3aed" />
   <img alt="false positive gate" src="https://img.shields.io/badge/false--positive-gated-2ea043" />
-  <img alt="bench precision" src="https://img.shields.io/badge/benchmark%20precision-100%25-f0883e" />
-  <img alt="bench recall" src="https://img.shields.io/badge/benchmark%20recall-100%25-f0883e" />
+  <img alt="benchmark precision" src="https://img.shields.io/badge/precision-1.000-f59e0b" />
+  <img alt="benchmark recall" src="https://img.shields.io/badge/recall-1.000-f59e0b" />
 </p>
-
-Flagship workflow skill for Cairo/Starknet contract security review.
 
 ## Usage
 
@@ -16,36 +20,33 @@ Flagship workflow skill for Cairo/Starknet contract security review.
 # default repo scan
 /cairo-auditor
 
-# deeper review with stricter adversarial pass
+# deep adversarial pass
 /cairo-auditor deep
 
-# targeted review for one or more files
+# targeted scan
 /cairo-auditor contracts/account.cairo
 ```
 
 ## Structure
 
-- `SKILL.md`: orchestration policy + reporting contract.
+- `SKILL.md`: orchestration policy + output contract.
 - `workflows/`: default/deep execution steps.
-- `agents/`: vector/adversarial sub-agent instructions.
+- `agents/`: vector and adversarial sub-agent playbooks.
 - `references/vulnerability-db/`: canonical vulnerability classes.
-- `references/audit-findings/`: compiled handbook-style reference.
+- `references/audit-findings/`: distilled audit-derived findings.
 - `scripts/`: extraction and normalization helpers.
 
-## Benchmark Snapshot
+## Benchmarks
 
-Published benchmark:
+| Suite | Cases | Precision | Recall | Scorecard |
+| --- | ---: | ---: | ---: | --- |
+| Core deterministic | 12 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-benchmark.md) |
+| Real-world corpus | 11 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-realworld-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md) |
 
-- [v0.2.0-cairo-auditor-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-benchmark.md)
-
-Benchmark case pack:
+Case packs:
 
 - [cairo_auditor_benchmark.jsonl](../evals/cases/cairo_auditor_benchmark.jsonl)
-
-Cases include vulnerable and hardened Cairo snippets derived from:
-
-- normalized findings in `datasets/normalized/findings/`
-- AA session-key escalation pattern (`AA-SELF-CALL-SESSION`)
+- [cairo_auditor_realworld_benchmark.jsonl](../evals/cases/cairo_auditor_realworld_benchmark.jsonl)
 
 ## References
 

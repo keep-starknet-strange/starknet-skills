@@ -1,0 +1,26 @@
+<svg width="1200" height="300" viewBox="0 0 1200 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cabg" x1="0" y1="0" x2="1200" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="300" rx="24" fill="url(#cabg)"/>
+  <rect x="30" y="30" width="1140" height="240" rx="18" fill="#0f172a" stroke="#334155"/>
+
+  <text x="72" y="124" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="48" font-weight="700">cairo-auditor</text>
+  <text x="72" y="165" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22">Deterministic vulnerability checks + skill-driven review orchestration</text>
+
+  <rect x="72" y="198" width="180" height="36" rx="10" fill="#132036" stroke="#3b82f6"/>
+  <text x="90" y="221" fill="#93c5fd" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">default mode</text>
+
+  <rect x="268" y="198" width="148" height="36" rx="10" fill="#23153a" stroke="#8b5cf6"/>
+  <text x="286" y="221" fill="#c4b5fd" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">deep mode</text>
+
+  <rect x="430" y="198" width="256" height="36" rx="10" fill="#12261b" stroke="#22c55e"/>
+  <text x="448" y="221" fill="#86efac" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">false-positive constrained</text>
+
+  <rect x="702" y="198" width="236" height="36" rx="10" fill="#36230f" stroke="#f59e0b"/>
+  <text x="720" y="221" fill="#fcd34d" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18">benchmark scorecarded</text>
+</svg>

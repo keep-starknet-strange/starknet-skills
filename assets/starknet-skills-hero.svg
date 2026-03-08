@@ -1,0 +1,32 @@
+<svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f172a"/>
+      <stop offset="0.5" stop-color="#111827"/>
+      <stop offset="1" stop-color="#1f2937"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="180" y1="38" x2="1020" y2="322" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22c55e" stop-opacity="0.25"/>
+      <stop offset="0.5" stop-color="#60a5fa" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#a78bfa" stop-opacity="0.25"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="360" rx="26" fill="url(#bg)"/>
+  <rect x="24" y="24" width="1152" height="312" rx="22" fill="url(#accent)"/>
+
+  <text x="70" y="136" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="52" font-weight="700">starknet-skills</text>
+  <text x="70" y="178" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22">Production-grade Cairo and Starknet skill system</text>
+
+  <rect x="70" y="214" width="272" height="42" rx="12" fill="#0b1220" stroke="#60a5fa"/>
+  <text x="90" y="241" fill="#93c5fd" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">security + quality + evals</text>
+
+  <rect x="364" y="214" width="212" height="42" rx="12" fill="#0b1220" stroke="#34d399"/>
+  <text x="384" y="241" fill="#86efac" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">8 focused modules</text>
+
+  <rect x="598" y="214" width="264" height="42" rx="12" fill="#0b1220" stroke="#a78bfa"/>
+  <text x="618" y="241" fill="#c4b5fd" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">audit-derived knowledge base</text>
+
+  <rect x="884" y="214" width="250" height="42" rx="12" fill="#0b1220" stroke="#f59e0b"/>
+  <text x="904" y="241" fill="#fcd34d" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="20">deterministic benchmark gates</text>
+</svg>
