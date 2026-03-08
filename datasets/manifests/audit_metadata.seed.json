@@ -1,0 +1,26 @@
+[
+  {
+    "audit_id": "csc_vesu_update_2025_03",
+    "project": "Vesu",
+    "auditor": "Cairo Security Clan",
+    "date": "2025-03-12",
+    "source_url": "https://github.com/Cairo-Security-Clan/Audit-Portfolio/blob/main/Vesu_Update_Audit_Report.pdf",
+    "source_type": "github_blob",
+    "repo_url": "https://github.com/vesuxyz/vesu-v1",
+    "raw_path": "datasets/audits/raw/Vesu_Update_Audit_Report.pdf",
+    "extracted_path": "datasets/audits/extracted/Vesu_Update_Audit_Report.txt",
+    "notes": "Vesu update review with shutdown mode findings"
+  },
+  {
+    "audit_id": "erim_nostra_pools_2024_01",
+    "project": "Nostra Pools",
+    "auditor": "Erim V.",
+    "date": "2024-01-01",
+    "source_url": "https://github.com/Cairo-Security-Clan/Audit-Portfolio/blob/main/Nostra%20Pools%20Security%20Review%20by%200xerim.pdf",
+    "source_type": "github_blob",
+    "repo_url": "https://github.com/nostrafinance",
+    "raw_path": "datasets/audits/raw/Nostra_Pools_Security_Review_by_0xerim.pdf",
+    "extracted_path": "datasets/audits/extracted/Nostra_Pools_Security_Review_by_0xerim.txt",
+    "notes": "DEX review with 9 low/info/best-practice findings"
+  }
+]

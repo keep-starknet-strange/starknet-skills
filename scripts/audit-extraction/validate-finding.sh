@@ -15,23 +15,38 @@ FILE="$1"
 
 required=(
   finding_id
-  source_audit
-  severity
-  file_path
-  function_name
+  source_audit_id
+  project
+  auditor
+  date
+  severity_original
+  severity_normalized
+  status
+  contracts
+  functions
   root_cause
   exploit_path
-  vulnerable_pattern
-  fixed_pattern
-  detection_rule
-  false_positive_caveat
-  required_test
-  provenance
+  trigger_condition
+  vulnerable_snippet
+  fixed_snippet
+  recommendation
+  test_that_catches_it
+  false_positive_lookalikes
+  tags
+  source_pages
   confidence
+  evidence_strength
+  reproducibility
+  notes
 )
 
 for key in "${required[@]}"; do
-  jq -e --arg k "$key" 'has($k) and .[$k] != null and .[$k] != ""' "$FILE" >/dev/null || {
+  jq -e --arg k "$key" '
+    has($k)
+    and .[$k] != null
+    and ((.[$k] | type) != "string" or (.[$k] | length) > 0)
+    and ((.[$k] | type) != "array" or (.[$k] | length) > 0)
+  ' "$FILE" >/dev/null || {
     echo "Missing required field: $key" >&2
     exit 1
   }
