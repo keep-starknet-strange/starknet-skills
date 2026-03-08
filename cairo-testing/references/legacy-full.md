@@ -56,7 +56,7 @@ snforge test --exact test_erc20_transfer
 snforge test --detailed-resources
 ```
 
-> **Tip:** Use `snforge test --filter <pattern>` or `snforge test <pattern>` to run a subset of tests during development. `--exact` matches the full test name when you need precision.
+> **Tip:** Use `snforge test <pattern>` to run a subset of tests during development. `--exact` matches the full test name when you need precision.
 
 ## Basic Test Structure
 
