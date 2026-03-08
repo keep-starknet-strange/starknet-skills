@@ -231,6 +231,18 @@ let selector = add(bit0, mul(bit1, TWO_UI));  // selector in {0..3}
 
 See [garaga/selectors.cairo](https://github.com/keep-starknet-strange/garaga/blob/main/src/src/ec/selectors.cairo) and [cairo-perfs-snippets](https://github.com/feltroidprime/cairo-perfs-snippets) for production examples.
 
+### 11. Always use `hades_permutation` for 2-input Poseidon hashes
+
+`poseidon_hash_span` has overhead for span construction. For exactly two inputs, use `hades_permutation` directly.
+
+```cairo
+// BAD
+let h = poseidon_hash_span(array![x, y].span());
+
+// GOOD
+let h = hades_permutation(x, y, 2);
+```
+
 ## Code Quality
 
 - **DRY:** Extract repeated validation into helper functions. If two functions validate-then-write the same struct, extract a shared `_set_config()`.
@@ -412,7 +424,7 @@ pub fn fused_sub_mul_mod(a: Zq, b: Zq, c: Zq) -> Zq {
 
 Rule: SHIFT = `ceil(|min_possible_value| / modulus) * modulus`. Adding SHIFT preserves the result mod Q (since SHIFT ≡ 0 mod Q) while making all values non-negative.
 
-### felt252 → BoundedInt: Prefer u128 Decomposition Over Downcast
+### 12. felt252 → BoundedInt: Prefer u128 Decomposition Over Downcast
 
 `u128s_from_felt252` is a native VM operation (2 steps/call). `downcast` (used by `try_into()`) performs a range check (4 steps/call). When converting many felt252 values to BoundedInt, decompose to u128 first, then upcast to `BoundedInt<0, u128_max>`. You lose tight compile-time bounds but save 2 steps per conversion — significant at scale.
 

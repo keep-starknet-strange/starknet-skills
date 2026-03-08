@@ -82,6 +82,17 @@ def _profile_filename(output_dir: str, package: str, name: str, metric: str, com
     return os.path.join(output_dir, f"{ts}_{package}_{name}_{metric}_{commit}.{ext}")
 
 
+def _find_repo_root() -> str:
+    """Walk up from cwd to find the git repo root."""
+    path = Path.cwd()
+    while path != path.parent:
+        if (path / ".git").exists():
+            return str(path)
+        path = path.parent
+    # Fallback to cwd
+    return str(Path.cwd())
+
+
 # ---------------------------------------------------------------------------
 # Metric → sample mapping
 # ---------------------------------------------------------------------------
@@ -360,17 +371,6 @@ def main() -> int:
     print(f"{'='*60}")
 
     return 0
-
-
-def _find_repo_root() -> str:
-    """Walk up from cwd to find the git repo root."""
-    path = Path.cwd()
-    while path != path.parent:
-        if (path / ".git").exists():
-            return str(path)
-        path = path.parent
-    # Fallback to cwd
-    return str(Path.cwd())
 
 
 if __name__ == "__main__":

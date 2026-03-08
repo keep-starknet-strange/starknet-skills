@@ -2,7 +2,7 @@
 name: cairo-optimization
 description: Improves Cairo performance after correctness is established, including hotspot profiling, arithmetic/loop optimization, and bounded-int hardening.
 license: Apache-2.0
-metadata: {"author":"feltroidprime","contributors":["starknet-agentic"],"version":"1.2.0","org":"keep-starknet-strange","upstream":"https://github.com/feltroidprime/cairo-skills","upstream_commit":"7fde29f","sync_date":"2026-03-09","upstream_paths":["skills/cairo-coding","skills/benchmarking-cairo"],"permission_ref":"maintainer-confirmed-2026-03-09"}
+metadata: {"author":"feltroidprime","contributors":["starknet-agentic"],"version":"1.2.0","org":"keep-starknet-strange","upstream":"https://github.com/feltroidprime/cairo-skills","upstream_commit":"7fde29f","sync_date":"2026-03-08","upstream_paths":["skills/cairo-coding","skills/benchmarking-cairo"],"permission_ref":"maintainer-confirmed-2026-03-08"}
 keywords: [cairo, optimization, profiling, benchmarking, gas, bounded-int, storage-packing, arithmetic, starknet]
 allowed-tools: [Bash, Read, Write, Glob, Grep, Task]
 user-invocable: true

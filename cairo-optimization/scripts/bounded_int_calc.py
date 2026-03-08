@@ -32,8 +32,6 @@ def validate_felt252(value: int, name: str) -> None:
 
 def format_bound(value: int) -> str:
     """Format a bound value, handling negatives."""
-    if value < 0:
-        return str(value)
     return str(value)
 
 

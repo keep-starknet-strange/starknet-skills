@@ -6,7 +6,7 @@ This file is the canonical registry for externally sourced skill content in this
 
 | Module | Upstream Author | Upstream Source | Synced Commit | Permission / License |
 | --- | --- | --- | --- | --- |
-| `cairo-optimization` | [feltroidprime](https://github.com/feltroidprime) | [feltroidprime/cairo-skills](https://github.com/feltroidprime/cairo-skills) (`skills/cairo-coding`, `skills/benchmarking-cairo`) | `7fde29f` | Maintainer-confirmed permission (`permission_ref: maintainer-confirmed-2026-03-09`) |
+| `cairo-optimization` | [feltroidprime](https://github.com/feltroidprime) | [feltroidprime/cairo-skills](https://github.com/feltroidprime/cairo-skills) (`skills/cairo-coding`, `skills/benchmarking-cairo`) | `7fde29f` | Maintainer-confirmed permission (`permission_ref: maintainer-confirmed-2026-03-08`) |
 
 ## Required Attribution Workflow
 
