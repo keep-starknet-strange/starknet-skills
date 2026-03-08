@@ -12,6 +12,7 @@ from pathlib import Path
 
 LATEST_RELEASE_RE = re.compile(r"- Latest release:\s+`([^`]+)`")
 STREAK_RE = re.compile(r"- Consecutive reportable releases \(latest-first\):\s+`(\d+)`")
+RELEASE_RE = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+$")
 APPROVED_AT_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 
 
@@ -83,9 +84,9 @@ def load_signoffs(path: Path) -> list[SecuritySignoff]:
         for key in ("release", "reviewer", "approved", "approved_at"):
             if key not in raw:
                 raise RuntimeError(f"{path}:{line_no}: missing key '{key}'")
-        if not isinstance(raw["release"], str) or not raw["release"]:
+        if not isinstance(raw["release"], str) or RELEASE_RE.match(raw["release"]) is None:
             raise RuntimeError(f"{path}:{line_no}: invalid release")
-        if not isinstance(raw["reviewer"], str) or not raw["reviewer"]:
+        if not isinstance(raw["reviewer"], str) or len(raw["reviewer"].strip()) < 3:
             raise RuntimeError(f"{path}:{line_no}: invalid reviewer")
         if not isinstance(raw["approved"], bool):
             raise RuntimeError(f"{path}:{line_no}: approved must be bool")
