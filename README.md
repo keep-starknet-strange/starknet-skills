@@ -1,3 +1,5 @@
+# starknet-skills
+
 <p align="center">
   <img alt="starknet-skills hero" src="assets/starknet-skills-hero.svg" width="100%" />
 </p>
@@ -14,8 +16,6 @@
   <img alt="deterministic smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-22c55e" />
   <img alt="agent eval" src="https://img.shields.io/badge/agent%20eval-in%20progress-f59e0b" />
 </p>
-
-# starknet-skills
 
 Production-grade Cairo/Starknet skills for secure coding, auditing, and regression-safe releases.
 
