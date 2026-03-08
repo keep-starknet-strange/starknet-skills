@@ -116,9 +116,18 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     continue
   fi
 
+  # Enforce PDF magic header to avoid extracting HTML/error pages.
+  if ! head -c 5 "$pdf_path" | grep -q '^%PDF-'; then
+    echo "FAIL: downloaded content is not a PDF: $url" >&2
+    rm -f "$pdf_path"
+    ((failed+=1))
+    continue
+  fi
+
   echo "Extracting: $pdf_path -> $txt_path"
   if ! extract_text "$pdf_path" "$txt_path"; then
     echo "FAIL: extraction failed for $pdf_path" >&2
+    rm -f "$txt_path"
     ((failed+=1))
     continue
   fi

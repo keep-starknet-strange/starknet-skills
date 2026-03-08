@@ -1,0 +1,66 @@
+name: Quality Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Ruff
+        uses: astral-sh/ruff-action@v3
+
+      - name: Python compile check
+        run: python -m py_compile scripts/audit-pipeline/*.py
+
+      - name: Ruff lint
+        run: ruff check scripts/audit-pipeline scripts/audit-extraction
+
+      - name: Shellcheck
+        run: shellcheck scripts/audit-extraction/*.sh
+
+      - name: Validate findings JSONL
+        run: |
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema datasets/normalized/finding.schema.json \
+            --jsonl datasets/normalized/findings/csc_vesu_update_2025_03.findings.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema datasets/normalized/finding.schema.json \
+            --jsonl datasets/normalized/findings/erim_nostra_pools_2024_01.findings.jsonl
+
+      - name: Validate manifest JSONL
+        run: |
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema datasets/manifests/audit-manifest.schema.json \
+            --jsonl datasets/manifests/audits.jsonl
+
+      - name: Segment smoke tests
+        run: |
+          python scripts/audit-pipeline/segment_text.py \
+            --audit-id csc_vesu_update_2025_03 \
+            --input datasets/audits/extracted/Vesu_Update_Audit_Report.txt \
+            --output /tmp/csc.segmented.jsonl
+          python scripts/audit-pipeline/segment_text.py \
+            --audit-id erim_nostra_pools_2024_01 \
+            --input datasets/audits/extracted/Nostra_Pools_Security_Review_by_0xerim.txt \
+            --output /tmp/erim.segmented.jsonl
+
+      - name: Generate manifest smoke test
+        run: |
+          python scripts/audit-pipeline/generate_manifest.py \
+            --seed datasets/manifests/audit_metadata.seed.json \
+            --output /tmp/audits.generated.jsonl
+
+      - name: Held-out leakage check
+        run: python scripts/audit-pipeline/check_no_heldout_leak.py

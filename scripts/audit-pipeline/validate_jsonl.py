@@ -50,14 +50,20 @@ def main() -> int:
     parser.add_argument("--jsonl", required=True)
     args = parser.parse_args()
 
-    schema = json.loads(Path(args.schema).read_text())
+    schema = json.loads(Path(args.schema).read_text(encoding="utf-8"))
+    if not isinstance(schema, dict):
+        raise ValueError("schema must be a JSON object")
     required = schema.get("required", [])
     allowed = set(schema.get("properties", {}).keys())
+    if not isinstance(required, list) or not all(isinstance(k, str) for k in required):
+        raise ValueError("schema.required must be a string array")
+    if not allowed:
+        raise ValueError("schema.properties must define allowed keys")
     repo_root = Path(__file__).resolve().parents[2]
     blocked_audit_ids = load_blocked_audit_ids(repo_root)
 
     err_count = 0
-    for i, line in enumerate(Path(args.jsonl).read_text().splitlines(), start=1):
+    for i, line in enumerate(Path(args.jsonl).read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
         try:

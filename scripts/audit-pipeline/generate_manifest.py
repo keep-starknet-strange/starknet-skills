@@ -8,6 +8,17 @@ import hashlib
 import json
 from pathlib import Path
 
+REQUIRED_SEED_KEYS = {
+    "audit_id",
+    "project",
+    "auditor",
+    "date",
+    "source_url",
+    "source_type",
+    "raw_path",
+    "extracted_path",
+}
+
 
 def sha256_file(path: Path) -> str:
     h = hashlib.sha256()
@@ -37,6 +48,24 @@ def resolve_repo_path(repo_root: Path, candidate: str, label: str) -> Path:
     return resolved
 
 
+def validate_seed_rows(rows: object) -> list[dict]:
+    if not isinstance(rows, list):
+        raise ValueError("seed file must contain a JSON array")
+    normalized: list[dict] = []
+    for idx, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            raise ValueError(f"seed row {idx} must be a JSON object")
+        missing = sorted(REQUIRED_SEED_KEYS - set(row.keys()))
+        if missing:
+            raise ValueError(f"seed row {idx} missing keys: {', '.join(missing)}")
+        for key in REQUIRED_SEED_KEYS:
+            value = row.get(key)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"seed row {idx} has empty/invalid {key}")
+        normalized.append(row)
+    return normalized
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate audits.jsonl with hashes from seed metadata")
     parser.add_argument("--seed", required=True, help="Path to seed metadata JSON array")
@@ -48,7 +77,7 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
     repo_root_resolved = repo_root.resolve()
 
-    rows = json.loads(seed_path.read_text())
+    rows = validate_seed_rows(json.loads(seed_path.read_text(encoding="utf-8")))
     generated = []
     now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
     blocked_audit_ids = load_blocked_audit_ids(repo_root_resolved)

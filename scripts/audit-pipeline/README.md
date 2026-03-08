@@ -35,3 +35,9 @@ Notes:
 
 - Validator reports malformed JSON line-by-line and rejects non-object JSON rows.
 - Validator enforces held-out policy by rejecting records whose `audit_id` or `source_audit_id` appears in `evals/heldout/audit_ids.txt`.
+
+## 4) Verify no held-out leakage in datasets
+
+```bash
+python3 scripts/audit-pipeline/check_no_heldout_leak.py
+```
