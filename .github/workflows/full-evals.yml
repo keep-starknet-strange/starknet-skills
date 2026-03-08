@@ -106,7 +106,28 @@ jobs:
             --min-precision 0.90 \
             --min-recall 0.90
 
+      - name: Probe GitHub Models availability
+        id: models_probe
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          body='{"messages":[{"role":"user","content":"Return {\"ok\":true} in JSON."}],"model":"openai/gpt-4o","temperature":0}'
+          code=$(curl -sS -o /tmp/models-probe.json -w "%{http_code}" \
+            "https://models.github.ai/inference/chat/completions" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -d "$body")
+          if [ "$code" = "200" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "GitHub Models probe: available"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "GitHub Models probe unavailable (HTTP $code), skipping LLM held-out eval."
+            sed -n '1,40p' /tmp/models-probe.json || true
+          fi
+
       - name: LLM held-out eval
+        if: ${{ steps.models_probe.outputs.available == 'true' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
@@ -118,6 +139,10 @@ jobs:
             --model openai/gpt-4o \
             --min-precision 0.75 \
             --min-recall 0.75
+
+      - name: LLM held-out eval (skipped: GitHub Models unavailable)
+        if: ${{ steps.models_probe.outputs.available != 'true' }}
+        run: echo "Skipping LLM held-out eval because GitHub Models is unavailable for this run."
 
       - name: Upload benchmark scorecards
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
