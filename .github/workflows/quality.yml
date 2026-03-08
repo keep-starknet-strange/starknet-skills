@@ -27,6 +27,9 @@ jobs:
       - name: Python compile check
         run: python -m py_compile scripts/audit-pipeline/*.py
 
+      - name: Validate SKILL contract
+        run: python scripts/quality/validate_skills.py
+
       - name: Ruff lint
         run: ruff check scripts/audit-pipeline scripts/audit-extraction
 

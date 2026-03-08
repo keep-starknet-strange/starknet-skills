@@ -22,6 +22,10 @@ Security/audit skills must also include:
 
 Keep entry skills short and link one level deep to `references/` and `workflows/`.
 
+Local check before PR:
+
+`python scripts/quality/validate_skills.py`
+
 ## Evaluation-Driven Changes
 
 Skill changes that affect detection or remediation quality must include one of:
