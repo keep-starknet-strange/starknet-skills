@@ -68,7 +68,8 @@ jobs:
             --exclude-files 'datasets/audits/raw/.*' \
             --exclude-files 'datasets/audits/extracted/.*' \
             --exclude-files 'datasets/manifests/audit_metadata.seed.json' \
-            --exclude-files 'evals/reports/data/.*' > /tmp/detect-secrets.json
+            --exclude-files 'evals/reports/data/.*' \
+            --exclude-files 'website/data/.*' > /tmp/detect-secrets.json
           python - <<'PY'
           import json
           import sys
