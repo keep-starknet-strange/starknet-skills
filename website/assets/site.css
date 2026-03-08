@@ -1,18 +1,19 @@
 :root {
-  --bg: #060b15;
-  --bg-soft: #0b1220;
-  --panel: #0e1728;
-  --panel-soft: #111f35;
-  --text: #edf4ff;
-  --muted: #a7b7d4;
-  --border: #22324f;
-  --accent: #7da4ff;
-  --accent-2: #55d2ff;
-  --ok: #32d399;
-  --shadow: 0 24px 54px rgba(1, 5, 17, 0.6);
-  --radius-lg: 18px;
+  --bg: #09090b;
+  --bg-soft: #111113;
+  --panel: #111113;
+  --panel-soft: #16161a;
+  --text: #ededef;
+  --muted: #a5a7b3;
+  --border: #27272a;
+  --border-strong: #34384a;
+  --accent: #818cf8;
+  --accent-soft: rgba(129, 140, 248, 0.12);
+  --ok: #3ecf8e;
+  --shadow: none;
+  --radius-lg: 16px;
   --radius-md: 12px;
-  --radius-sm: 10px;
+  --radius-sm: 9px;
 }
 
 * {
@@ -27,46 +28,25 @@ body {
 
 body {
   min-height: 100vh;
-  background: radial-gradient(1200px 600px at 18% -10%, rgba(125, 164, 255, 0.18), transparent 56%),
-    radial-gradient(900px 520px at 88% -8%, rgba(85, 210, 255, 0.16), transparent 58%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
-  line-height: 1.58;
+  line-height: 1.6;
   letter-spacing: 0.01em;
 }
 
 .ambient {
-  position: fixed;
-  z-index: -1;
-  border-radius: 999px;
-  filter: blur(70px);
-  pointer-events: none;
-}
-
-.ambient-a {
-  width: 380px;
-  height: 380px;
-  top: 14%;
-  right: -120px;
-  background: rgba(125, 164, 255, 0.18);
-}
-
-.ambient-b {
-  width: 320px;
-  height: 320px;
-  bottom: -110px;
-  left: -70px;
-  background: rgba(85, 210, 255, 0.16);
+  display: none;
 }
 
 a {
-  color: var(--accent-2);
+  color: var(--text);
   text-decoration: none;
+  transition: color 0.18s ease;
 }
 
 a:hover {
-  color: #9de7ff;
+  color: var(--accent);
 }
 
 h1,
@@ -90,15 +70,16 @@ ol {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 1.2rem 0 0.8rem;
+  padding: 1.15rem 0 0.95rem;
+  border-bottom: 1px solid var(--border);
 }
 
 .brand {
-  font-family: "Space Grotesk", "Manrope", sans-serif;
+  font-family: "Manrope", "Avenir Next", sans-serif;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   text-transform: lowercase;
-  font-size: 1.02rem;
+  font-size: 1rem;
   color: var(--text);
 }
 
@@ -114,20 +95,20 @@ ol {
 }
 
 .shell {
-  padding: 0.6rem 0 1.2rem;
+  padding: 1rem 0 1.4rem;
 }
 
 .panel {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  background: var(--panel);
   box-shadow: var(--shadow);
 }
 
 .panel-soft {
-  border: 1px solid rgba(85, 210, 255, 0.2);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
-  background: linear-gradient(165deg, rgba(85, 210, 255, 0.1), rgba(125, 164, 255, 0.08));
+  background: var(--panel-soft);
 }
 
 .hero,
@@ -142,10 +123,10 @@ ol {
 .hero h1,
 .subpage-hero h1 {
   margin-top: 0.9rem;
-  font-family: "Space Grotesk", "Manrope", sans-serif;
+  font-family: "Manrope", "Avenir Next", sans-serif;
   font-size: clamp(2rem, 4vw, 3.4rem);
-  line-height: 1.08;
-  letter-spacing: -0.01em;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
   max-width: 15ch;
 }
 
@@ -164,18 +145,20 @@ ol {
 
 .chip {
   border: 1px solid var(--border);
-  background: rgba(125, 164, 255, 0.15);
+  background: var(--panel-soft);
   color: var(--text);
   border-radius: 999px;
   padding: 0.24rem 0.62rem;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .chip-soft {
-  background: rgba(85, 210, 255, 0.13);
+  background: var(--accent-soft);
+  border-color: rgba(129, 140, 248, 0.28);
+  color: #c7cdff;
 }
 
 .chip-domain {
@@ -194,7 +177,7 @@ ol {
 .hero-metrics article {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: rgba(6, 11, 21, 0.62);
+  background: var(--panel-soft);
   padding: 0.76rem 0.82rem;
 }
 
@@ -209,7 +192,7 @@ ol {
 .hero-metrics strong {
   display: block;
   margin-top: 0.2rem;
-  font-family: "Space Grotesk", "Manrope", sans-serif;
+  font-family: "Manrope", "Avenir Next", sans-serif;
   font-size: 1.3rem;
   line-height: 1;
 }
@@ -224,7 +207,7 @@ ol {
 .install-card {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: rgba(11, 18, 32, 0.82);
+  background: var(--panel-soft);
   padding: 0.88rem;
 }
 
@@ -241,7 +224,7 @@ pre {
   padding: 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: rgba(6, 11, 21, 0.9);
+  background: var(--bg);
   overflow-x: auto;
 }
 
@@ -291,12 +274,12 @@ code {
   text-align: center;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(125, 164, 255, 0.1);
-  color: #cbe0ff;
+  background: var(--panel-soft);
+  color: var(--text);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 700;
+  font-weight: 600;
   padding: 0.42rem 0.38rem;
 }
 
@@ -325,10 +308,10 @@ code {
 }
 
 .scorecard-grid div {
-  border: 1px solid rgba(85, 210, 255, 0.24);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.48rem;
-  background: rgba(6, 11, 21, 0.42);
+  background: var(--bg);
 }
 
 .scorecard-grid span {
@@ -358,7 +341,7 @@ code {
 .vuln-card {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: rgba(11, 18, 32, 0.76);
+  background: var(--panel-soft);
   padding: 0.88rem;
 }
 
@@ -376,7 +359,7 @@ code {
 }
 
 .status {
-  border: 1px solid rgba(50, 211, 153, 0.44);
+  border: 1px solid rgba(62, 207, 142, 0.3);
   color: var(--ok);
   border-radius: 999px;
   padding: 0.15rem 0.45rem;
@@ -403,7 +386,7 @@ code {
 
 .pipeline-grid h3 {
   font-size: 0.82rem;
-  color: #b9dcff;
+  color: #c7cbda;
   text-transform: uppercase;
   letter-spacing: 0.09em;
 }
@@ -445,9 +428,9 @@ code {
   padding: 0.16rem 0.46rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(125, 164, 255, 0.12);
+  background: var(--bg);
   font-size: 0.72rem;
-  color: #d8e8ff;
+  color: var(--muted);
 }
 
 .pill-muted {
@@ -457,7 +440,7 @@ code {
 .finding-link {
   display: inline-block;
   margin: 0 0.34rem 0.34rem 0;
-  border-bottom: 1px dashed rgba(85, 210, 255, 0.48);
+  border-bottom: 1px solid rgba(129, 140, 248, 0.25);
   font-size: 0.82rem;
 }
 
@@ -478,7 +461,8 @@ code {
   gap: 1rem;
   color: var(--muted);
   font-size: 0.83rem;
-  padding: 0.35rem 0 2.3rem;
+  padding: 0.55rem 0 2.3rem;
+  border-top: 1px solid var(--border);
 }
 
 .reveal {
