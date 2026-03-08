@@ -29,10 +29,11 @@ normalize_url() {
     local repo="${BASH_REMATCH[2]}"
     local ref="${BASH_REMATCH[3]}"
     local path="${BASH_REMATCH[4]}"
-    printf "https://raw.githubusercontent.com/%s/%s/%s/%s" "$owner" "$repo" "$ref" "$path"
+    url="$(printf "https://raw.githubusercontent.com/%s/%s/%s/%s" "$owner" "$repo" "$ref" "$path")"
+    printf "%s" "${url// /%20}"
     return
   fi
-  printf "%s" "$url"
+  printf "%s" "${url// /%20}"
 }
 
 extract_text() {
@@ -82,7 +83,9 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   fi
 
   normalized_url="$(normalize_url "$url")"
-  filename="$(basename "${normalized_url%%\?*}")"
+  filename="$(basename "${url%%\?*}")"
+  filename="${filename//%20/ }"
+  filename="${filename// /_}"
   if [[ -z "$filename" || "$filename" == "/" ]]; then
     echo "SKIP: could not infer filename from URL: $url" >&2
     ((failed+=1))
@@ -98,7 +101,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   txt_path="${EXTRACTED_DIR}/${filename%.pdf}.txt"
 
   echo "Downloading: $normalized_url"
-  if ! curl -fL --retry 3 --retry-all-errors -o "$pdf_path" "$normalized_url"; then
+  if ! curl -fsSL --retry 3 --retry-all-errors -o "$pdf_path" "$normalized_url"; then
     echo "FAIL: download failed for $url" >&2
     rm -f "$pdf_path"
     ((failed+=1))
