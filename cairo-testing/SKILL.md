@@ -25,6 +25,13 @@ Reference for testing Cairo smart contracts with Starknet Foundry (snforge).
 
 **Not for:** Contract structure (use cairo-contract-authoring), optimization (use cairo-optimization), deployment (use cairo-toolchain)
 
+## Audit-Derived Test Inputs
+
+For security regression tests, prefer templates under:
+
+- `../datasets/distilled/test-recipes/`
+- `../datasets/normalized/findings/`
+
 ## Setup
 
 ### Scarb.toml

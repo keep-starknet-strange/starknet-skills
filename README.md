@@ -23,7 +23,7 @@ Operational SDK and protocol execution playbooks belong in `starknet-agentic` / 
 
 ## Data + Evals
 
-- `datasets/audits/` stores normalized findings extracted from real audits.
+- `datasets/` stores the full audit-to-skills pipeline (`ingest -> segment -> normalize -> distill`).
 - `evals/` stores held-out evaluation cases and scorecards.
 
 Do not merge skill changes without updating or passing the corresponding evaluation set.

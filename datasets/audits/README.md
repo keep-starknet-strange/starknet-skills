@@ -1,14 +1,18 @@
-# Audit Dataset
+# Audit Ingest Artifacts
 
-Structured findings extracted from historical Cairo audits.
+This directory contains stage-1 ingest artifacts:
 
-## Files
+- `raw/`: source PDFs
+- `extracted/`: plain text extracted from source artifacts
 
-- `schema.md`: field-level schema and quality requirements.
-- `examples/`: sanitized example records.
+For downstream stages, see:
 
-## Rules
+- `../manifests/` for provenance registry
+- `../segments/` for chunking outputs
+- `../normalized/` for structured records
+- `../distilled/` for skill-ready security artifacts
 
-- No confidential client identifiers.
-- Preserve exploitability and remediation detail.
-- Include provenance and confidence tags per record.
+Rules:
+
+- Do not commit confidential/private reports without explicit approval.
+- Keep file names stable for reproducible manifests.

@@ -37,10 +37,11 @@ Workflow skill for systematic Cairo contract security review.
 
 1. Discover in-scope Cairo files.
 2. Run vectorized scans using vulnerability patterns in `references/vulnerability-db/`.
-3. Correlate with historical findings in `references/audit-findings/`.
-4. Merge and deduplicate findings by root cause.
-5. Run false-positive verification gate.
-6. Emit prioritized report with remediation guidance and test requirements.
+3. Correlate with historical findings in `../../datasets/normalized/findings/`.
+4. Prefer distilled classes from `../../datasets/distilled/vuln-cards/` when available.
+5. Merge and deduplicate findings by root cause.
+6. Run false-positive verification gate.
+7. Emit prioritized report with remediation guidance and test requirements.
 
 ## Reporting Contract
 
@@ -56,7 +57,8 @@ Each finding must include:
 ## Evidence Sources
 
 - canonical patterns: `references/vulnerability-db/`
-- audit-derived cases: `references/audit-findings/`
+- audit-derived records: `../../datasets/normalized/findings/`
+- distilled security cards: `../../datasets/distilled/vuln-cards/`
 - evaluator regressions: `../../evals/cases/`
 
 ## Output Rule

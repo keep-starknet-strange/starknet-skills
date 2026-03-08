@@ -26,6 +26,13 @@ Reference for writing Cairo smart contracts on Starknet. Covers structure, stora
 
 **Not for:** Gas optimization (use cairo-optimization), testing (use cairo-testing), deployment (use cairo-toolchain)
 
+## Audit-Derived Patterns
+
+Before finalizing implementation for security-sensitive logic, cross-check:
+
+- `../datasets/distilled/fix-patterns/`
+- `../datasets/distilled/vuln-cards/`
+
 ## Contract Structure
 
 Every Starknet contract follows this skeleton:

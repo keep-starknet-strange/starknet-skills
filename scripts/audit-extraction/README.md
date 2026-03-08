@@ -27,3 +27,11 @@ Notes:
 
 - `datasets/audits/raw/` and `datasets/audits/extracted/` are local working dirs.
 - GitHub `blob` URLs are converted automatically to raw download URLs.
+
+## Next Pipeline Step
+
+After extraction, use `scripts/audit-pipeline/` to:
+
+1. generate manifest hashes
+2. segment extracted text
+3. validate normalized outputs
