@@ -439,7 +439,7 @@ def head_meta(title: str, description: str, css_path: str, domain: str | None, p
                 '  <meta property="og:type" content="website" />',
                 f'  <meta property="og:title" content="{e(title)}" />',
                 f'  <meta property="og:description" content="{e(description)}" />',
-                f'  <meta name="twitter:card" content="summary_large_image" />',
+                '  <meta name="twitter:card" content="summary_large_image" />',
                 f'  <meta name="twitter:title" content="{e(title)}" />',
                 f'  <meta name="twitter:description" content="{e(description)}" />',
             ]
