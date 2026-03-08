@@ -334,7 +334,7 @@ def main() -> int:
     pb_path = _profile_filename(output_dir, args.package, args.name, args.metric, commit, "pb.gz")
     png_path = _profile_filename(output_dir, args.package, args.name, args.metric, commit, "png")
 
-    print(f"Cairo Profiling Pipeline")
+    print("Cairo Profiling Pipeline")
     print(f"  Mode:    {args.mode}")
     print(f"  Package: {args.package} ({pkg_dir})")
     print(f"  Name:    {args.name}")
@@ -350,7 +350,7 @@ def main() -> int:
         _step_scarb(pkg_dir, args.executable, args.args_file)
 
     # Step 2: Find trace
-    print(f"\n[2/4] Locating trace file")
+    print("\n[2/4] Locating trace file")
     if args.mode == "snforge":
         trace_path = _find_trace_snforge(pkg_dir, args.test)
     else:
