@@ -19,8 +19,9 @@ python3 scripts/audit-pipeline/segment_text.py \
 
 Notes:
 
-- Table-of-contents noise and oversized test-output sections are filtered automatically.
+- Table-of-contents noise, common watermark fragments, and oversized test-output sections are filtered automatically.
 - Finding segments are expected to include `File(s):` markers for downstream normalization.
+- Held-out audit IDs listed in `evals/heldout/audit_ids.txt` are blocked from segmentation output.
 
 ## 3) Validate normalized records
 
@@ -29,3 +30,8 @@ python3 scripts/audit-pipeline/validate_jsonl.py \
   --schema datasets/normalized/finding.schema.json \
   --jsonl datasets/normalized/findings/csc_vesu_update_2025_03.findings.jsonl
 ```
+
+Notes:
+
+- Validator reports malformed JSON line-by-line and rejects non-object JSON rows.
+- Validator enforces held-out policy by rejecting records whose `audit_id` or `source_audit_id` appears in `evals/heldout/audit_ids.txt`.

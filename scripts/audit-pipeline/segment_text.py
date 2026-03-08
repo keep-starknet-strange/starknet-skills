@@ -10,6 +10,7 @@ from pathlib import Path
 
 NUMERIC_HEADING = re.compile(r"^\s*(\d+(?:\.\d+)+)\s+(.+?)\s*$")
 ID_HEADING = re.compile(r"^\s*([A-Z]{1,3}-\d{2})\s+(.+?)\s*$")
+WATERMARK_TOKENS = {"V.", "Er", "im", "by", "Rev", "ev", "ie", "w", "R", "iew"}
 
 
 @dataclass
@@ -104,6 +105,31 @@ def is_low_signal(seg: dict) -> bool:
     return False
 
 
+def load_blocked_audit_ids(repo_root: Path) -> set[str]:
+    blocklist = repo_root / "evals" / "heldout" / "audit_ids.txt"
+    if not blocklist.exists():
+        return set()
+    blocked = set()
+    for raw in blocklist.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        blocked.add(line)
+    return blocked
+
+
+def clean_layout_noise(content: str) -> str:
+    cleaned_lines: list[str] = []
+    for raw in content.splitlines():
+        line = raw.strip()
+        if line in WATERMARK_TOKENS:
+            continue
+        if re.fullmatch(r"[A-Za-z]", line):
+            continue
+        cleaned_lines.append(raw.rstrip())
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(cleaned_lines)).strip()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Segment extracted audit text by headings")
     parser.add_argument("--audit-id", required=True)
@@ -113,6 +139,10 @@ def main() -> int:
 
     in_path = Path(args.input)
     out_path = Path(args.output)
+    repo_root = Path(__file__).resolve().parents[2]
+    blocked_audit_ids = load_blocked_audit_ids(repo_root)
+    if args.audit_id in blocked_audit_ids:
+        raise ValueError(f"audit_id is blocked by held-out policy: {args.audit_id}")
 
     segments = segment_text(in_path.read_text(encoding="utf-8", errors="ignore"))
 
@@ -123,6 +153,9 @@ def main() -> int:
             if is_toc_noise(seg):
                 continue
             if is_low_signal(seg):
+                continue
+            seg["content"] = clean_layout_noise(seg["content"])
+            if not seg["content"]:
                 continue
             idx += 1
             seg["segment_id"] = f"{args.audit_id}:{idx:04d}"

@@ -17,6 +17,26 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def load_blocked_audit_ids(repo_root: Path) -> set[str]:
+    blocklist = repo_root / "evals" / "heldout" / "audit_ids.txt"
+    if not blocklist.exists():
+        return set()
+    blocked = set()
+    for raw in blocklist.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        blocked.add(line)
+    return blocked
+
+
+def resolve_repo_path(repo_root: Path, candidate: str, label: str) -> Path:
+    resolved = (repo_root / candidate).resolve(strict=False)
+    if not resolved.is_relative_to(repo_root):
+        raise ValueError(f"seed {label} escapes repo root: {candidate}")
+    return resolved
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate audits.jsonl with hashes from seed metadata")
     parser.add_argument("--seed", required=True, help="Path to seed metadata JSON array")
@@ -31,15 +51,17 @@ def main() -> int:
     rows = json.loads(seed_path.read_text())
     generated = []
     now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
+    blocked_audit_ids = load_blocked_audit_ids(repo_root_resolved)
 
     for row in rows:
-        raw_path = (repo_root_resolved / row["raw_path"]).resolve()
-        extracted_path = (repo_root_resolved / row["extracted_path"]).resolve()
-        try:
-            raw_path.relative_to(repo_root_resolved)
-            extracted_path.relative_to(repo_root_resolved)
-        except ValueError as exc:
-            raise ValueError(f"seed path escapes repo root for audit_id={row.get('audit_id')}") from exc
+        audit_id = row.get("audit_id")
+        if audit_id in blocked_audit_ids:
+            raise ValueError(f"audit_id is blocked by held-out policy: {audit_id}")
+
+        raw_path = resolve_repo_path(repo_root_resolved, row["raw_path"], "raw_path")
+        extracted_path = resolve_repo_path(
+            repo_root_resolved, row["extracted_path"], "extracted_path"
+        )
 
         if not raw_path.exists():
             raise FileNotFoundError(f"Missing raw artifact: {raw_path}")

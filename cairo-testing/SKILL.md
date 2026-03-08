@@ -124,18 +124,26 @@ fn test_deployed_contract() {
 use snforge_std::{start_cheat_caller_address, stop_cheat_caller_address};
 
 #[test]
-fn test_only_owner() {
+fn test_owner_allowed() {
     let contract_address = deploy_contract();
     let dispatcher = IMyContractDispatcher { contract_address };
 
     // Impersonate OWNER
     start_cheat_caller_address(contract_address, OWNER());
-    dispatcher.owner_only_function();  // should succeed
+    dispatcher.owner_only_function(); // should succeed
     stop_cheat_caller_address(contract_address);
+}
 
-    // Impersonate USER — should fail
+#[test]
+#[should_panic]
+fn test_non_owner_rejected() {
+    let contract_address = deploy_contract();
+    let dispatcher = IMyContractDispatcher { contract_address };
+
+    // Impersonate USER and call protected function
     start_cheat_caller_address(contract_address, USER());
-    // This should panic
+    dispatcher.owner_only_function();
+    stop_cheat_caller_address(contract_address);
 }
 ```
 
@@ -360,7 +368,7 @@ fn test_amm_swap() {
 
 ## Test Organization
 
-```
+```text
 tests/
   test_unit.cairo        # unit tests (contract_state_for_testing)
   test_integration.cairo # integration tests (deploy + dispatch)
