@@ -73,6 +73,16 @@ Direct router URL:
 - [datasets/README.md](datasets/README.md): `ingest -> segment -> normalize -> distill -> skillize`
 - [evals/README.md](evals/README.md): held-out policy + benchmark gates
 
+## Website
+
+- Static site source: [website/](website/)
+- Site generator: [scripts/site/build_site.py](scripts/site/build_site.py)
+- Regenerate locally:
+
+```bash
+python3 scripts/site/build_site.py --domain starkskills.org
+```
+
 ## Governance
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)

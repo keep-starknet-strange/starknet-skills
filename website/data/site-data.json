@@ -1,0 +1,141 @@
+{
+  "counts": {
+    "cataloged_audits": 24,
+    "distilled_fix_patterns": 3,
+    "distilled_test_recipes": 3,
+    "distilled_vuln_cards": 3,
+    "normalized_audits": 26,
+    "normalized_findings": 217,
+    "segmented_audits": 26,
+    "skill_modules": 8,
+    "skills_total_with_router": 9
+  },
+  "latest_scorecards": {
+    "deterministic": {
+      "cases": 17,
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.2.0-cairo-auditor-benchmark.md",
+      "path": "evals/scorecards/v0.2.0-cairo-auditor-benchmark.md",
+      "precision": 1.0,
+      "recall": 1.0
+    },
+    "realworld": {
+      "cases": 17,
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md",
+      "path": "evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md",
+      "precision": 1.0,
+      "recall": 1.0
+    }
+  },
+  "links": {
+    "cairo_auditor": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/SKILL.md",
+    "cairo_auditor_readme": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/README.md",
+    "contributing": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/CONTRIBUTING.md",
+    "full_evals_workflow": "https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/full-evals.yml",
+    "heldout_policy": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/heldout/README.md",
+    "pipeline_readme": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/README.md",
+    "quality_workflow": "https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/quality.yml",
+    "repo": "https://github.com/keep-starknet-strange/starknet-skills",
+    "repo_ref": "main",
+    "router_skill_github": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/SKILL.md",
+    "router_skill_raw": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md",
+    "vuln_cards_dir": "https://github.com/keep-starknet-strange/starknet-skills/tree/main/datasets/distilled/vuln-cards"
+  },
+  "modules": [
+    {
+      "description": "Deterministic + workflow-guided security review",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-auditor/SKILL.md",
+      "name": "cairo-auditor",
+      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md",
+      "skill_path": "cairo-auditor/SKILL.md"
+    },
+    {
+      "description": "Safe implementation patterns",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-contract-authoring/SKILL.md",
+      "name": "cairo-contract-authoring",
+      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md",
+      "skill_path": "cairo-contract-authoring/SKILL.md"
+    },
+    {
+      "description": "Unit/integration/invariant strategy",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-testing/SKILL.md",
+      "name": "cairo-testing",
+      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md",
+      "skill_path": "cairo-testing/SKILL.md"
+    },
+    {
+      "description": "Performance/resource hardening",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-optimization/SKILL.md",
+      "name": "cairo-optimization",
+      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md",
+      "skill_path": "cairo-optimization/SKILL.md"
+    },
+    {
+      "description": "Build/declare/deploy/verify ops",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/cairo-toolchain/SKILL.md",
+      "name": "cairo-toolchain",
+      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-toolchain/SKILL.md",
+      "skill_path": "cairo-toolchain/SKILL.md"
+    },
+    {
+      "description": "Account/session-key threat patterns",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/account-abstraction/SKILL.md",
+      "name": "account-abstraction",
+      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/account-abstraction/SKILL.md",
+      "skill_path": "account-abstraction/SKILL.md"
+    },
+    {
+      "description": "Chain semantics and constraints",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/starknet-network-facts/SKILL.md",
+      "name": "starknet-network-facts",
+      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/starknet-network-facts/SKILL.md",
+      "skill_path": "starknet-network-facts/SKILL.md"
+    },
+    {
+      "description": "OZ Cairo composition footguns",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/openzeppelin-cairo/SKILL.md",
+      "name": "openzeppelin-cairo",
+      "raw_skill_url": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/openzeppelin-cairo/SKILL.md",
+      "skill_path": "openzeppelin-cairo/SKILL.md"
+    }
+  ],
+  "source_fingerprint": "59f8d52b23264f05",
+  "vuln_cards": [
+    {
+      "detection_rule": "If both inferred and forced-mode paths exist, assert forced-mode check dominates all early returns.",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/SHUTDOWN_OVERRIDE_PRECEDENCE.md",
+      "name": "SHUTDOWN_OVERRIDE_PRECEDENCE",
+      "severity_distribution": {
+        "high": 1
+      },
+      "source_findings": [
+        "CSC-VESU-001"
+      ],
+      "trigger": "Use when contracts combine inferred operational mode and manually forced override mode."
+    },
+    {
+      "detection_rule": "Flag selector-fallback blocks that retry alternate selector within same transaction path.",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/SYSCALL_SELECTOR_FALLBACK_ASSUMPTION.md",
+      "name": "SYSCALL_SELECTOR_FALLBACK_ASSUMPTION",
+      "severity_distribution": {
+        "info": 2
+      },
+      "source_findings": [
+        "ERIM-NOSTRA-I01",
+        "ERIM-NOSTRA-I02"
+      ],
+      "trigger": "Use when helper functions issue syscall then fallback to alternate selector on error."
+    },
+    {
+      "detection_rule": "Find external/configurable fee input and verify explicit bound assertions in the same call path.",
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/UNCHECKED_FEE_BOUND.md",
+      "name": "UNCHECKED_FEE_BOUND",
+      "severity_distribution": {
+        "low": 1
+      },
+      "source_findings": [
+        "ERIM-NOSTRA-L02"
+      ],
+      "trigger": "Use when fees are accepted as constructor or config parameters."
+    }
+  ]
+}
