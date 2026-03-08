@@ -5,43 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Starkskills | Vulnerability Cards</title>
   <meta name="description" content="Browsable vulnerability cards distilled from Starknet audit findings." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../assets/site.css" />
 </head>
 <body>
-  <header class="subpage-hero">
-    <a class="back-link" href="../">← Back to landing page</a>
-    <h1>Vulnerability Card Browser</h1>
-    <p>Distilled classes from <strong>217</strong> normalized findings.</p>
+  <div class="ambient ambient-a" aria-hidden="true"></div>
+  <div class="ambient ambient-b" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="https://github.com/keep-starknet-strange/starknet-skills" target="_blank" rel="noreferrer">starkskills</a>
+    <nav>
+      <a href="../">Landing</a>
+      <a href="https://github.com/keep-starknet-strange/starknet-skills/tree/main/datasets/distilled/vuln-cards" target="_blank" rel="noreferrer">Repo Directory</a>
+    </nav>
   </header>
 
-  <main>
-    <section class="section">
+  <main class="shell">
+    <section class="subpage-hero panel reveal">
+      <a class="back-link" href="../">← Back to landing page</a>
+      <h1>Vulnerability Card Browser</h1>
+      <p>Distilled classes from <strong>217</strong> normalized findings.</p>
+      <div class="hero-metrics">
+        <article>
+          <span>Cards</span>
+          <strong>3</strong>
+        </article>
+        <article>
+          <span>Findings</span>
+          <strong>217</strong>
+        </article>
+        <article>
+          <span>Audits</span>
+          <strong>24</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="section panel reveal">
       <div class="section-head">
         <h2>Card Index</h2>
         <a href="https://github.com/keep-starknet-strange/starknet-skills/tree/main/datasets/distilled/vuln-cards" target="_blank" rel="noreferrer">Open repo directory</a>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Class</th>
-              <th>Severity Distribution</th>
-              <th>Trigger Condition</th>
-              <th>Detection Rule</th>
-              <th>Source Findings</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/SHUTDOWN_OVERRIDE_PRECEDENCE.md" target="_blank" rel="noreferrer">SHUTDOWN_OVERRIDE_PRECEDENCE</a></td><td><span class="pill">high: 1</span></td><td>Use when contracts combine inferred operational mode and manually forced override mode.</td><td>If both inferred and forced-mode paths exist, assert forced-mode check dominates all early returns.</td><td><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=CSC-VESU-001" target="_blank" rel="noreferrer">CSC-VESU-001</a></td></tr>
-<tr><td><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/SYSCALL_SELECTOR_FALLBACK_ASSUMPTION.md" target="_blank" rel="noreferrer">SYSCALL_SELECTOR_FALLBACK_ASSUMPTION</a></td><td><span class="pill">info: 2</span></td><td>Use when helper functions issue syscall then fallback to alternate selector on error.</td><td>Flag selector-fallback blocks that retry alternate selector within same transaction path.</td><td><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=ERIM-NOSTRA-I01" target="_blank" rel="noreferrer">ERIM-NOSTRA-I01</a><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=ERIM-NOSTRA-I02" target="_blank" rel="noreferrer">ERIM-NOSTRA-I02</a></td></tr>
-<tr><td><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/UNCHECKED_FEE_BOUND.md" target="_blank" rel="noreferrer">UNCHECKED_FEE_BOUND</a></td><td><span class="pill">low: 1</span></td><td>Use when fees are accepted as constructor or config parameters.</td><td>Find external/configurable fee input and verify explicit bound assertions in the same call path.</td><td><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=ERIM-NOSTRA-L02" target="_blank" rel="noreferrer">ERIM-NOSTRA-L02</a></td></tr>
-          </tbody>
-        </table>
+      <div class="vuln-grid">
+        <article class="vuln-card reveal"><div class="vuln-head"><h3><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/SHUTDOWN_OVERRIDE_PRECEDENCE.md" target="_blank" rel="noreferrer">SHUTDOWN_OVERRIDE_PRECEDENCE</a></h3><div><span class="pill">high: 1</span></div></div><p class="meta-label">Trigger</p><p>Use when contracts combine inferred operational mode and manually forced override mode.</p><p class="meta-label">Detection Rule</p><p>If both inferred and forced-mode paths exist, assert forced-mode check dominates all early returns.</p><p class="meta-label">Source Findings</p><div><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=CSC-VESU-001" target="_blank" rel="noreferrer">CSC-VESU-001</a></div></article>
+<article class="vuln-card reveal"><div class="vuln-head"><h3><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/SYSCALL_SELECTOR_FALLBACK_ASSUMPTION.md" target="_blank" rel="noreferrer">SYSCALL_SELECTOR_FALLBACK_ASSUMPTION</a></h3><div><span class="pill">info: 2</span></div></div><p class="meta-label">Trigger</p><p>Use when helper functions issue syscall then fallback to alternate selector on error.</p><p class="meta-label">Detection Rule</p><p>Flag selector-fallback blocks that retry alternate selector within same transaction path.</p><p class="meta-label">Source Findings</p><div><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=ERIM-NOSTRA-I01" target="_blank" rel="noreferrer">ERIM-NOSTRA-I01</a><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=ERIM-NOSTRA-I02" target="_blank" rel="noreferrer">ERIM-NOSTRA-I02</a></div></article>
+<article class="vuln-card reveal"><div class="vuln-head"><h3><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/UNCHECKED_FEE_BOUND.md" target="_blank" rel="noreferrer">UNCHECKED_FEE_BOUND</a></h3><div><span class="pill">low: 1</span></div></div><p class="meta-label">Trigger</p><p>Use when fees are accepted as constructor or config parameters.</p><p class="meta-label">Detection Rule</p><p>Find external/configurable fee input and verify explicit bound assertions in the same call path.</p><p class="meta-label">Source Findings</p><div><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=ERIM-NOSTRA-L02" target="_blank" rel="noreferrer">ERIM-NOSTRA-L02</a></div></article>
       </div>
     </section>
   </main>
 
-  <footer>
+  <footer class="footer">
     <span>Source fingerprint: 59f8d52b23264f05</span>
     <a href="../data/site-data.json">site-data.json</a>
   </footer>

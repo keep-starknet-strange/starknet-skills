@@ -399,8 +399,11 @@ def build_index_html(data: dict, domain: str | None) -> str:
 
     modules_html = "\n".join(
         (
-            '<article class="module-card">'
-            f'<h3>{e(item["name"])}<span class="status">stable</span></h3>'
+            '<article class="module-card reveal">'
+            '<div class="module-top">'
+            f"<h3>{e(item['name'])}</h3>"
+            '<span class="status">stable</span>'
+            "</div>"
             f'<p>{e(item["description"])}</p>'
             '<div class="card-links">'
             f'<a href="{e(item["raw_skill_url"])}" target="_blank" rel="noreferrer">Raw SKILL.md</a>'
@@ -414,19 +417,20 @@ def build_index_html(data: dict, domain: str | None) -> str:
     scorecard_block = ""
     if scorecard:
         scorecard_block = (
-            '<div class="scorecard">'
-            '<h3>Latest Benchmark Snapshot</h3>'
+            '<aside class="scorecard panel-soft">'
+            '<p class="eyebrow">Latest benchmark</p>'
+            '<h3>cairo-auditor performance gate</h3>'
             '<div class="scorecard-grid">'
             f'<div><span>Cases</span><strong>{e(scorecard.get("cases", "n/a"))}</strong></div>'
             f'<div><span>Precision</span><strong>{e(scorecard.get("precision", "n/a"))}</strong></div>'
             f'<div><span>Recall</span><strong>{e(scorecard.get("recall", "n/a"))}</strong></div>'
             "</div>"
             f'<a href="{e(scorecard["github_url"])}" target="_blank" rel="noreferrer">Open scorecard</a>'
-            "</div>"
+            "</aside>"
         )
 
     domain_note = (
-        f'<div class="domain-note">Prepared for <strong>{e(domain)}</strong>.</div>'
+        f'<span class="chip chip-domain">Domain: <strong>{e(domain)}</strong></span>'
         if domain
         else ""
     )
@@ -438,51 +442,91 @@ def build_index_html(data: dict, domain: str | None) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Starkskills | Cairo Security Skills for AI Agents</title>
   <meta name="description" content="Production-grade Cairo security knowledge for AI agents, backed by manifest-tracked Starknet audit data." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/site.css" />
 </head>
 <body>
-  <header class="hero">
-    <div class="badge-row">
-      <span class="badge">Starknet Skills</span>
-      <span class="badge badge-soft">Flagship: cairo-auditor</span>
-    </div>
-    <h1>Production-grade Cairo security knowledge for AI agents.</h1>
-    <p class="hero-subtitle">Backed by <strong>{fmt_int(counts['cataloged_audits'])}</strong> manifest-cataloged audits, <strong>{fmt_int(counts['normalized_findings'])}</strong> normalized findings, and deterministic benchmark gates.</p>
-    {domain_note}
-    <div class="install-grid">
-      <article>
-        <h2>Claude marketplace</h2>
-        <pre><code>/plugin marketplace add keep-starknet-strange/starknet-skills
-/plugin menu</code></pre>
-      </article>
-      <article>
-        <h2>Raw router URL</h2>
-        <pre><code>{e(links['router_skill_raw'])}</code></pre>
-      </article>
-      <article>
-        <h2>Git clone</h2>
-        <pre><code>git clone {e(links['repo'])}.git</code></pre>
-      </article>
-    </div>
+  <div class="ambient ambient-a" aria-hidden="true"></div>
+  <div class="ambient ambient-b" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="{e(links['repo'])}" target="_blank" rel="noreferrer">starkskills</a>
+    <nav>
+      <a href="vuln-cards/">Vuln Cards</a>
+      <a href="{e(links['cairo_auditor'])}" target="_blank" rel="noreferrer">cairo-auditor</a>
+      <a href="{e(links['repo'])}" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
   </header>
 
-  <main>
-    <section class="section">
-      <div class="section-head">
-        <h2>Flagship: cairo-auditor</h2>
-        <a href="{e(links['cairo_auditor'])}" target="_blank" rel="noreferrer">Open SKILL.md</a>
+  <main class="shell">
+    <section class="hero panel reveal">
+      <div class="hero-chips">
+        <span class="chip">Starknet Skills</span>
+        <span class="chip chip-soft">Flagship: cairo-auditor</span>
+        {domain_note}
       </div>
-      <p>Systematic review workflow for Cairo contracts: discover in-scope files, run vectorized scans, verify findings through a false-positive gate, and report prioritized fixes with required regression tests.</p>
-      <div class="workflow">
-        <span>discover</span>
-        <span>scan</span>
-        <span>verify</span>
-        <span>report</span>
+      <h1>Production-grade Cairo security knowledge for AI agents.</h1>
+      <p class="hero-subtitle">
+        Backed by <strong>{fmt_int(counts['cataloged_audits'])}</strong> manifest-cataloged audits and
+        <strong>{fmt_int(counts['normalized_findings'])}</strong> normalized findings.
+      </p>
+      <div class="hero-metrics">
+        <article>
+          <span>Audits</span>
+          <strong>{fmt_int(counts['cataloged_audits'])}</strong>
+        </article>
+        <article>
+          <span>Findings</span>
+          <strong>{fmt_int(counts['normalized_findings'])}</strong>
+        </article>
+        <article>
+          <span>Skill Modules</span>
+          <strong>{fmt_int(counts['skills_total_with_router'])}</strong>
+        </article>
       </div>
-      {scorecard_block}
+      <div class="install-grid">
+        <article class="install-card">
+          <h2>Claude marketplace</h2>
+          <pre><code>/plugin marketplace add keep-starknet-strange/starknet-skills
+/plugin menu</code></pre>
+        </article>
+        <article class="install-card">
+          <h2>Raw router URL</h2>
+          <pre><code>{e(links['router_skill_raw'])}</code></pre>
+        </article>
+        <article class="install-card">
+          <h2>Git clone</h2>
+          <pre><code>git clone {e(links['repo'])}.git</code></pre>
+        </article>
+      </div>
     </section>
 
-    <section class="section">
+    <section class="section panel reveal">
+      <div class="section-head">
+        <h2>Flagship Workflow: cairo-auditor</h2>
+        <a href="{e(links['cairo_auditor'])}" target="_blank" rel="noreferrer">Open SKILL.md</a>
+      </div>
+      <div class="flagship-layout{" flagship-layout--no-scorecard" if not scorecard else ""}">
+        <div>
+          <p>
+            A deterministic security review workflow for Cairo contracts: discover in-scope files,
+            run targeted scans, verify candidates behind false-positive gates, and report
+            prioritized fixes with regression tests.
+          </p>
+          <ul class="workflow">
+            <li>discover</li>
+            <li>scan</li>
+            <li>verify</li>
+            <li>report</li>
+          </ul>
+        </div>
+        {scorecard_block}
+      </div>
+    </section>
+
+    <section class="section reveal">
       <div class="section-head">
         <h2>Skill Modules</h2>
         <a href="{e(links['router_skill_github'])}" target="_blank" rel="noreferrer">Router</a>
@@ -492,22 +536,22 @@ def build_index_html(data: dict, domain: str | None) -> str:
       </div>
     </section>
 
-    <section class="section">
+    <section class="section panel reveal">
       <div class="section-head">
         <h2>Audit Data Pipeline</h2>
         <a href="{e(links['pipeline_readme'])}" target="_blank" rel="noreferrer">Pipeline docs</a>
       </div>
       <div class="pipeline-grid">
-        <article><h3>ingest</h3><p>{fmt_int(counts['cataloged_audits'])} audits cataloged in manifest</p></article>
-        <article><h3>segment</h3><p>{fmt_int(counts['segmented_audits'])} segmented audit text sets</p></article>
-        <article><h3>normalize</h3><p>{fmt_int(counts['normalized_audits'])} normalized audits / {fmt_int(counts['normalized_findings'])} findings</p></article>
-        <article><h3>distill</h3><p>{fmt_int(counts['distilled_vuln_cards'])} vuln cards, {fmt_int(counts['distilled_fix_patterns'])} fix patterns, {fmt_int(counts['distilled_test_recipes'])} test recipes</p></article>
-        <article><h3>skillize</h3><p>{fmt_int(counts['skills_total_with_router'])} skills including router</p></article>
+        <article><h3>ingest</h3><p>{fmt_int(counts['cataloged_audits'])} audits cataloged from manifests.</p></article>
+        <article><h3>segment</h3><p>{fmt_int(counts['segmented_audits'])} segmented text corpora.</p></article>
+        <article><h3>normalize</h3><p>{fmt_int(counts['normalized_audits'])} normalized audits and {fmt_int(counts['normalized_findings'])} findings.</p></article>
+        <article><h3>distill</h3><p>{fmt_int(counts['distilled_vuln_cards'])} vuln cards, {fmt_int(counts['distilled_fix_patterns'])} fix patterns, {fmt_int(counts['distilled_test_recipes'])} test recipes.</p></article>
+        <article><h3>skillize</h3><p>{fmt_int(counts['skills_total_with_router'])} skills ready for agent routing.</p></article>
       </div>
       <p class="pipeline-footnote">Counts are generated from repository data at build time.</p>
     </section>
 
-    <section class="section trust">
+    <section class="section panel trust reveal">
       <div class="section-head">
         <h2>Trust & Verification</h2>
         <a href="vuln-cards/">Browse vuln cards</a>
@@ -521,7 +565,7 @@ def build_index_html(data: dict, domain: str | None) -> str:
     </section>
   </main>
 
-  <footer>
+  <footer class="footer">
     <span>Source fingerprint: {e(data['source_fingerprint'])}</span>
     <a href="data/site-data.json">site-data.json</a>
   </footer>
@@ -535,16 +579,21 @@ def build_vuln_cards_html(data: dict) -> str:
     rows = []
     for card in data["vuln_cards"]:
         rows.append(
-            "<tr>"
-            f"<td><a href=\"{e(card['github_url'])}\" target=\"_blank\" rel=\"noreferrer\">{e(card['name'])}</a></td>"
-            f"<td>{severity_badges(card['severity_distribution'])}</td>"
-            f"<td>{e(card['trigger'])}</td>"
-            f"<td>{e(card['detection_rule'])}</td>"
-            f"<td>{source_finding_links(card['source_findings'], repo_github)}</td>"
-            "</tr>"
+            '<article class="vuln-card reveal">'
+            '<div class="vuln-head">'
+            f"<h3><a href=\"{e(card['github_url'])}\" target=\"_blank\" rel=\"noreferrer\">{e(card['name'])}</a></h3>"
+            f"<div>{severity_badges(card['severity_distribution'])}</div>"
+            "</div>"
+            '<p class="meta-label">Trigger</p>'
+            f"<p>{e(card['trigger'])}</p>"
+            '<p class="meta-label">Detection Rule</p>'
+            f"<p>{e(card['detection_rule'])}</p>"
+            '<p class="meta-label">Source Findings</p>'
+            f"<div>{source_finding_links(card['source_findings'], repo_github)}</div>"
+            "</article>"
         )
 
-    row_markup = "\n".join(rows) if rows else "<tr><td colspan=\"5\">No vuln cards published yet.</td></tr>"
+    row_markup = "\n".join(rows) if rows else '<article class="vuln-card"><p>No vuln cards published yet.</p></article>'
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -553,41 +602,56 @@ def build_vuln_cards_html(data: dict) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Starkskills | Vulnerability Cards</title>
   <meta name="description" content="Browsable vulnerability cards distilled from Starknet audit findings." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../assets/site.css" />
 </head>
 <body>
-  <header class="subpage-hero">
-    <a class="back-link" href="../">← Back to landing page</a>
-    <h1>Vulnerability Card Browser</h1>
-    <p>Distilled classes from <strong>{fmt_int(data['counts']['normalized_findings'])}</strong> normalized findings.</p>
+  <div class="ambient ambient-a" aria-hidden="true"></div>
+  <div class="ambient ambient-b" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="{e(data['links']['repo'])}" target="_blank" rel="noreferrer">starkskills</a>
+    <nav>
+      <a href="../">Landing</a>
+      <a href="{e(data['links']['vuln_cards_dir'])}" target="_blank" rel="noreferrer">Repo Directory</a>
+    </nav>
   </header>
 
-  <main>
-    <section class="section">
+  <main class="shell">
+    <section class="subpage-hero panel reveal">
+      <a class="back-link" href="../">← Back to landing page</a>
+      <h1>Vulnerability Card Browser</h1>
+      <p>Distilled classes from <strong>{fmt_int(data['counts']['normalized_findings'])}</strong> normalized findings.</p>
+      <div class="hero-metrics">
+        <article>
+          <span>Cards</span>
+          <strong>{fmt_int(data['counts']['distilled_vuln_cards'])}</strong>
+        </article>
+        <article>
+          <span>Findings</span>
+          <strong>{fmt_int(data['counts']['normalized_findings'])}</strong>
+        </article>
+        <article>
+          <span>Audits</span>
+          <strong>{fmt_int(data['counts']['cataloged_audits'])}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="section panel reveal">
       <div class="section-head">
         <h2>Card Index</h2>
         <a href="{e(data['links']['vuln_cards_dir'])}" target="_blank" rel="noreferrer">Open repo directory</a>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Class</th>
-              <th>Severity Distribution</th>
-              <th>Trigger Condition</th>
-              <th>Detection Rule</th>
-              <th>Source Findings</th>
-            </tr>
-          </thead>
-          <tbody>
-            {row_markup}
-          </tbody>
-        </table>
+      <div class="vuln-grid">
+        {row_markup}
       </div>
     </section>
   </main>
 
-  <footer>
+  <footer class="footer">
     <span>Source fingerprint: {e(data['source_fingerprint'])}</span>
     <a href="../data/site-data.json">site-data.json</a>
   </footer>
