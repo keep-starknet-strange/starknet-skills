@@ -36,3 +36,15 @@
   - computes TP/FP/FN/TN, precision, recall from `tp`/`fp` outcomes
   - emits release scorecard (`evals/scorecards/v*.md`) and trend table
   - enforces minimum precision/recall thresholds in CI
+
+- `benchmark_contract_skills.py` runs deterministic contract-oriented skill checks:
+  - case pack:
+    - `evals/cases/contract_skill_benchmark.jsonl`
+  - fixture projects:
+    - `evals/contracts/secure_owned_vault/`
+    - `evals/contracts/insecure_owned_vault/`
+  - checks:
+    - `scarb build`
+    - `snforge test`
+    - source-level must-match / must-not-match regex assertions
+  - emits scorecard markdown and enforces precision/recall thresholds

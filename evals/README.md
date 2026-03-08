@@ -5,6 +5,7 @@ Evaluation cases and scorecards for skill quality regression tracking.
 ## Structure
 
 - `cases/`: held-out cases for detection and remediation quality.
+- `contracts/`: runnable Cairo fixture projects for contract skill checks.
 - `heldout/`: explicit hold-out policy and reserved sets excluded from distillation.
 - `reports/`: external repository scan reports and triage notes.
 - `scorecards/`: run outputs and aggregate metrics by version.
@@ -35,6 +36,17 @@ python scripts/quality/benchmark_cairo_auditor.py \
   --output evals/scorecards/v0.2.0-cairo-auditor-benchmark.md \
   --min-precision 0.90 \
   --min-recall 0.90
+```
+
+Run contract skill benchmark (compiles/tests fixture contracts and enforces policy assertions):
+
+```bash
+python scripts/quality/benchmark_contract_skills.py \
+  --cases evals/cases/contract_skill_benchmark.jsonl \
+  --output evals/scorecards/v0.3.0-contract-skill-benchmark.md \
+  --min-precision 1.00 \
+  --min-recall 1.00 \
+  --require-tools
 ```
 
 Run the real-world Cairo corpus benchmark (public snippets + normalized audit findings):
