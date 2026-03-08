@@ -65,7 +65,7 @@ Direct router URL:
 - Deterministic smoke scorecards:
   - [v0.2.0-cairo-auditor-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-benchmark.md)
   - [v0.2.0-cairo-auditor-realworld-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md)
-  - [v0.3.0-contract-skill-benchmark.md](evals/scorecards/v0.3.0-contract-skill-benchmark.md)
+  - [v0.3.0-contract-skill-benchmark.md](evals/scorecards/v0.3.0-contract-skill-benchmark.md) (smoke-only sample)
 - Human-labeled external scan scorecards:
   - [v0.2.0-cairo-auditor-external-triage.md](evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
   - [cairo-auditor-external-trend.md](evals/scorecards/cairo-auditor-external-trend.md)

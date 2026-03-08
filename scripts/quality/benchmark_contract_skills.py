@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+MIN_REPORTABLE_CASES = 10
+
 
 @dataclass
 class PatternRule:
@@ -304,8 +306,10 @@ def render_markdown(
     recall: float,
     have_scarb: bool,
     have_snforge: bool,
+    min_reportable_cases: int,
 ) -> str:
     accuracy = 1.0 if evaluated == 0 else (totals["tp"] + totals["tn"]) / evaluated
+    smoke_only = evaluated < min_reportable_cases
 
     lines = [
         f"# {title}",
@@ -320,6 +324,7 @@ def render_markdown(
         f"- Precision: {precision:.3f}",
         f"- Recall: {recall:.3f}",
         f"- Accuracy: {accuracy:.3f}",
+        f"- Interpretation: {'smoke-only (low sample)' if smoke_only else 'reportable benchmark sample'}",
         "",
         "## Outcome Summary",
         "",
@@ -352,6 +357,7 @@ def render_markdown(
             f"- Tools: scarb={'yes' if have_scarb else 'no'}, snforge={'yes' if have_snforge else 'no'}.",
             "- Positive cases must compile/test and satisfy all static policy assertions.",
             "- Negative cases validate that policy checks fail on intentionally insecure patterns.",
+            f"- Sample policy: fewer than {min_reportable_cases} evaluated cases is smoke-only and should not be reported as broad skill quality.",
         ]
     )
 
@@ -430,6 +436,7 @@ def main() -> int:
         recall=rec,
         have_scarb=have_scarb,
         have_snforge=have_snforge,
+        min_reportable_cases=MIN_REPORTABLE_CASES,
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -447,8 +454,14 @@ def main() -> int:
         )
         return 1
 
+    if evaluated < MIN_REPORTABLE_CASES:
+        print(
+            "NOTE: benchmark passed but sample is smoke-only "
+            f"(evaluated={evaluated}, recommended_min={MIN_REPORTABLE_CASES})."
+        )
+
     print(
-        "PASS: contract benchmark gate met "
+        "PASS: contract smoke gate met "
         f"(precision={prec:.4f}, recall={rec:.4f}, evaluated={evaluated}, skipped={skipped})"
     )
     return 0

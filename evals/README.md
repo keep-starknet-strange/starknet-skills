@@ -49,6 +49,12 @@ python scripts/quality/benchmark_contract_skills.py \
   --require-tools
 ```
 
+Interpretation guidance for contract benchmark metrics:
+
+- If evaluated cases are fewer than `10`, treat results as a deterministic smoke gate only.
+- Smoke-gate pass means fixture checks are wired correctly and caught seeded regressions.
+- Smoke-gate pass does **not** justify broad claims like "overall skill quality is 100%."
+
 Run the real-world Cairo corpus benchmark (public snippets + normalized audit findings):
 
 ```bash
