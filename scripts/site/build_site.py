@@ -508,19 +508,19 @@ def build_index_html(data: dict, domain: str | None) -> str:
         <h2>Flagship Workflow: cairo-auditor</h2>
         <a href="{e(links['cairo_auditor'])}" target="_blank" rel="noreferrer">Open SKILL.md</a>
       </div>
-      <div class="flagship-layout">
+      <div class="flagship-layout{" flagship-layout--no-scorecard" if not scorecard else ""}">
         <div>
           <p>
             A deterministic security review workflow for Cairo contracts: discover in-scope files,
             run targeted scans, verify candidates behind false-positive gates, and report
             prioritized fixes with regression tests.
           </p>
-          <ol class="workflow">
+          <ul class="workflow">
             <li>discover</li>
             <li>scan</li>
             <li>verify</li>
             <li>report</li>
-          </ol>
+          </ul>
         </div>
         {scorecard_block}
       </div>

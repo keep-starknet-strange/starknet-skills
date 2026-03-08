@@ -274,6 +274,10 @@ code {
   gap: 1rem;
 }
 
+.flagship-layout--no-scorecard {
+  grid-template-columns: 1fr;
+}
+
 .workflow {
   margin: 0.9rem 0 0;
   padding: 0;
@@ -455,6 +459,10 @@ code {
   margin: 0 0.34rem 0.34rem 0;
   border-bottom: 1px dashed rgba(85, 210, 255, 0.48);
   font-size: 0.82rem;
+}
+
+.muted {
+  color: var(--muted);
 }
 
 .back-link {
