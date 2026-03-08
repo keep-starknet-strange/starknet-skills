@@ -373,6 +373,22 @@ def main() -> int:
             ensure_ascii=True,
         )
     )
+    error_rows = [row for row in results if row.get("error")]
+    if error_rows:
+        counts: dict[str, int] = {}
+        for row in error_rows:
+            key = str(row["error"])[:180]
+            counts[key] = counts.get(key, 0) + 1
+        sample = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:5]
+        print(
+            json.dumps(
+                {
+                    "error_cases": len(error_rows),
+                    "error_kinds": [{"error": err, "count": count} for err, count in sample],
+                },
+                ensure_ascii=True,
+            )
+        )
 
     if p < args.min_precision or r < args.min_recall:
         print(
