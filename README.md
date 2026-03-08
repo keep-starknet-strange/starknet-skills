@@ -88,5 +88,6 @@ python3 scripts/site/build_site.py --domain starkskills.org
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [SECURITY.md](SECURITY.md)
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- [THIRD_PARTY.md](THIRD_PARTY.md)
 - Skill contract validator: `python scripts/quality/validate_skills.py`
 - Parity + eval preflight: `python scripts/quality/parity_check.py`
