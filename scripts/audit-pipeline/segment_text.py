@@ -144,7 +144,7 @@ def main() -> int:
     if args.audit_id in blocked_audit_ids:
         raise ValueError(f"audit_id is blocked by held-out policy: {args.audit_id}")
 
-    segments = segment_text(in_path.read_text(encoding="utf-8", errors="ignore"))
+    segments = segment_text(in_path.read_text(encoding="utf-8", errors="replace"))
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:
