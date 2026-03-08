@@ -59,13 +59,20 @@ def main() -> int:
     else:
         results.append(CheckResult("governance-and-entry-files", "FAIL", f"missing: {', '.join(missing)}"))
 
-    # 3) Install onboarding in README.
+    # 3) Plugin marketplace metadata consistency.
+    market = run([sys.executable, "scripts/quality/validate_marketplace.py"])
+    if market.returncode == 0:
+        results.append(CheckResult("plugin-marketplace-metadata", "PASS", market.stdout.strip()))
+    else:
+        results.append(CheckResult("plugin-marketplace-metadata", "FAIL", (market.stderr or market.stdout).strip()))
+
+    # 4) Install onboarding in README.
     if has_text(ROOT / "README.md", "## Install & Use"):
         results.append(CheckResult("readme-install-flow", "PASS", "README includes install/use section"))
     else:
         results.append(CheckResult("readme-install-flow", "FAIL", "README missing 'Install & Use' section"))
 
-    # 4) CLI accuracy: snforge flags.
+    # 5) CLI accuracy: snforge flags.
     snforge = run(["snforge", "test", "--help"])
     if snforge.returncode != 0:
         results.append(CheckResult("snforge-cli-check", "SKIP", "snforge unavailable"))
@@ -85,7 +92,7 @@ def main() -> int:
                 )
             )
 
-    # 5) CLI accuracy: sncast account import and verify backends.
+    # 6) CLI accuracy: sncast account import and verify backends.
     sncast_account = run(["sncast", "account", "--help"])
     sncast_verify = run(["sncast", "verify", "--help"])
     if sncast_account.returncode != 0 or sncast_verify.returncode != 0:
@@ -114,7 +121,7 @@ def main() -> int:
                 )
             )
 
-    # 6) Trail of Bits-style authoring contract (explicit parity signal).
+    # 7) Trail of Bits-style authoring contract (explicit parity signal).
     non_root_skills = sorted(p for p in ROOT.rglob("SKILL.md") if p.parent != ROOT)
     tob_errors: list[str] = []
     for skill in non_root_skills:

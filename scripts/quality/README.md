@@ -11,6 +11,12 @@
   - one-level markdown link depth for progressive disclosure
   - markdown link target existence and in-repo resolution
 
+- `validate_marketplace.py` enforces `.claude-plugin/plugin.json` and
+  `.claude-plugin/marketplace.json` consistency:
+  - same plugin name across files
+  - synchronized version fields
+  - root plugin entry present with `source: "./"`
+
 - `parity_check.py` runs local parity checks against baseline quality bars:
   - skill contract validator pass
   - required governance/entry files present

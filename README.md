@@ -12,10 +12,11 @@ Operational SDK and protocol execution playbooks belong in `starknet-agentic` / 
 
 ## Install & Use
 
-1. Clone repository:
-   - `git clone https://github.com/keep-starknet-strange/starknet-skills.git`
-2. Load the root router in your agent session:
-   - `SKILL.md` (local) or [raw SKILL.md](https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md)
+1. Marketplace install (recommended):
+   - `/plugin marketplace add keep-starknet-strange/starknet-skills`
+   - `/plugin menu` and install `starknet-skills`
+2. Direct skill loading (fallback):
+   - [raw SKILL.md](https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md)
 3. Let the router activate only the needed module skill for the task.
 
 ## Modules
@@ -42,6 +43,7 @@ Do not merge skill changes without updating or passing the corresponding evaluat
 - Security policy: `SECURITY.md`
 - Code of conduct: `CODE_OF_CONDUCT.md`
 - Skill contract validator: `python scripts/quality/validate_skills.py`
+- Marketplace metadata validator: `python scripts/quality/validate_marketplace.py`
 - Baseline parity check: `python scripts/quality/parity_check.py`
 
 ## License

@@ -30,6 +30,9 @@ jobs:
       - name: Validate SKILL contract
         run: python scripts/quality/validate_skills.py
 
+      - name: Validate plugin marketplace metadata
+        run: python scripts/quality/validate_marketplace.py
+
       - name: Ruff lint
         run: ruff check scripts/audit-pipeline scripts/audit-extraction scripts/quality
 
