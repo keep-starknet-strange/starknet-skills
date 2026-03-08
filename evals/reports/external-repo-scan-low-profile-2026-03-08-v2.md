@@ -2,6 +2,12 @@
 
 Date: 2026-03-08
 
+Machine-readable triage artifacts:
+
+- `evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl`
+- `evals/scorecards/v0.2.0-cairo-auditor-external-triage.md`
+- `evals/scorecards/cairo-auditor-external-trend.md`
+
 ## Scope
 
 Repos scanned (production paths only, tests/mocks excluded):
