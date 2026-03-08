@@ -45,6 +45,15 @@ jobs:
             --schema datasets/normalized/finding.schema.json \
             --jsonl datasets/normalized/findings/erim_nostra_pools_2024_01.findings.jsonl
 
+      - name: Validate benchmark case JSONL
+        run: |
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/benchmark-case.schema.json \
+            --jsonl evals/cases/cairo_auditor_benchmark.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/benchmark-case.schema.json \
+            --jsonl evals/cases/cairo_auditor_realworld_benchmark.jsonl
+
       - name: Validate manifest JSONL
         run: |
           python scripts/audit-pipeline/validate_jsonl.py \

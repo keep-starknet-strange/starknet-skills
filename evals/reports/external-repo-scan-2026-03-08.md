@@ -1,5 +1,15 @@
 # External Repo Detector Sweep (2026-03-08)
 
+Machine-readable artifact:
+
+- `evals/reports/data/external-repo-scan-2026-03-08.json`
+
+Scanner metadata:
+
+- scanner revision: `8221c25`
+- detector source: `scripts/quality/benchmark_cairo_auditor.py`
+- command profile: `external-sweep / prod-only excludes test/tests/mock/mocks`
+
 ## Scope
 
 Scanned 5 public Cairo repositories:
@@ -9,6 +19,14 @@ Scanned 5 public Cairo repositories:
 3. `typhoonmixer/typhoon-contracts`
 4. `karnotxyz/starknet_bridge`
 5. `keep-starknet-strange/piltover`
+
+Scanned refs:
+
+1. `OpenZeppelin/cairo-contracts@2ce56dd7d736095e874e9649aec29d6bc90736cc`
+2. `atomiqlabs/atomiq-contracts-starknet@b5875a031063c88563cb44c3afa0460abc2f7e2f`
+3. `typhoonmixer/typhoon-contracts@e11dffbe1c8c4cc96eba91b5f300c82425f2ae4e`
+4. `karnotxyz/starknet_bridge@44e2255dae07f64bdbec0c12c23d678f86c46fdc`
+5. `keep-starknet-strange/piltover@658d707a5cc3ccc3e37b710609cbf0f83917a421`
 
 Detector classes:
 

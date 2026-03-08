@@ -110,10 +110,21 @@ def detect_shutdown_override_precedence(code: str) -> bool:
 
 def detect_selector_fallback_assumption(code: str) -> bool:
     lower = code.lower()
-    call_count = len(re.findall(r"call_contract_syscall", lower))
-    has_error_branch = "is_err" in lower
-    has_selector_alias = "selector_" in lower
-    return call_count >= 2 and has_error_branch and has_selector_alias
+    if "is_err" not in lower:
+        return False
+    pattern = re.compile(
+        r"call_contract_syscall\([^)]*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*,[^)]*\)"
+        r"[\s\S]{0,260}if\s*\(?\s*result\.is_err\(\)\s*\)?\s*\{"
+        r"[\s\S]{0,260}call_contract_syscall\([^)]*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*,",
+        re.IGNORECASE,
+    )
+    for first_selector, second_selector in pattern.findall(code):
+        if first_selector != second_selector and (
+            first_selector.lower().startswith("selector_")
+            or second_selector.lower().startswith("selector_")
+        ):
+            return True
+    return False
 
 
 def _upgrade_snippets(lower: str) -> list[str]:
@@ -144,7 +155,7 @@ def detect_immediate_upgrade_without_timelock(code: str) -> bool:
         )
         if not has_upgrade_call:
             continue
-        if any(marker in lower for marker in timelock_markers):
+        if any(marker in snippet for marker in timelock_markers):
             continue
         return True
     return False
@@ -168,8 +179,10 @@ def detect_upgrade_class_hash_without_nonzero_guard(code: str) -> bool:
             re.search(
                 r"assert\([^)]*new_class_hash[^)]*(is_non_zero|is_zero|!=\s*0)", snippet
             )
-            or "new_class_hash.is_non_zero()" in snippet
-            or "new_class_hash.is_zero()" in snippet
+            or re.search(r"if\s*\([^)]*new_class_hash[^)]*(is_non_zero|is_zero|!=\s*0)", snippet)
+            or re.search(
+                r"if\s+new_class_hash[^:\n]{0,80}(is_non_zero|is_zero|!=\s*0)", snippet
+            )
         )
         if not has_nonzero_guard:
             return True
@@ -228,10 +241,9 @@ def detect_critical_address_init_without_nonzero_guard(code: str) -> bool:
         if has_guard:
             continue
         used_for_init = bool(
-            re.search(
-                rf"\b{param}\b[^\n]{{0,120}}(write\(|initializer\(|_grant_role\()",
-                body,
-            )
+            re.search(rf"\b\w+\.write\(\s*{param}\b", body)
+            or re.search(rf"\binitializer\([^)]*\b{param}\b", body)
+            or re.search(rf"\b_grant_role\([^)]*\b{param}\b", body)
         )
         if used_for_init:
             return True
@@ -298,6 +310,8 @@ def run_benchmark(cases: list[Case]) -> tuple[list[dict[str, object]], dict[str,
 def render_markdown(
     *,
     cases_path: Path,
+    version: str,
+    title: str,
     results: list[dict[str, object]],
     totals: dict[str, int],
     generated_at: str,
@@ -320,9 +334,10 @@ def render_markdown(
         class_row[str(row["outcome"])] += 1
 
     lines: list[str] = []
-    lines.append("# v0.2.0 Cairo Auditor Benchmark")
+    lines.append(f"# {title}")
     lines.append("")
     lines.append(f"Generated: {generated_at}")
+    lines.append(f"Version: {version}")
     lines.append(f"Case pack: `{cases_path.as_posix()}`")
     lines.append("")
     lines.append("## Overall")
@@ -381,6 +396,8 @@ def main() -> int:
     )
     parser.add_argument("--cases", required=True, help="JSONL benchmark cases path")
     parser.add_argument("--output", required=True, help="Output markdown scorecard path")
+    parser.add_argument("--version", default="v0.2.0", help="Version label for scorecard")
+    parser.add_argument("--title", default="", help="Optional markdown H1 title override")
     parser.add_argument("--min-precision", type=float, default=0.9)
     parser.add_argument("--min-recall", type=float, default=0.9)
     args = parser.parse_args()
@@ -398,8 +415,13 @@ def main() -> int:
     overall_recall = recall(tp, fn)
 
     generated_at = datetime.now(UTC).replace(microsecond=0).isoformat()
+    title = args.title.strip() or (
+        f"{args.version} {cases_path.stem.replace('_', ' ').replace('-', ' ').title()}"
+    )
     markdown = render_markdown(
         cases_path=cases_path,
+        version=args.version,
+        title=title,
         results=results,
         totals=totals,
         generated_at=generated_at,

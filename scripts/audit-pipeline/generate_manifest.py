@@ -23,7 +23,7 @@ REQUIRED_SEED_KEYS = {
     "redaction_status",
     "extractor_version",
 }
-DATE_RE = re.compile(r"^\d{4}(-\d{2})?(-\d{2})?$")
+DATE_RE = re.compile(r"^\d{4}(-\d{2}(-\d{2})?)?$")
 SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 
 

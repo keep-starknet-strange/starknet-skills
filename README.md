@@ -10,9 +10,9 @@
     <img alt="full evals" src="https://img.shields.io/github/actions/workflow/status/keep-starknet-strange/starknet-skills/full-evals.yml?branch=main&label=full%20evals&color=0969da" />
   </a>
   <img alt="modules" src="https://img.shields.io/badge/modules-8-7c3aed" />
-  <img alt="ingested audits" src="https://img.shields.io/badge/ingested%20audits-24-f59e0b" />
-  <img alt="benchmark precision" src="https://img.shields.io/badge/benchmark%20precision-100%25-22c55e" />
-  <img alt="benchmark recall" src="https://img.shields.io/badge/benchmark%20recall-100%25-22c55e" />
+  <img alt="ingested audits" src="https://img.shields.io/badge/ingested%20audits-manifest--backed-f59e0b" />
+  <img alt="deterministic smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-22c55e" />
+  <img alt="agent eval" src="https://img.shields.io/badge/agent%20eval-in%20progress-f59e0b" />
 </p>
 
 # starknet-skills
@@ -63,10 +63,10 @@ Direct router URL:
 
 ## Benchmarks
 
-| Suite | Cases | Precision | Recall | Scorecard |
-| --- | ---: | ---: | ---: | --- |
-| Core deterministic | 17 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-benchmark.md) |
-| Real-world corpus | 17 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-realworld-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md) |
+- Deterministic smoke scorecards:
+  - [v0.2.0-cairo-auditor-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-benchmark.md)
+  - [v0.2.0-cairo-auditor-realworld-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md)
+- Canonical benchmark surface and maintenance notes live in [cairo-auditor/README.md](cairo-auditor/README.md).
 
 ## Data Pipeline
 

@@ -10,8 +10,8 @@ Flagship Cairo/Starknet security review skill.
   <img alt="mode default" src="https://img.shields.io/badge/mode-default-0969da" />
   <img alt="mode deep" src="https://img.shields.io/badge/mode-deep-7c3aed" />
   <img alt="false positive gate" src="https://img.shields.io/badge/false--positive-gated-2ea043" />
-  <img alt="benchmark precision" src="https://img.shields.io/badge/precision-1.000-f59e0b" />
-  <img alt="benchmark recall" src="https://img.shields.io/badge/recall-1.000-f59e0b" />
+  <img alt="deterministic smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-f59e0b" />
+  <img alt="agent eval" src="https://img.shields.io/badge/agent%20eval-in%20progress-f59e0b" />
 </p>
 
 ## Usage
@@ -37,6 +37,8 @@ Flagship Cairo/Starknet security review skill.
 - `scripts/`: extraction and normalization helpers.
 
 ## Benchmarks
+
+Maintenance: update table values after running `scripts/quality/benchmark_cairo_auditor.py` on both case packs.
 
 | Suite | Cases | Precision | Recall | Scorecard |
 | --- | ---: | ---: | ---: | --- |

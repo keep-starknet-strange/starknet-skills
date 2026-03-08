@@ -39,6 +39,12 @@ jobs:
           python scripts/audit-pipeline/check_unique_ids.py \
             --jsonl datasets/manifests/audits.jsonl \
             --keys audit_id source_url raw_path extracted_path raw_sha256
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/benchmark-case.schema.json \
+            --jsonl evals/cases/cairo_auditor_benchmark.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/benchmark-case.schema.json \
+            --jsonl evals/cases/cairo_auditor_realworld_benchmark.jsonl
 
       - name: Held-out leakage guard
         run: python scripts/audit-pipeline/check_no_heldout_leak.py
@@ -52,7 +58,8 @@ jobs:
           import json
           import sys
 
-          report = json.load(open("/tmp/detect-secrets.json", "r", encoding="utf-8"))
+          with open("/tmp/detect-secrets.json", "r", encoding="utf-8") as handle:
+              report = json.load(handle)
           findings = report.get("results", {})
           finding_count = sum(len(v) for v in findings.values())
           print(f"detect-secrets findings={finding_count}")
@@ -69,6 +76,7 @@ jobs:
           python scripts/quality/benchmark_cairo_auditor.py \
             --cases evals/cases/cairo_auditor_benchmark.jsonl \
             --output "${RUNNER_TEMP}/scorecards/cairo-auditor-benchmark.md" \
+            --version v0.2.0 \
             --min-precision 0.90 \
             --min-recall 0.90
 
@@ -78,6 +86,8 @@ jobs:
           python scripts/quality/benchmark_cairo_auditor.py \
             --cases evals/cases/cairo_auditor_realworld_benchmark.jsonl \
             --output "${RUNNER_TEMP}/scorecards/cairo-auditor-realworld-benchmark.md" \
+            --version v0.2.0 \
+            --title "v0.2.0 Cairo Auditor Real-World Benchmark" \
             --min-precision 0.90 \
             --min-recall 0.90
 

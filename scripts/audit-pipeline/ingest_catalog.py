@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import ipaddress
 import json
 import re
 import shutil
+import socket
 import subprocess
 import urllib.parse
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -169,9 +172,55 @@ def shutil_which(name: str) -> str | None:
     return shutil.which(name)
 
 
+def is_safe_hostname(hostname: str) -> bool:
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        return False
+
+    if not infos:
+        return False
+
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0])
+        except ValueError:
+            return False
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        ):
+            return False
+    return True
+
+
+def validate_https_url(url: str) -> urllib.parse.ParseResult:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https":
+        raise ValueError("source URL must use https")
+    if not parsed.hostname:
+        raise ValueError("source URL missing hostname")
+    if not is_safe_hostname(parsed.hostname):
+        raise ValueError("source URL host resolves to private/reserved address")
+    return parsed
+
+
+class SafeHTTPSRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        validate_https_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def download_pdf(url: str, output_path: Path) -> str:
+    validate_https_url(url)
+    opener = urllib.request.build_opener(SafeHTTPSRedirectHandler())
     request = urllib.request.Request(url=url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=DEFAULT_TIMEOUT_SECONDS) as response:
+    with opener.open(request, timeout=DEFAULT_TIMEOUT_SECONDS) as response:
+        validate_https_url(response.geturl())
         payload = response.read()
     if not payload.startswith(b"%PDF-"):
         raise ValueError("downloaded payload is not a PDF")
@@ -335,10 +384,11 @@ def main() -> int:
             continue
 
         normalized_url = normalize_url(row.source_url)
-        parsed = urllib.parse.urlparse(normalized_url)
-        if parsed.scheme != "https":
+        try:
+            validate_https_url(normalized_url)
+        except ValueError:
             report["result"] = "skipped"
-            report["reason"] = "non_https_source"
+            report["reason"] = "invalid_or_unsafe_source_url"
             report_rows.append(report)
             continue
 
