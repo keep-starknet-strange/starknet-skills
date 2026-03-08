@@ -12,11 +12,14 @@ REQUIRED_SEED_KEYS = {
     "audit_id",
     "project",
     "auditor",
-    "date",
     "source_url",
     "source_type",
     "raw_path",
     "extracted_path",
+    "license",
+    "usage_rights",
+    "redaction_status",
+    "extractor_version",
 }
 
 
@@ -64,9 +67,27 @@ def validate_seed_rows(rows: object) -> list[dict]:
             value = row.get(key)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"seed row {idx} has empty/invalid {key}")
+        date_value = row.get("date")
+        if date_value is not None and (
+            not isinstance(date_value, str) or not date_value.strip()
+        ):
+            raise ValueError(f"seed row {idx} has empty/invalid date")
         if not row["source_url"].startswith("https://"):
             raise ValueError(
                 f"seed row {idx} source_url must use https://: {row['source_url']}"
+            )
+        if row["usage_rights"] not in {
+            "public_redistributable",
+            "public_reference_only",
+            "restricted_no_redistribution",
+            "unknown",
+        }:
+            raise ValueError(
+                f"seed row {idx} invalid usage_rights: {row['usage_rights']}"
+            )
+        if row["redaction_status"] not in {"none", "partial", "required", "unknown"}:
+            raise ValueError(
+                f"seed row {idx} invalid redaction_status: {row['redaction_status']}"
             )
         normalized.append(row)
     return normalized
@@ -108,6 +129,7 @@ def main() -> int:
         rec["extracted_path"] = extracted_path.relative_to(repo_root_resolved).as_posix()
         rec["raw_sha256"] = sha256_file(raw_path)
         rec["extracted_sha256"] = sha256_file(extracted_path)
+        rec["source_sha256"] = rec["raw_sha256"]
         rec["ingested_at"] = now
         generated.append(rec)
 
