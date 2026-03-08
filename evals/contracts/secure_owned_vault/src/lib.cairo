@@ -42,6 +42,7 @@ mod OwnedVault {
 
     #[external(v0)]
     fn split_half(ref self: ContractState, amount: u128) {
+        assert_only_owner(@self);
         let (half, remainder) = DivRem::div_rem(amount, 2);
         self.last_half.write(half);
         self.last_remainder.write(remainder);

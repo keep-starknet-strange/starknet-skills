@@ -1,6 +1,6 @@
 # Contract Skill Benchmark Trend
 
-Generated: 2026-03-08T22:48:21Z
+Generated: 2026-03-08T22:52:36Z
 Scorecard glob: `evals/scorecards/v*-contract-skill-benchmark.md`
 
 ## Policy
@@ -15,5 +15,5 @@ Scorecard glob: `evals/scorecards/v*-contract-skill-benchmark.md`
 
 | Release | Cases | Precision | Recall | Reportable | Scorecard |
 | --- | ---: | ---: | ---: | --- | --- |
-| `v0.4.0` | `24` | `1.000` | `1.000` | `yes` | `evals/scorecards/v0.4.0-contract-skill-benchmark.md` |
+| `v0.4.0` | `26` | `1.000` | `1.000` | `yes` | `evals/scorecards/v0.4.0-contract-skill-benchmark.md` |
 | `v0.3.0` | `2` | `1.000` | `1.000` | `no` | `evals/scorecards/v0.3.0-contract-skill-benchmark.md` |

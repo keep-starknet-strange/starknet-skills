@@ -54,6 +54,7 @@
   - emits scorecard markdown and enforces precision/recall thresholds
   - supports reportable-gate thresholds (`--min-evaluated`, `--enforce-min-evaluated`)
   - defaults to `22` minimum evaluated cases for reportable interpretation
+  - fails on zero evaluated cases unless `--allow-empty-evaluated` is explicitly set
 
 - `render_contract_benchmark_trend.py` builds release trend reporting for contract benchmarks:
   - scans `evals/scorecards/v*-contract-skill-benchmark.md`

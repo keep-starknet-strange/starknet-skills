@@ -129,6 +129,12 @@ def parse_rules(raw_rules: object, line_no: int, field: str) -> list[PatternRule
         for key in ("path", "pattern", "description"):
             if key not in raw_rule or not isinstance(raw_rule[key], str):
                 raise ValueError(f"line {line_no}: {field}[{idx}].{key} must be string")
+        try:
+            re.compile(raw_rule["pattern"])
+        except re.error as exc:
+            raise ValueError(
+                f"line {line_no}: {field}[{idx}].pattern invalid regex: {exc}"
+            ) from exc
         rules.append(
             PatternRule(
                 path=raw_rule["path"],
@@ -149,6 +155,22 @@ def run_command(cmd: list[str], cwd: Path, timeout_seconds: int) -> tuple[bool, 
     )
     output = (proc.stdout or "") + (proc.stderr or "")
     return proc.returncode == 0, output.strip()
+
+
+def resolve_under_root(root: Path, relative_path: str) -> Path | None:
+    candidate = (root / relative_path).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return None
+    return candidate
+
+
+def display_path(path: Path, root: Path) -> Path:
+    try:
+        return path.relative_to(root)
+    except ValueError:
+        return path
 
 
 def execute_fixture(
@@ -232,9 +254,24 @@ def evaluate_case(
     timeout_seconds: int,
     fixture_cache: dict[tuple[str, bool, bool, str], FixtureExecutionResult],
 ) -> CaseResult:
-    fixture = repo_root / case.fixture
+    fixture = resolve_under_root(repo_root, case.fixture)
     notes: list[str] = []
     static_ok = True
+
+    if fixture is None:
+        notes.append(f"fixture_path_escape:{case.fixture}")
+        return CaseResult(
+            case_id=case.case_id,
+            skill_id=case.skill_id,
+            expected_pass=case.expected_pass,
+            predicted_pass=False,
+            outcome=map_outcome(expected_pass=case.expected_pass, predicted_pass=False),
+            build_ok=False,
+            tests_ok=False,
+            static_ok=False,
+            skipped=False,
+            notes=notes,
+        )
 
     if not fixture.is_dir():
         notes.append(f"fixture_missing:{fixture}")
@@ -297,7 +334,10 @@ def run_static_rules(*, case: Case, fixture: Path) -> list[str]:
     errors: list[str] = []
 
     for rule in case.must_match:
-        target = fixture / rule.path
+        target = resolve_under_root(fixture, rule.path)
+        if target is None:
+            errors.append(f"must_match_path_escape:{rule.path}:{rule.description}")
+            continue
         if not target.is_file():
             errors.append(f"must_match_file_missing:{rule.path}:{rule.description}")
             continue
@@ -306,7 +346,10 @@ def run_static_rules(*, case: Case, fixture: Path) -> list[str]:
             errors.append(f"must_match_failed:{rule.path}:{rule.description}")
 
     for rule in case.must_not_match:
-        target = fixture / rule.path
+        target = resolve_under_root(fixture, rule.path)
+        if target is None:
+            errors.append(f"must_not_match_path_escape:{rule.path}:{rule.description}")
+            continue
         if not target.is_file():
             errors.append(f"must_not_match_file_missing:{rule.path}:{rule.description}")
             continue
@@ -468,6 +511,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Fail if evaluated cases are below --min-evaluated",
     )
+    parser.add_argument(
+        "--allow-empty-evaluated",
+        action="store_true",
+        help="Allow zero evaluated cases (all skipped) to pass with a warning",
+    )
     return parser.parse_args()
 
 
@@ -504,7 +552,7 @@ def main() -> int:
         title=args.title,
         version=args.version,
         generated_at=generated_at,
-        cases_path=cases_path.relative_to(repo_root),
+        cases_path=display_path(cases_path, repo_root),
         results=results,
         totals=totals,
         evaluated=evaluated,
@@ -520,12 +568,11 @@ def main() -> int:
     output_path.write_text(markdown, encoding="utf-8")
 
     if evaluated == 0:
-        message = "FAIL: no evaluated cases (all skipped)"
-        if args.enforce_min_evaluated:
-            print(f"{message}; min_evaluated gate is enforced")
-            return 1
-        print(f"WARNING: {message}; benchmark is non-reportable")
-        return 0
+        if args.allow_empty_evaluated:
+            print("WARNING: no evaluated cases (all skipped); allowed by --allow-empty-evaluated")
+            return 0
+        print("FAIL: no evaluated cases (all skipped)")
+        return 1
 
     if prec < args.min_precision or rec < args.min_recall:
         print(
@@ -562,6 +609,6 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except RuntimeError as exc:
+    except Exception as exc:
         print(f"FAIL: {exc}")
         sys.exit(2)

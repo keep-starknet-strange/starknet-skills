@@ -96,13 +96,16 @@ def _find_float(pattern: str, text: str) -> float | None:
     return float(match.group(1)) if match else None
 
 
-def pick_latest_scorecards(scorecard_dir: Path) -> tuple[ScorecardMetrics | None, ScorecardMetrics | None]:
+def pick_latest_scorecards(
+    scorecard_dir: Path,
+) -> tuple[ScorecardMetrics | None, ScorecardMetrics | None, ScorecardMetrics | None]:
     files = [p for p in scorecard_dir.glob("v*.md") if p.is_file()]
     if not files:
-        return None, None
+        return None, None, None
 
-    real_world = [p for p in files if "realworld" in p.name]
-    deterministic = [p for p in files if "benchmark" in p.name and "realworld" not in p.name]
+    real_world = [p for p in files if "cairo-auditor-realworld-benchmark" in p.name]
+    deterministic = [p for p in files if "cairo-auditor-benchmark" in p.name and "realworld" not in p.name]
+    contract_skill = [p for p in files if "contract-skill-benchmark" in p.name]
 
     def _pick(candidates: list[Path]) -> ScorecardMetrics | None:
         if not candidates:
@@ -110,7 +113,7 @@ def pick_latest_scorecards(scorecard_dir: Path) -> tuple[ScorecardMetrics | None
         chosen = max(candidates, key=lambda item: (parse_version(item), item.name))
         return parse_scorecard(chosen)
 
-    return _pick(deterministic), _pick(real_world)
+    return _pick(deterministic), _pick(contract_skill), _pick(real_world)
 
 
 def parse_card_sections(markdown_text: str) -> dict[str, str]:
@@ -275,7 +278,9 @@ def build_dataset(root: Path, repo_slug: str, repo_ref: str) -> dict:
             )
         )
 
-    deterministic_scorecard, realworld_scorecard = pick_latest_scorecards(scorecards_dir)
+    deterministic_scorecard, contract_skill_scorecard, realworld_scorecard = pick_latest_scorecards(
+        scorecards_dir
+    )
     source_fingerprint = fingerprint_files(
         root,
         [
@@ -305,6 +310,7 @@ def build_dataset(root: Path, repo_slug: str, repo_ref: str) -> dict:
         },
         "latest_scorecards": {
             "deterministic": scorecard_to_dict(deterministic_scorecard, root, repo_github, repo_ref),
+            "contract_skill": scorecard_to_dict(contract_skill_scorecard, root, repo_github, repo_ref),
             "realworld": scorecard_to_dict(realworld_scorecard, root, repo_github, repo_ref),
         },
         "modules": [
