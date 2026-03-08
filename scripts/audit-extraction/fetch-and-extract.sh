@@ -47,8 +47,10 @@ extract_text() {
   fi
 
   if command -v mutool >/dev/null 2>&1; then
-    mutool draw -F txt -o "$txt_path" "$pdf_path" >/dev/null
-    return 0
+    if mutool draw -F txt -o "$txt_path" "$pdf_path" >/dev/null; then
+      return 0
+    fi
+    return 1
   fi
 
   echo "ERROR: neither pdftotext nor mutool is available." >&2

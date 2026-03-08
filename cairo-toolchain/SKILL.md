@@ -34,17 +34,13 @@ Reference for deploying Cairo smart contracts to Starknet using sncast (Starknet
 asdf plugin add starknet-foundry
 asdf install starknet-foundry 0.56.0
 asdf global starknet-foundry 0.56.0
-
-# Or install directly
-curl -L https://raw.githubusercontent.com/foundry-rs/starknet-foundry/master/scripts/install.sh | sh
-snfoundryup
 ```
 
 ### .tool-versions
 
 Pin versions for reproducible builds:
 
-```
+```text
 scarb 2.15.1
 starknet-foundry 0.56.0
 ```
@@ -82,12 +78,14 @@ sncast account deploy \
 
 ### Import Existing Account
 
+> ⚠️ Never hard-code a real private key in shell history or scripts. Use an environment variable or keystore-backed flow.
+
 ```bash
 sncast account add \
     --url https://starknet-sepolia.g.alchemy.com/v2/YOUR_KEY \
     --name my-deployer \
     --address 0x123... \
-    --private-key 0xabc... \
+    --private-key "$DEPLOYER_PRIVATE_KEY" \
     --type oz
 ```
 
