@@ -12,7 +12,7 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
-from urllib.parse import quote_plus
+from urllib.parse import quote
 
 DEFAULT_REPO_SLUG = "keep-starknet-strange/starknet-skills"
 DEFAULT_REPO_REF = "main"
@@ -381,7 +381,7 @@ def severity_badges(counter: dict[str, int]) -> str:
 def source_finding_links(ids: Iterable[str], repo_github: str) -> str:
     output: list[str] = []
     for item_id in ids:
-        encoded_id = quote_plus(item_id)
+        encoded_id = quote(item_id, safe="")
         output.append(
             (
                 '<a class="finding-link" '
