@@ -20,6 +20,7 @@ mod InsecureUpgrade {
     }
 
     #[external(v0)]
+    // Intentionally insecure: no owner/timelock/non-zero class-hash guards.
     fn upgrade_now(ref self: ContractState, new_class_hash: felt252) {
         self.active_class_hash.write(new_class_hash);
     }
