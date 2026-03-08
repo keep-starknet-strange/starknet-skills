@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-MIN_REPORTABLE_CASES = 10
+MIN_REPORTABLE_CASES = 20
 
 
 @dataclass
@@ -45,6 +45,14 @@ class CaseResult:
     build_ok: bool
     tests_ok: bool
     static_ok: bool
+    skipped: bool
+    notes: list[str]
+
+
+@dataclass
+class FixtureExecutionResult:
+    build_ok: bool
+    tests_ok: bool
     skipped: bool
     notes: list[str]
 
@@ -143,38 +151,30 @@ def run_command(cmd: list[str], cwd: Path, timeout_seconds: int) -> tuple[bool, 
     return proc.returncode == 0, output.strip()
 
 
-def evaluate_case(
+def execute_fixture(
     case: Case,
     *,
-    repo_root: Path,
+    fixture: Path,
     have_scarb: bool,
     have_snforge: bool,
     require_tools: bool,
     timeout_seconds: int,
-) -> CaseResult:
-    fixture = repo_root / case.fixture
-    notes: list[str] = []
+    cache: dict[tuple[str, bool, bool, str], FixtureExecutionResult],
+) -> FixtureExecutionResult:
+    cache_key = (case.fixture, case.run_build, case.run_tests, case.test_filter or "")
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return FixtureExecutionResult(
+            build_ok=cached.build_ok,
+            tests_ok=cached.tests_ok,
+            skipped=cached.skipped,
+            notes=list(cached.notes),
+        )
 
+    notes: list[str] = []
+    skipped = False
     build_ok = True
     tests_ok = True
-    static_ok = True
-
-    skipped = False
-
-    if not fixture.is_dir():
-        notes.append(f"fixture_missing:{fixture}")
-        return CaseResult(
-            case_id=case.case_id,
-            skill_id=case.skill_id,
-            expected_pass=case.expected_pass,
-            predicted_pass=False,
-            outcome=map_outcome(expected_pass=case.expected_pass, predicted_pass=False),
-            build_ok=False,
-            tests_ok=False,
-            static_ok=False,
-            skipped=False,
-            notes=notes,
-        )
 
     if case.run_build and not have_scarb:
         notes.append("missing_tool:scarb")
@@ -185,10 +185,10 @@ def evaluate_case(
         skipped = True
 
     if skipped and require_tools:
-        raise RuntimeError(
-            f"required tools missing for {case.case_id}: "
-            f"{', '.join(note.split(':', 1)[1] for note in notes if note.startswith('missing_tool:'))}"
+        missing = ", ".join(
+            note.split(":", 1)[1] for note in notes if note.startswith("missing_tool:")
         )
+        raise RuntimeError(f"required tools missing for fixture {case.fixture}: {missing}")
 
     if case.run_build and not skipped:
         build_ok, build_log = run_command(["scarb", "build"], fixture, timeout_seconds)
@@ -207,13 +207,77 @@ def evaluate_case(
             tests_ok = False
             notes.append("snforge_skipped:build_failed")
 
+    result = FixtureExecutionResult(
+        build_ok=build_ok,
+        tests_ok=tests_ok,
+        skipped=skipped,
+        notes=notes,
+    )
+    cache[cache_key] = result
+    return FixtureExecutionResult(
+        build_ok=result.build_ok,
+        tests_ok=result.tests_ok,
+        skipped=result.skipped,
+        notes=list(result.notes),
+    )
+
+
+def evaluate_case(
+    case: Case,
+    *,
+    repo_root: Path,
+    have_scarb: bool,
+    have_snforge: bool,
+    require_tools: bool,
+    timeout_seconds: int,
+    fixture_cache: dict[tuple[str, bool, bool, str], FixtureExecutionResult],
+) -> CaseResult:
+    fixture = repo_root / case.fixture
+    notes: list[str] = []
+    static_ok = True
+
+    if not fixture.is_dir():
+        notes.append(f"fixture_missing:{fixture}")
+        return CaseResult(
+            case_id=case.case_id,
+            skill_id=case.skill_id,
+            expected_pass=case.expected_pass,
+            predicted_pass=False,
+            outcome=map_outcome(expected_pass=case.expected_pass, predicted_pass=False),
+            build_ok=False,
+            tests_ok=False,
+            static_ok=False,
+            skipped=False,
+            notes=notes,
+        )
+
+    fixture_exec = execute_fixture(
+        case,
+        fixture=fixture,
+        have_scarb=have_scarb,
+        have_snforge=have_snforge,
+        require_tools=require_tools,
+        timeout_seconds=timeout_seconds,
+        cache=fixture_cache,
+    )
+    notes.extend(fixture_exec.notes)
+
     static_errors = run_static_rules(case=case, fixture=fixture)
     if static_errors:
         static_ok = False
         notes.extend(static_errors)
 
-    predicted_pass = (not skipped) and build_ok and tests_ok and static_ok
-    outcome = "skip" if skipped else map_outcome(expected_pass=case.expected_pass, predicted_pass=predicted_pass)
+    predicted_pass = (
+        (not fixture_exec.skipped)
+        and fixture_exec.build_ok
+        and fixture_exec.tests_ok
+        and static_ok
+    )
+    outcome = (
+        "skip"
+        if fixture_exec.skipped
+        else map_outcome(expected_pass=case.expected_pass, predicted_pass=predicted_pass)
+    )
 
     return CaseResult(
         case_id=case.case_id,
@@ -221,10 +285,10 @@ def evaluate_case(
         expected_pass=case.expected_pass,
         predicted_pass=predicted_pass,
         outcome=outcome,
-        build_ok=build_ok,
-        tests_ok=tests_ok,
+        build_ok=fixture_exec.build_ok,
+        tests_ok=fixture_exec.tests_ok,
         static_ok=static_ok,
-        skipped=skipped,
+        skipped=fixture_exec.skipped,
         notes=notes,
     )
 
@@ -393,6 +457,17 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Fail if required Cairo tools are unavailable",
     )
+    parser.add_argument(
+        "--min-evaluated",
+        type=int,
+        default=MIN_REPORTABLE_CASES,
+        help="Minimum evaluated cases for reportable benchmark interpretation",
+    )
+    parser.add_argument(
+        "--enforce-min-evaluated",
+        action="store_true",
+        help="Fail if evaluated cases are below --min-evaluated",
+    )
     return parser.parse_args()
 
 
@@ -409,6 +484,7 @@ def main() -> int:
     have_snforge = shutil.which("snforge") is not None
 
     results: list[CaseResult] = []
+    fixture_cache: dict[tuple[str, bool, bool, str], FixtureExecutionResult] = {}
     for case in cases:
         result = evaluate_case(
             case,
@@ -417,6 +493,7 @@ def main() -> int:
             have_snforge=have_snforge,
             require_tools=args.require_tools,
             timeout_seconds=args.timeout_seconds,
+            fixture_cache=fixture_cache,
         )
         results.append(result)
 
@@ -436,7 +513,7 @@ def main() -> int:
         recall=rec,
         have_scarb=have_scarb,
         have_snforge=have_snforge,
-        min_reportable_cases=MIN_REPORTABLE_CASES,
+        min_reportable_cases=args.min_evaluated,
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -454,16 +531,27 @@ def main() -> int:
         )
         return 1
 
-    if evaluated < MIN_REPORTABLE_CASES:
+    if args.enforce_min_evaluated and evaluated < args.min_evaluated:
+        print(
+            "FAIL: reportable threshold not met "
+            f"(evaluated={evaluated}, min_evaluated={args.min_evaluated})"
+        )
+        return 1
+
+    if evaluated < args.min_evaluated:
         print(
             "NOTE: benchmark passed but sample is smoke-only "
-            f"(evaluated={evaluated}, recommended_min={MIN_REPORTABLE_CASES})."
+            f"(evaluated={evaluated}, recommended_min={args.min_evaluated})."
         )
-
-    print(
-        "PASS: contract smoke gate met "
-        f"(precision={prec:.4f}, recall={rec:.4f}, evaluated={evaluated}, skipped={skipped})"
-    )
+        print(
+            "PASS: contract smoke gate met "
+            f"(precision={prec:.4f}, recall={rec:.4f}, evaluated={evaluated}, skipped={skipped})"
+        )
+    else:
+        print(
+            "PASS: contract reportable gate met "
+            f"(precision={prec:.4f}, recall={rec:.4f}, evaluated={evaluated}, skipped={skipped})"
+        )
     return 0
 
 

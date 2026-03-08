@@ -12,9 +12,9 @@
   },
   "latest_scorecards": {
     "deterministic": {
-      "cases": 2,
-      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.3.0-contract-skill-benchmark.md",
-      "path": "evals/scorecards/v0.3.0-contract-skill-benchmark.md",
+      "cases": 24,
+      "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.4.0-contract-skill-benchmark.md",
+      "path": "evals/scorecards/v0.4.0-contract-skill-benchmark.md",
       "precision": 1.0,
       "recall": 1.0
     },
@@ -99,7 +99,7 @@
       "skill_path": "starknet-network-facts/SKILL.md"
     }
   ],
-  "source_fingerprint": "1170b28bd3b93594",
+  "source_fingerprint": "2010b520c5afdc87",
   "vuln_cards": [
     {
       "detection_rule": "If both inferred and forced-mode paths exist, assert forced-mode check dominates all early returns.",

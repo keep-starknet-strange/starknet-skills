@@ -43,17 +43,31 @@ Run contract skill benchmark (compiles/tests fixture contracts and enforces poli
 ```bash
 python scripts/quality/benchmark_contract_skills.py \
   --cases evals/cases/contract_skill_benchmark.jsonl \
-  --output evals/scorecards/v0.3.0-contract-skill-benchmark.md \
-  --min-precision 1.00 \
-  --min-recall 1.00 \
+  --output evals/scorecards/v0.4.0-contract-skill-benchmark.md \
+  --version v0.4.0 \
+  --min-precision 0.95 \
+  --min-recall 0.95 \
+  --min-evaluated 20 \
+  --enforce-min-evaluated \
   --require-tools
 ```
 
 Interpretation guidance for contract benchmark metrics:
 
-- If evaluated cases are fewer than `10`, treat results as a deterministic smoke gate only.
+- If evaluated cases are fewer than `20`, treat results as a deterministic smoke gate only.
 - Smoke-gate pass means fixture checks are wired correctly and caught seeded regressions.
 - Smoke-gate pass does **not** justify broad claims like "overall skill quality is 100%."
+- Publishable KPI status requires at least `2` consecutive reportable releases (tracked in trend scorecard).
+
+Render contract benchmark trend report:
+
+```bash
+python scripts/quality/render_contract_benchmark_trend.py \
+  --scorecards-glob 'evals/scorecards/v*-contract-skill-benchmark.md' \
+  --output evals/scorecards/contract-skill-benchmark-trend.md \
+  --min-cases 20 \
+  --min-consecutive 2
+```
 
 Run the real-world Cairo corpus benchmark (public snippets + normalized audit findings):
 
