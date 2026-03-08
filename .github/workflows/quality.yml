@@ -50,6 +50,9 @@ jobs:
           python scripts/audit-pipeline/validate_jsonl.py \
             --schema datasets/manifests/audit-manifest.schema.json \
             --jsonl datasets/manifests/audits.jsonl
+          python scripts/audit-pipeline/check_unique_ids.py \
+            --jsonl datasets/manifests/audits.jsonl \
+            --keys audit_id source_url raw_path extracted_path
 
       - name: Segment smoke tests
         run: |
@@ -89,7 +92,11 @@ jobs:
               "source_url": "https://example.com/smoke.pdf",
               "source_type": "direct_pdf",
               "raw_path": "datasets/audits/raw/smoke_ci.pdf",
-              "extracted_path": "datasets/audits/extracted/smoke_ci.txt"
+              "extracted_path": "datasets/audits/extracted/smoke_ci.txt",
+              "license": "unknown",
+              "usage_rights": "public_reference_only",
+              "redaction_status": "none",
+              "extractor_version": "quality-smoke@v1"
             }
           ]
           EOF

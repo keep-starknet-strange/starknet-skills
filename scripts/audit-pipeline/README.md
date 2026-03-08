@@ -12,6 +12,27 @@ python3 scripts/audit-pipeline/generate_manifest.py \
   --output datasets/manifests/audits.jsonl
 ```
 
+Seed rows require provenance rights fields:
+
+- `license`
+- `usage_rights`
+- `redaction_status`
+- `extractor_version`
+
+## 0) Ingest from a catalog list (wave imports)
+
+```bash
+python3 scripts/audit-pipeline/ingest_catalog.py \
+  --catalog datasets/manifests/audit_catalog.json \
+  --seed-out datasets/manifests/audit_metadata.seed.json \
+  --report-out datasets/manifests/audit_ingest_report.jsonl
+```
+
+Notes:
+
+- Only rows marked audited are attempted.
+- Unsupported sources (e.g., HTML index pages, Drive links) are recorded in the report with explicit skip reasons.
+
 ## 2) Segment extracted text
 
 ```bash
