@@ -20,14 +20,14 @@ DOMAIN_PATTERN = re.compile(r"(?=.{1,253}\Z)(?!-)(?:[A-Za-z0-9-]{1,63}\.)+[A-Za-
 REPO_SLUG_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 
 MODULES: list[tuple[str, str]] = [
-    ("cairo-auditor", "Deterministic + workflow-guided security review"),
-    ("cairo-contract-authoring", "Safe implementation patterns"),
-    ("cairo-testing", "Unit/integration/invariant strategy"),
-    ("cairo-optimization", "Performance/resource hardening"),
-    ("cairo-toolchain", "Build/declare/deploy/verify ops"),
-    ("account-abstraction", "Account/session-key threat patterns"),
-    ("starknet-network-facts", "Chain semantics and constraints"),
-    ("openzeppelin-cairo", "OZ Cairo composition footguns"),
+    ("cairo-auditor", "Audit workflow for Cairo contracts"),
+    ("cairo-contract-authoring", "Contract implementation patterns"),
+    ("cairo-testing", "Unit, integration, and invariant testing"),
+    ("cairo-optimization", "Performance and resource usage"),
+    ("cairo-toolchain", "Build, declare, deploy, and verify"),
+    ("account-abstraction", "Accounts, sessions, and threat patterns"),
+    ("starknet-network-facts", "Network semantics and constraints"),
+    ("openzeppelin-cairo", "OpenZeppelin Cairo notes and footguns"),
 ]
 
 
@@ -418,8 +418,8 @@ def build_index_html(data: dict, domain: str | None) -> str:
     if scorecard:
         scorecard_block = (
             '<aside class="scorecard panel-soft">'
-            '<p class="eyebrow">Latest benchmark</p>'
-            '<h3>cairo-auditor performance gate</h3>'
+            '<p class="eyebrow">Latest scorecard</p>'
+            '<h3>cairo-auditor</h3>'
             '<div class="scorecard-grid">'
             f'<div><span>Cases</span><strong>{e(scorecard.get("cases", "n/a"))}</strong></div>'
             f'<div><span>Precision</span><strong>{e(scorecard.get("precision", "n/a"))}</strong></div>'
@@ -440,8 +440,8 @@ def build_index_html(data: dict, domain: str | None) -> str:
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Starkskills | Cairo Security Skills for AI Agents</title>
-  <meta name="description" content="Production-grade Cairo security knowledge for AI agents, backed by manifest-tracked Starknet audit data." />
+  <title>Starkskills | Starknet Skills</title>
+  <meta name="description" content="Starknet and Cairo skills, audit data, and reference links." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
@@ -464,13 +464,14 @@ def build_index_html(data: dict, domain: str | None) -> str:
     <section class="hero panel reveal">
       <div class="hero-chips">
         <span class="chip">Starknet Skills</span>
-        <span class="chip chip-soft">Flagship: cairo-auditor</span>
+        <span class="chip chip-soft">cairo-auditor</span>
         {domain_note}
       </div>
-      <h1>Production-grade Cairo security knowledge for AI agents.</h1>
+      <h1>Starknet skills for agents.</h1>
       <p class="hero-subtitle">
-        Backed by <strong>{fmt_int(counts['cataloged_audits'])}</strong> manifest-cataloged audits and
-        <strong>{fmt_int(counts['normalized_findings'])}</strong> normalized findings.
+        <strong>{fmt_int(counts['cataloged_audits'])}</strong> audits,
+        <strong>{fmt_int(counts['normalized_findings'])}</strong> findings,
+        <strong>{fmt_int(counts['skills_total_with_router'])}</strong> skills.
       </p>
       <div class="hero-metrics">
         <article>
@@ -482,18 +483,18 @@ def build_index_html(data: dict, domain: str | None) -> str:
           <strong>{fmt_int(counts['normalized_findings'])}</strong>
         </article>
         <article>
-          <span>Skill Modules</span>
+          <span>Skills</span>
           <strong>{fmt_int(counts['skills_total_with_router'])}</strong>
         </article>
       </div>
       <div class="install-grid">
         <article class="install-card">
-          <h2>Claude marketplace</h2>
+          <h2>Claude</h2>
           <pre><code>/plugin marketplace add keep-starknet-strange/starknet-skills
 /plugin menu</code></pre>
         </article>
         <article class="install-card">
-          <h2>Raw router URL</h2>
+          <h2>Raw URL</h2>
           <pre><code>{e(links['router_skill_raw'])}</code></pre>
         </article>
         <article class="install-card">
@@ -505,15 +506,14 @@ def build_index_html(data: dict, domain: str | None) -> str:
 
     <section class="section panel reveal">
       <div class="section-head">
-        <h2>Flagship Workflow: cairo-auditor</h2>
+        <h2>cairo-auditor</h2>
         <a href="{e(links['cairo_auditor'])}" target="_blank" rel="noreferrer">Open SKILL.md</a>
       </div>
       <div class="flagship-layout{" flagship-layout--no-scorecard" if not scorecard else ""}">
         <div>
           <p>
-            A deterministic security review workflow for Cairo contracts: discover in-scope files,
-            run targeted scans, verify candidates behind false-positive gates, and report
-            prioritized fixes with regression tests.
+            Audit workflow for Cairo contracts: discover in-scope files, scan patterns,
+            verify findings, and write the report.
           </p>
           <ul class="workflow">
             <li>discover</li>
@@ -528,7 +528,7 @@ def build_index_html(data: dict, domain: str | None) -> str:
 
     <section class="section reveal">
       <div class="section-head">
-        <h2>Skill Modules</h2>
+        <h2>Modules</h2>
         <a href="{e(links['router_skill_github'])}" target="_blank" rel="noreferrer">Router</a>
       </div>
       <div class="module-grid">
@@ -538,23 +538,23 @@ def build_index_html(data: dict, domain: str | None) -> str:
 
     <section class="section panel reveal">
       <div class="section-head">
-        <h2>Audit Data Pipeline</h2>
-        <a href="{e(links['pipeline_readme'])}" target="_blank" rel="noreferrer">Pipeline docs</a>
+        <h2>Data</h2>
+        <a href="{e(links['pipeline_readme'])}" target="_blank" rel="noreferrer">Pipeline</a>
       </div>
       <div class="pipeline-grid">
-        <article><h3>ingest</h3><p>{fmt_int(counts['cataloged_audits'])} audits cataloged from manifests.</p></article>
-        <article><h3>segment</h3><p>{fmt_int(counts['segmented_audits'])} segmented text corpora.</p></article>
-        <article><h3>normalize</h3><p>{fmt_int(counts['normalized_audits'])} normalized audits and {fmt_int(counts['normalized_findings'])} findings.</p></article>
+        <article><h3>ingest</h3><p>{fmt_int(counts['cataloged_audits'])} audits from manifests.</p></article>
+        <article><h3>segment</h3><p>{fmt_int(counts['segmented_audits'])} segmented corpora.</p></article>
+        <article><h3>normalize</h3><p>{fmt_int(counts['normalized_audits'])} audits and {fmt_int(counts['normalized_findings'])} findings.</p></article>
         <article><h3>distill</h3><p>{fmt_int(counts['distilled_vuln_cards'])} vuln cards, {fmt_int(counts['distilled_fix_patterns'])} fix patterns, {fmt_int(counts['distilled_test_recipes'])} test recipes.</p></article>
-        <article><h3>skillize</h3><p>{fmt_int(counts['skills_total_with_router'])} skills ready for agent routing.</p></article>
+        <article><h3>skillize</h3><p>{fmt_int(counts['skills_total_with_router'])} skills.</p></article>
       </div>
       <p class="pipeline-footnote">Counts are generated from repository data at build time.</p>
     </section>
 
     <section class="section panel trust reveal">
       <div class="section-head">
-        <h2>Trust & Verification</h2>
-        <a href="vuln-cards/">Browse vuln cards</a>
+        <h2>Links</h2>
+        <a href="vuln-cards/">Vuln cards</a>
       </div>
       <ul>
         <li><a href="{e(links['quality_workflow'])}" target="_blank" rel="noreferrer">Quality gate CI</a></li>
@@ -600,8 +600,8 @@ def build_vuln_cards_html(data: dict) -> str:
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Starkskills | Vulnerability Cards</title>
-  <meta name="description" content="Browsable vulnerability cards distilled from Starknet audit findings." />
+  <title>Starkskills | Vuln Cards</title>
+  <meta name="description" content="Vulnerability cards distilled from Starknet audit findings." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
@@ -621,8 +621,8 @@ def build_vuln_cards_html(data: dict) -> str:
 
   <main class="shell">
     <section class="subpage-hero panel reveal">
-      <a class="back-link" href="../">← Back to landing page</a>
-      <h1>Vulnerability Card Browser</h1>
+      <a class="back-link" href="../">← Back</a>
+      <h1>Vuln Cards</h1>
       <p>Distilled classes from <strong>{fmt_int(data['counts']['normalized_findings'])}</strong> normalized findings.</p>
       <div class="hero-metrics">
         <article>
@@ -642,7 +642,7 @@ def build_vuln_cards_html(data: dict) -> str:
 
     <section class="section panel reveal">
       <div class="section-head">
-        <h2>Card Index</h2>
+        <h2>Index</h2>
         <a href="{e(data['links']['vuln_cards_dir'])}" target="_blank" rel="noreferrer">Open repo directory</a>
       </div>
       <div class="vuln-grid">
