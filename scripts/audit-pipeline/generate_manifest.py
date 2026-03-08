@@ -64,6 +64,10 @@ def validate_seed_rows(rows: object) -> list[dict]:
             value = row.get(key)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"seed row {idx} has empty/invalid {key}")
+        if not row["source_url"].startswith("https://"):
+            raise ValueError(
+                f"seed row {idx} source_url must use https://: {row['source_url']}"
+            )
         normalized.append(row)
     return normalized
 

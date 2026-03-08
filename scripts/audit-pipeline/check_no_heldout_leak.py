@@ -20,7 +20,10 @@ def load_blocked_audit_ids(repo_root: Path) -> set[str]:
 
 
 def check_json_file(path: Path, blocked: set[str]) -> list[str]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [f"{path}: invalid json: {exc.msg}"]
     if not isinstance(data, dict):
         return [f"{path}: expected JSON object"]
     findings = []

@@ -10,7 +10,20 @@ from pathlib import Path
 
 NUMERIC_HEADING = re.compile(r"^\s*(\d+(?:\.\d+)+)\s+(.+?)\s*$")
 ID_HEADING = re.compile(r"^\s*([A-Z]{1,3}-\d{2,})\s+(.+?)\s*$")
-WATERMARK_TOKENS = {"V.", "Er", "im", "by", "Rev", "ev", "ie", "w", "R", "iew"}
+DETAIL_MARKERS = (
+    "File(s):",
+    "File:",
+    "Contract:",
+    "Location:",
+    "Affected",
+    "Description:",
+    "Recommendation:",
+    "Impact:",
+)
+# Keep watermark stripping scoped to known noisy report styles only.
+AUDIT_WATERMARK_TOKENS = {
+    "erim_nostra_pools_2024_01": {"V.", "Er", "im", "Rev", "ev", "ie", "iew"},
+}
 
 
 @dataclass
@@ -100,7 +113,8 @@ def is_low_signal(seg: dict) -> bool:
     if "tests output" in title or "compilation output" in title:
         return True
     if ID_HEADING.match(f"{seg['heading_key']} x"):
-        if "File(s):" not in seg["content"] and seg["start_page"] <= 5:
+        has_detail = any(marker in seg["content"] for marker in DETAIL_MARKERS)
+        if not has_detail and seg["start_page"] <= 5:
             return True
     return False
 
@@ -118,13 +132,12 @@ def load_blocked_audit_ids(repo_root: Path) -> set[str]:
     return blocked
 
 
-def clean_layout_noise(content: str) -> str:
+def clean_layout_noise(content: str, audit_id: str) -> str:
+    watermark_tokens = AUDIT_WATERMARK_TOKENS.get(audit_id, set())
     cleaned_lines: list[str] = []
     for raw in content.splitlines():
         line = raw.strip()
-        if line in WATERMARK_TOKENS:
-            continue
-        if re.fullmatch(r"[A-Za-z]", line):
+        if line in watermark_tokens:
             continue
         cleaned_lines.append(raw.rstrip())
     return re.sub(r"\n{3,}", "\n\n", "\n".join(cleaned_lines)).strip()
@@ -154,7 +167,7 @@ def main() -> int:
                 continue
             if is_low_signal(seg):
                 continue
-            seg["content"] = clean_layout_noise(seg["content"])
+            seg["content"] = clean_layout_noise(seg["content"], args.audit_id)
             if not seg["content"]:
                 continue
             idx += 1
