@@ -101,6 +101,7 @@ def parse_model_json(text: str) -> dict:
 
 def run_single_case(
     *,
+    api_url: str,
     api_key: str,
     model: str,
     case: EvalCase,
@@ -118,7 +119,7 @@ def run_single_case(
     last_err = ""
     for attempt in range(retries + 1):
         request = urllib.request.Request(
-            url="https://api.openai.com/v1/chat/completions",
+            url=api_url,
             data=body,
             headers={
                 "Content-Type": "application/json",
@@ -234,16 +235,24 @@ def main() -> int:
     parser.add_argument("--cases", required=True)
     parser.add_argument("--output-json", required=True)
     parser.add_argument("--output-md", required=True)
-    parser.add_argument("--model", default="gpt-4.1-mini")
+    parser.add_argument("--model", default="openai/gpt-4o")
+    parser.add_argument("--api-url", default="https://models.github.ai/inference/chat/completions")
+    parser.add_argument("--auth-env", default="GITHUB_TOKEN")
     parser.add_argument("--min-precision", type=float, default=0.75)
     parser.add_argument("--min-recall", type=float, default=0.75)
     parser.add_argument("--timeout-seconds", type=int, default=45)
     parser.add_argument("--retries", type=int, default=1)
     args = parser.parse_args()
 
-    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    api_key = os.environ.get(args.auth_env, "").strip()
+    if not api_key and args.auth_env != "OPENAI_API_KEY":
+        # Backward-compatible local fallback.
+        api_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is required for LLM eval")
+        raise RuntimeError(
+            f"{args.auth_env} is required for LLM eval "
+            "(or OPENAI_API_KEY for compatibility fallback)"
+        )
 
     cases_path = Path(args.cases)
     out_json = Path(args.output_json)
@@ -255,6 +264,7 @@ def main() -> int:
 
     for case in cases:
         row = run_single_case(
+            api_url=args.api_url,
             api_key=api_key,
             model=args.model,
             case=case,

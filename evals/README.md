@@ -21,7 +21,7 @@ For changes affecting security detection behavior:
 
 - Per-PR (`quality.yml`): schema validation, manifest uniqueness checks, and held-out leakage policy checks.
 - Full tier (`full-evals.yml`): parity checks + held-out leakage guard + deterministic benchmarks; run on schedule, workflow-dispatch, or pull requests labeled `full-evals`.
-- LLM held-out tier (`full-evals.yml`, conditional): runs only when `OPENAI_API_KEY` is configured in repo secrets and enforces precision/recall gates on a separate held-out case pack.
+- LLM held-out tier (`full-evals.yml`): runs with GitHub Models via `GITHUB_TOKEN` and `permissions: models: read`, enforcing precision/recall gates on a separate held-out case pack.
 
 ## Benchmark Runner
 
@@ -45,14 +45,14 @@ python scripts/quality/benchmark_cairo_auditor.py \
   --min-recall 0.90
 ```
 
-Run LLM held-out eval (requires `OPENAI_API_KEY`):
+Run LLM held-out eval (GitHub Models + `GITHUB_TOKEN`):
 
 ```bash
-OPENAI_API_KEY=... python scripts/quality/run_llm_eval.py \
+GITHUB_TOKEN=... python scripts/quality/run_llm_eval.py \
   --cases evals/heldout/cairo_auditor_llm_eval_cases.jsonl \
   --output-json evals/scorecards/v0.2.0-cairo-auditor-llm-heldout.json \
   --output-md evals/scorecards/v0.2.0-cairo-auditor-llm-heldout.md \
-  --model gpt-4.1-mini \
+  --model openai/gpt-4o \
   --min-precision 0.75 \
   --min-recall 0.75
 ```

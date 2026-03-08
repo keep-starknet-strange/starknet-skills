@@ -14,6 +14,7 @@ jobs:
   full-evals:
     permissions:
       contents: read
+      models: read
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'full-evals')
     runs-on: ubuntu-latest
     steps:
@@ -102,21 +103,16 @@ jobs:
             --min-precision 0.90 \
             --min-recall 0.90
 
-      - name: LLM held-out eval (skipped: no OPENAI_API_KEY)
-        if: ${{ secrets.OPENAI_API_KEY == '' }}
-        run: echo "Skipping LLM held-out eval because OPENAI_API_KEY is not configured."
-
       - name: LLM held-out eval
-        if: ${{ secrets.OPENAI_API_KEY != '' }}
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           mkdir -p "${RUNNER_TEMP}/scorecards"
           python scripts/quality/run_llm_eval.py \
             --cases evals/heldout/cairo_auditor_llm_eval_cases.jsonl \
             --output-json "${RUNNER_TEMP}/scorecards/cairo-auditor-llm-heldout.json" \
             --output-md "${RUNNER_TEMP}/scorecards/cairo-auditor-llm-heldout.md" \
-            --model gpt-4.1-mini \
+            --model openai/gpt-4o \
             --min-precision 0.75 \
             --min-recall 0.75
 
