@@ -58,6 +58,10 @@ Notes:
 ## 3) Validate normalized records
 
 ```bash
+python3 scripts/audit-pipeline/validate_json.py \
+  --schema datasets/normalized/audit.schema.json \
+  --glob 'datasets/normalized/audits/*.json'
+
 python3 scripts/audit-pipeline/validate_jsonl.py \
   --schema datasets/normalized/finding.schema.json \
   --jsonl datasets/normalized/findings/csc_vesu_update_2025_03.findings.jsonl
@@ -67,6 +71,21 @@ Notes:
 
 - Validator reports malformed JSON line-by-line and rejects non-object JSON rows.
 - Validator enforces held-out policy by rejecting records whose `audit_id` or `source_audit_id` appears in `evals/heldout/audit_ids.txt`.
+
+## 3b) Normalize full corpus from extracted text
+
+```bash
+python3 scripts/audit-pipeline/normalize_corpus.py \
+  --manifest datasets/manifests/audits.jsonl \
+  --audits-dir datasets/normalized/audits \
+  --findings-dir datasets/normalized/findings \
+  --overwrite
+```
+
+Notes:
+
+- This pass is heuristic and intended to bootstrap broad coverage quickly.
+- Follow-up manual curation remains required for high-confidence distillation.
 
 ## 4) Verify no held-out leakage in datasets
 

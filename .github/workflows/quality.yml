@@ -36,14 +36,19 @@ jobs:
       - name: Shellcheck
         run: shellcheck scripts/audit-extraction/*.sh
 
+      - name: Validate normalized audit metadata JSON
+        run: |
+          python scripts/audit-pipeline/validate_json.py \
+            --schema datasets/normalized/audit.schema.json \
+            --glob 'datasets/normalized/audits/*.json'
+
       - name: Validate findings JSONL
         run: |
-          python scripts/audit-pipeline/validate_jsonl.py \
-            --schema datasets/normalized/finding.schema.json \
-            --jsonl datasets/normalized/findings/csc_vesu_update_2025_03.findings.jsonl
-          python scripts/audit-pipeline/validate_jsonl.py \
-            --schema datasets/normalized/finding.schema.json \
-            --jsonl datasets/normalized/findings/erim_nostra_pools_2024_01.findings.jsonl
+          for file in datasets/normalized/findings/*.jsonl; do
+            python scripts/audit-pipeline/validate_jsonl.py \
+              --schema datasets/normalized/finding.schema.json \
+              --jsonl "$file"
+          done
 
       - name: Validate benchmark case JSONL
         run: |
@@ -53,6 +58,9 @@ jobs:
           python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/cases/benchmark-case.schema.json \
             --jsonl evals/cases/cairo_auditor_realworld_benchmark.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/benchmark-case.schema.json \
+            --jsonl evals/heldout/cairo_auditor_llm_eval_cases.jsonl
 
       - name: Validate manifest JSONL
         run: |
