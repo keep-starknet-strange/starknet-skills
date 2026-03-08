@@ -1,9 +1,9 @@
 ---
 name: cairo-optimization
-description: Improves Cairo performance and resource usage after correctness is established, with an entry workflow and references for full optimization patterns.
+description: Improves Cairo performance after correctness is established, including hotspot profiling, arithmetic/loop optimization, and bounded-int hardening.
 license: Apache-2.0
-metadata: {"author":"feltroidprime","contributors":["starknet-agentic"],"version":"1.1.1","org":"keep-starknet-strange","upstream":"https://github.com/feltroidprime/cairo-skills/tree/main/skills/cairo-coding"}
-keywords: [cairo, optimization, gas, bounded-int, storage-packing, arithmetic, starknet]
+metadata: {"author":"feltroidprime","contributors":["starknet-agentic"],"version":"1.2.0","org":"keep-starknet-strange","upstream":"https://github.com/feltroidprime/cairo-skills","upstream_commit":"7fde29f","sync_date":"2026-03-08","upstream_paths":["skills/cairo-coding","skills/benchmarking-cairo"],"permission_ref":"maintainer-confirmed-2026-03-08"}
+keywords: [cairo, optimization, profiling, benchmarking, gas, bounded-int, storage-packing, arithmetic, starknet]
 allowed-tools: [Bash, Read, Write, Glob, Grep, Task]
 user-invocable: true
 ---
@@ -26,7 +26,7 @@ Apply only after tests pass and behavior is locked.
 ## Quick Start
 
 1. Confirm baseline behavior with tests.
-2. Identify hotspots via resource reports.
+2. Profile target paths with `python3 scripts/profile.py profile`.
 3. Apply one optimization class at a time.
 4. Re-run tests and compare resource deltas.
 
@@ -37,4 +37,5 @@ Apply only after tests pass and behavior is locked.
 ## References
 
 - Detailed optimization rules: [legacy reference](references/legacy-full.md)
+- Profiling workflow and troubleshooting: [profiling reference](references/profiling.md)
 - Module index: [references index](references/README.md)

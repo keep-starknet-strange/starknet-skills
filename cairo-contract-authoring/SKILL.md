@@ -1,9 +1,9 @@
 ---
 name: cairo-contract-authoring
-description: Guides Cairo smart-contract authoring on Starknet with safe structure choices, component composition, and implementation workflow references.
+description: Guides Cairo smart-contract authoring on Starknet with language fundamentals, safe structure choices, component composition, and implementation workflow references.
 license: Apache-2.0
-metadata: {"author":"starknet-skills","version":"0.1.1","org":"keep-starknet-strange","source":"starknet-agentic"}
-keywords: [cairo, contracts, starknet, openzeppelin, components, storage, interfaces]
+metadata: {"author":"starknet-skills","version":"0.2.0","org":"keep-starknet-strange","source":"starknet-agentic","contributors":["kronosapiens/dojoengine"]}
+keywords: [cairo, contracts, starknet, language, ownership, traits, openzeppelin, components, storage, interfaces]
 allowed-tools: [Bash, Read, Write, Glob, Grep, Task]
 user-invocable: true
 ---
@@ -14,6 +14,7 @@ Use this as the entrypoint for implementation decisions; load references only as
 
 ## When to Use
 
+- Checking Cairo language fundamentals that directly affect contract behavior (ownership, refs, traits, generics).
 - Writing a new Starknet contract.
 - Modifying storage/events/interfaces.
 - Composing OpenZeppelin Cairo components.
@@ -39,4 +40,5 @@ Use this as the entrypoint for implementation decisions; load references only as
 ## References
 
 - Detailed authoring reference: [legacy reference](references/legacy-full.md)
+- Cairo language fundamentals reference: [language reference](references/language.md)
 - Module index: [references index](references/README.md)
