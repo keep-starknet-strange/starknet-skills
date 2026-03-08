@@ -13,6 +13,32 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 
+CLASS_DESCRIPTIONS: dict[str, str] = {
+    "AA-SELF-CALL-SESSION": (
+        "Session-key or delegated execute path allows calls to self without explicit guard, "
+        "enabling privilege escalation via internal selectors."
+    ),
+    "UNCHECKED_FEE_BOUND": (
+        "Fee parameter is accepted/written/used without explicit upper-bound assertion."
+    ),
+    "SHUTDOWN_OVERRIDE_PRECEDENCE": (
+        "Fixed/manual shutdown override exists but dynamic inferred value takes precedence first."
+    ),
+    "SYSCALL_SELECTOR_FALLBACK_ASSUMPTION": (
+        "Code retries a syscall by swapping selector casing/name on error, assuming fallback compatibility."
+    ),
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": (
+        "Upgrade executes replace_class directly in privileged function without schedule-delay-execute timelock."
+    ),
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": (
+        "Upgrade path accepts class hash without explicit non-zero guard before upgrade."
+    ),
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": (
+        "Constructor/initializer stores critical addresses without explicit non-zero assertions."
+    ),
+}
+
+
 @dataclass
 class EvalCase:
     case_id: str
@@ -61,14 +87,19 @@ def recall(tp: int, fn: int) -> float:
 
 
 def build_messages(case: EvalCase) -> list[dict[str, str]]:
+    class_description = CLASS_DESCRIPTIONS.get(case.class_id, "No class description available.")
     system = (
         "You are a Cairo smart-contract security reviewer. "
         "Given one vulnerability class and one code snippet, decide if the class is present. "
-        "Return strict JSON with keys: detected (boolean), confidence (low|medium|high), reason (string)."
+        "Return strict JSON with keys: detected (boolean), confidence (low|medium|high), reason (string). "
+        "Do not invent external context. Base the decision only on explicit code evidence."
     )
     user = (
         f"Class ID: {case.class_id}\n"
+        f"Class description: {class_description}\n"
         "Task: detect only this class. Ignore unrelated issues.\n"
+        "Mark detected=true only when concrete code patterns in the snippet satisfy the class definition.\n"
+        "If a direct guard/fix for this class exists, prefer detected=false.\n"
         "Code:\n"
         "```cairo\n"
         f"{case.code}\n"
@@ -107,6 +138,7 @@ def run_single_case(
     case: EvalCase,
     timeout_seconds: int,
     retries: int,
+    retry_base_seconds: float,
 ) -> dict[str, object]:
     payload = {
         "model": model,
@@ -148,10 +180,20 @@ def run_single_case(
                 "source_url": case.source_url,
                 "error": "",
             }
-        except (urllib.error.HTTPError, urllib.error.URLError, KeyError, ValueError, json.JSONDecodeError) as exc:
+        except urllib.error.HTTPError as exc:
+            last_err = f"HTTP {exc.code}: {exc.reason}"
+            if attempt < retries:
+                retry_after = exc.headers.get("Retry-After") if exc.headers else None
+                delay = retry_base_seconds * (2**attempt)
+                if retry_after and retry_after.isdigit():
+                    delay = max(delay, float(retry_after))
+                if exc.code in {408, 409, 425, 429} or exc.code >= 500:
+                    time.sleep(min(delay, 30.0))
+                    continue
+        except (urllib.error.URLError, KeyError, ValueError, json.JSONDecodeError) as exc:
             last_err = str(exc)
             if attempt < retries:
-                time.sleep(1.0 * (attempt + 1))
+                time.sleep(min(retry_base_seconds * (2**attempt), 30.0))
                 continue
 
     return {
@@ -241,7 +283,8 @@ def main() -> int:
     parser.add_argument("--min-precision", type=float, default=0.75)
     parser.add_argument("--min-recall", type=float, default=0.75)
     parser.add_argument("--timeout-seconds", type=int, default=45)
-    parser.add_argument("--retries", type=int, default=1)
+    parser.add_argument("--retries", type=int, default=4)
+    parser.add_argument("--retry-base-seconds", type=float, default=2.0)
     args = parser.parse_args()
 
     api_key = os.environ.get(args.auth_env, "").strip()
@@ -270,6 +313,7 @@ def main() -> int:
             case=case,
             timeout_seconds=args.timeout_seconds,
             retries=args.retries,
+            retry_base_seconds=args.retry_base_seconds,
         )
         expected = bool(row["expected_detect"])
         predicted = bool(row["predicted_detect"])
