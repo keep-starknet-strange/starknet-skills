@@ -4,6 +4,8 @@
 
 # Local tooling
 .venv/
+.venv_jsonschema/
+.ruff_cache/
 .env
 .env.*
 !.env.example

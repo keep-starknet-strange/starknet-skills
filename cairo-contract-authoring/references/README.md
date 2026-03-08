@@ -1,3 +1,4 @@
 # References
 
-Extended patterns and examples for Cairo contract authoring.
+- Full imported authoring reference: `legacy-full.md`
+- Start from module entrypoint first: `../SKILL.md`

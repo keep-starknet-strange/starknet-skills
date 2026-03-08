@@ -26,14 +26,14 @@ Keep entry skills short and link one level deep to `references/` and `workflows/
 
 Skill changes that affect detection or remediation quality must include one of:
 
-- New/updated case in `evals/cases/`
-- Updated benchmark scorecard in `evals/scorecards/`
+- new or updated case in `evals/cases/`
+- updated scorecard in `evals/scorecards/`
 
 No merge without green quality gates:
 
 - formatting/build/tests
 - static analysis where applicable
-- evaluator pass threshold
+- evaluator threshold: documented expected result in a scorecard and no regression versus the latest baseline
 
 ## Audit Data Handling
 

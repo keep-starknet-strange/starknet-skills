@@ -1,3 +1,4 @@
 # References
 
-Supplemental optimization notes and benchmark examples.
+- Full imported optimization reference: `legacy-full.md`
+- Start from module entrypoint first: `../SKILL.md`

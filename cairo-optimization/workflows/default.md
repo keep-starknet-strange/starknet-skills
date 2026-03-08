@@ -1,0 +1,17 @@
+# Default Workflow
+
+1. Baseline
+- Capture pre-change resource profile for target tests.
+- Freeze behavior expectations with tests.
+
+2. Apply targeted changes
+- Replace expensive arithmetic/loop idioms first.
+- Optimize storage packing only when reads/writes dominate cost.
+
+3. Validate
+- Run full tests and targeted resource report.
+- Reject changes that reduce readability without measurable gains.
+
+4. Document
+- Record before/after metrics in the PR.
+- Link to the optimization class used from references.

@@ -1,3 +1,4 @@
 # References
 
-Deployment, verification, and release operation references.
+- Full imported toolchain reference: `legacy-full.md`
+- Start from module entrypoint first: `../SKILL.md`

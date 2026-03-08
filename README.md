@@ -28,10 +28,12 @@ Operational SDK and protocol execution playbooks belong in `starknet-agentic` / 
 
 Do not merge skill changes without updating or passing the corresponding evaluation set.
 
-## Initial Source Imports
+## Governance
 
-v0.1 seeds several modules from existing `starknet-agentic` skills and then constrains them to this repo boundary.
+- Contribution guide: `CONTRIBUTING.md`
+- Security policy: `SECURITY.md`
+- Code of conduct: `CODE_OF_CONDUCT.md`
 
 ## License
 
-MIT
+MIT (see `LICENSE`).
