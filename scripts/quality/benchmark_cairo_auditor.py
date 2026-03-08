@@ -136,34 +136,40 @@ def _upgrade_snippets(lower: str) -> list[str]:
     return snippets
 
 
+def _iter_functions(lower: str) -> list[tuple[str, str, str]]:
+    functions: list[tuple[str, str, str]] = []
+    for match in re.finditer(r"fn\s+([a-z_][a-z0-9_]*)\s*\(([^)]*)\)\s*\{", lower, flags=re.IGNORECASE):
+        fn_name = match.group(1)
+        signature = match.group(2)
+        body_start = match.end()
+        depth = 1
+        i = body_start
+        while i < len(lower) and depth > 0:
+            ch = lower[i]
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+            i += 1
+        if depth != 0:
+            continue
+        functions.append((fn_name, signature, lower[body_start : i - 1]))
+    return functions
+
+
 def _extract_fn_signature_and_body(lower: str, fn_name: str) -> tuple[str | None, str | None]:
-    match = re.search(rf"fn\s+{fn_name}\s*\(([^)]*)\)\s*\{{", lower, flags=re.IGNORECASE)
-    if not match:
-        return None, None
-
-    signature = match.group(1)
-    body_start = match.end()
-    depth = 1
-    i = body_start
-    while i < len(lower) and depth > 0:
-        ch = lower[i]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-        i += 1
-
-    if depth != 0:
-        return signature, None
-    return signature, lower[body_start : i - 1]
+    for name, signature, body in _iter_functions(lower):
+        if name.lower() == fn_name.lower():
+            return signature, body
+    return None, None
 
 
 def _has_nonzero_class_hash_guard(snippet: str) -> bool:
     return bool(
-        re.search(r"assert\([^)]*new_class_hash[^)]*is_non_zero", snippet)
-        or re.search(r"assert\([^)]*new_class_hash[^)]*!=\s*0", snippet)
-        or re.search(r"assert\([^)]*!\s*new_class_hash\.is_zero\(\)", snippet)
-        or re.search(r"assert\([^)]*new_class_hash\.is_zero\(\)[^)]*==\s*false", snippet)
+        re.search(r"assert!?\([^)]*new_class_hash[^)]*is_non_zero", snippet)
+        or re.search(r"assert!?\([^)]*new_class_hash[^)]*!=\s*0", snippet)
+        or re.search(r"assert!?\([^)]*!\s*new_class_hash\.is_zero\(\)", snippet)
+        or re.search(r"assert!?\([^)]*new_class_hash\.is_zero\(\)[^)]*==\s*false", snippet)
         or re.search(r"if\s*\([^)]*new_class_hash[^)]*is_non_zero", snippet)
         or re.search(r"if\s*\([^)]*new_class_hash[^)]*!=\s*0", snippet)
         or re.search(r"if\s*\([^)]*new_class_hash\.is_zero\(\)\s*\)\s*\{[\s\S]{0,180}(panic|assert|revert)", snippet)
@@ -205,7 +211,14 @@ def detect_upgrade_class_hash_without_nonzero_guard(code: str) -> bool:
         return False
 
     # OZ UpgradeableComponent::upgrade() already checks non-zero class hash internally.
-    uses_oz_upgradeable_component = "upgradeablecomponent" in lower or "openzeppelin" in lower
+    uses_oz_upgradeable_component = any(
+        marker in lower
+        for marker in (
+            "upgradeablecomponent",
+            "openzeppelin_upgrades",
+            "openzeppelin::upgrades",
+        )
+    )
 
     for snippet in snippets:
         has_direct_syscall = "replace_class_syscall" in snippet
@@ -321,7 +334,6 @@ def detect_no_access_control_mutation(code: str) -> bool:
     lower = code.lower()
     if "#[starknet::contract]" not in lower:
         return False
-    fn_iter = re.finditer(r"fn\s+([a-z_][a-z0-9_]*)\s*\(", lower)
     risky_prefixes = (
         "set_",
         "register_",
@@ -341,6 +353,8 @@ def detect_no_access_control_mutation(code: str) -> bool:
         "access_control.assert_only_role",
         "get_caller_address() ==",
         "get_caller_address()!=",
+        "assert!(get_caller_address() ==",
+        "assert!(get_caller_address()!=",
         "caller == self.",
         "caller != self.",
     )
@@ -353,21 +367,19 @@ def detect_no_access_control_mutation(code: str) -> bool:
         "initializer(",
     )
 
-    for match in fn_iter:
-        fn_name = match.group(1)
+    for fn_name, signature, body in _iter_functions(lower):
         if fn_name in {"constructor", "__validate__", "__execute__", "__validate_declare__"}:
             continue
         if not fn_name.startswith(risky_prefixes):
             continue
-        start = match.start()
-        snippet = lower[start : start + 2600]
-        if "ref self" not in snippet:
+        if "ref self" not in signature:
             continue
-        if not any(marker in snippet for marker in mutation_markers):
+        if not any(marker in body for marker in mutation_markers):
             continue
-        if any(marker in snippet for marker in access_markers):
-            continue
-        if "view" in lower[max(0, start - 120) : start]:
+        has_access_guard = any(marker in body for marker in access_markers) or bool(
+            re.search(r"assert!?\([^)]*get_caller_address\(\)\s*(==|!=)", body)
+        )
+        if has_access_guard:
             continue
         return True
     return False
@@ -378,24 +390,21 @@ def detect_cei_violation_erc1155(code: str) -> bool:
     if "safe_transfer_from" not in lower and "_transfer_item(" not in lower:
         return False
 
-    for fn_match in re.finditer(r"fn\s+([a-z_][a-z0-9_]*)\s*\(", lower):
-        start = fn_match.start()
-        snippet = lower[start : start + 3600]
-        interaction_marker = None
-        if "safe_transfer_from" in snippet:
-            interaction_marker = "safe_transfer_from"
-        elif "_transfer_item(" in snippet:
-            interaction_marker = "_transfer_item("
-        if interaction_marker is None:
+    for _fn_name, _signature, body in _iter_functions(lower):
+        interaction_positions = [
+            pos for pos in (body.find("safe_transfer_from"), body.find("_transfer_item(")) if pos != -1
+        ]
+        if not interaction_positions:
             continue
-        if "reentrancy" in snippet or "non_reentrant" in snippet or "entered" in snippet:
+        if "reentrancy" in body or "non_reentrant" in body or "entered" in body:
             continue
 
-        transfer_pos = snippet.find(interaction_marker)
-        before = snippet[:transfer_pos]
-        after = snippet[transfer_pos:]
+        transfer_pos = min(interaction_positions)
+        before = body[:transfer_pos]
+        after = body[transfer_pos:]
         state_markers = (
             ".write(",
+            ".update(",
             "status =",
             "is_fulfilled",
             "is_claimed",
