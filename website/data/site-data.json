@@ -12,14 +12,14 @@
   },
   "latest_scorecards": {
     "deterministic": {
-      "cases": 17,
+      "cases": 20,
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.2.0-cairo-auditor-benchmark.md",
       "path": "evals/scorecards/v0.2.0-cairo-auditor-benchmark.md",
       "precision": 1.0,
       "recall": 1.0
     },
     "realworld": {
-      "cases": 17,
+      "cases": 20,
       "github_url": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md",
       "path": "evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md",
       "precision": 1.0,
@@ -98,7 +98,7 @@
       "skill_path": "openzeppelin-cairo/SKILL.md"
     }
   ],
-  "source_fingerprint": "60b6cb3d0450fcd6",
+  "source_fingerprint": "c78f0445616d29f8",
   "vuln_cards": [
     {
       "detection_rule": "If both inferred and forced-mode paths exist, assert forced-mode check dominates all early returns.",
