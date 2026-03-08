@@ -71,7 +71,7 @@ sncast account deploy \
 > ⚠️ Never hard-code a real private key in shell history or scripts. Use an environment variable or keystore-backed flow.
 
 ```bash
-sncast account add \
+sncast account import \
     --url https://starknet-sepolia.g.alchemy.com/v2/YOUR_KEY \
     --name my-deployer \
     --address 0x123... \
@@ -195,24 +195,26 @@ echo "Building..."
 scarb build
 
 echo "Declaring MyToken..."
-TOKEN_CLASS=$(sncast declare --contract-name MyToken --url $RPC_URL --account $ACCOUNT | grep "class_hash" | awk '{print $2}')
+TOKEN_CLASS=$(sncast --json declare --contract-name MyToken --url "$RPC_URL" --account "$ACCOUNT" | jq -r '.class_hash')
 echo "Token class: $TOKEN_CLASS"
 
 echo "Deploying MyToken..."
-TOKEN_ADDR=$(sncast deploy --class-hash $TOKEN_CLASS --constructor-calldata 0xOWNER --url $RPC_URL --account $ACCOUNT | grep "contract_address" | awk '{print $2}')
+TOKEN_ADDR=$(sncast --json deploy --class-hash "$TOKEN_CLASS" --constructor-calldata 0xOWNER --url "$RPC_URL" --account "$ACCOUNT" | jq -r '.contract_address')
 echo "Token deployed at: $TOKEN_ADDR"
 
 echo "Declaring AMM..."
-AMM_CLASS=$(sncast declare --contract-name AMM --url $RPC_URL --account $ACCOUNT | grep "class_hash" | awk '{print $2}')
+AMM_CLASS=$(sncast --json declare --contract-name AMM --url "$RPC_URL" --account "$ACCOUNT" | jq -r '.class_hash')
 
 echo "Deploying AMM..."
-AMM_ADDR=$(sncast deploy --class-hash $AMM_CLASS --constructor-calldata $TOKEN_ADDR --url $RPC_URL --account $ACCOUNT | grep "contract_address" | awk '{print $2}')
+AMM_ADDR=$(sncast --json deploy --class-hash "$AMM_CLASS" --constructor-calldata "$TOKEN_ADDR" --url "$RPC_URL" --account "$ACCOUNT" | jq -r '.contract_address')
 echo "AMM deployed at: $AMM_ADDR"
 
 echo "Done. Addresses:"
 echo "  Token: $TOKEN_ADDR"
 echo "  AMM:   $AMM_ADDR"
 ```
+
+> **Note:** Script above assumes `jq` is installed for JSON parsing.
 
 ## Network Endpoints
 

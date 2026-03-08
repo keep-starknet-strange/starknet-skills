@@ -10,3 +10,10 @@
   - max 500 lines per SKILL.md
   - one-level markdown link depth for progressive disclosure
   - markdown link target existence and in-repo resolution
+
+- `parity_check.py` runs local parity checks against baseline quality bars:
+  - skill contract validator pass
+  - required governance/entry files present
+  - README install/use onboarding present
+  - `cairo-testing` docs match installed `snforge` CLI behavior
+  - `cairo-toolchain` docs match installed `sncast` CLI behavior

@@ -30,6 +30,10 @@ If missing dependencies locally, install:
 
 `python -m pip install pyyaml`
 
+Optional parity check against baseline bars (requires local `snforge` + `sncast`):
+
+`python scripts/quality/parity_check.py`
+
 ## Evaluation-Driven Changes
 
 Skill changes that affect detection or remediation quality must include one of:

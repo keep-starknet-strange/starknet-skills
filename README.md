@@ -42,6 +42,7 @@ Do not merge skill changes without updating or passing the corresponding evaluat
 - Security policy: `SECURITY.md`
 - Code of conduct: `CODE_OF_CONDUCT.md`
 - Skill contract validator: `python scripts/quality/validate_skills.py`
+- Baseline parity check: `python scripts/quality/parity_check.py`
 
 ## License
 
