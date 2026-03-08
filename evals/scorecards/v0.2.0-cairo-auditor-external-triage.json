@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-03-08T21:20:50+00:00",
+  "generated_at": "2026-03-08T22:02:03+00:00",
   "release": "v0.2.0",
   "labels_path": "evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl",
   "totals": {
-    "tp": 24,
-    "fp": 4,
+    "tp": 19,
+    "fp": 1,
     "fn": 0,
-    "tn": 0
+    "tn": 8
   },
-  "precision": 0.8571428571428571,
+  "precision": 0.95,
   "recall": 1.0,
   "gate": {
     "min_precision": 0.7,
