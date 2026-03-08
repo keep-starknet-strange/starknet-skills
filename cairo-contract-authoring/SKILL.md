@@ -33,6 +33,17 @@ Use this as the entrypoint for implementation decisions; load references only as
 4. Add tests before broadening feature surface.
 5. Run an audit pass with `cairo-auditor`.
 
+## Security-Critical Rules
+
+- Timelock checks must read time from Starknet syscalls (`get_block_timestamp`), never from caller-provided arguments.
+- Every `#[external(v0)]` function that mutates storage must have explicit access posture:
+  - guarded (`assert_only_owner` / role checks), or
+  - intentionally public with a code comment stating why.
+- Upgrade flows must reject zero class hash inputs before applying state transitions.
+- If any of these rules fail in fixture benchmarks, update both:
+  - skill/reference text, and
+  - deterministic cases in `../evals/cases/contract_skill_benchmark.jsonl`.
+
 ## Workflow
 
 - Main authoring flow: [default workflow](workflows/default.md)
