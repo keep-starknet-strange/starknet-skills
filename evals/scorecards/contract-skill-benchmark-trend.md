@@ -1,6 +1,6 @@
 # Contract Skill Benchmark Trend
 
-Generated: 2026-03-08T22:52:36Z
+Generated: 2026-03-08T22:56:33Z
 Scorecard glob: `evals/scorecards/v*-contract-skill-benchmark.md`
 
 ## Policy

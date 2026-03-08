@@ -106,7 +106,7 @@
       "skill_path": "starknet-network-facts/SKILL.md"
     }
   ],
-  "source_fingerprint": "d3bbe7ddf7f92170",
+  "source_fingerprint": "084ae93a2cc07409",
   "vuln_cards": [
     {
       "detection_rule": "If both inferred and forced-mode paths exist, assert forced-mode check dominates all early returns.",
