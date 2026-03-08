@@ -26,7 +26,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Python deps
-        run: python -m pip install jsonschema pyyaml
+        run: python -m pip install jsonschema pyyaml detect-secrets==1.5.0
 
       - name: Run parity quality checks
         run: python scripts/quality/parity_check.py
@@ -42,6 +42,24 @@ jobs:
 
       - name: Held-out leakage guard
         run: python scripts/audit-pipeline/check_no_heldout_leak.py
+
+      - name: Secret scan
+        run: |
+          detect-secrets scan --all-files --exclude-files 'datasets/audits/raw/.*' > /tmp/detect-secrets.json
+          python - <<'PY'
+          import json
+          import sys
+
+          report = json.load(open("/tmp/detect-secrets.json", "r", encoding="utf-8"))
+          findings = report.get("results", {})
+          finding_count = sum(len(v) for v in findings.values())
+          print(f"detect-secrets findings={finding_count}")
+          if finding_count > 0:
+              for path, items in findings.items():
+                  if items:
+                      print(f"{path}: {len(items)} potential secrets")
+              sys.exit(1)
+          PY
 
       - name: Cairo auditor benchmark
         run: |
