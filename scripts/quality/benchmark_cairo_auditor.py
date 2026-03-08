@@ -292,6 +292,124 @@ def detect_constructor_dead_param(code: str) -> bool:
     return False
 
 
+def detect_fees_recipient_zero_dos(code: str) -> bool:
+    lower = code.lower()
+    if "fees_recipient" not in lower:
+        return False
+
+    writes_fees_recipient = bool(re.search(r"\b\w+\.write\(\s*fees_recipient\b", lower))
+    if not writes_fees_recipient:
+        return False
+
+    has_nonzero_guard = bool(
+        re.search(r"assert\([^)]*fees_recipient[^)]*is_non_zero", lower)
+        or re.search(r"assert\([^)]*fees_recipient[^)]*!=\s*0", lower)
+        or re.search(r"if\s*\([^)]*fees_recipient\.is_zero\(\)\s*\)\s*\{[\s\S]{0,120}(panic|assert|revert)", lower)
+    )
+    if has_nonzero_guard:
+        return False
+
+    downstream_usage = bool(
+        re.search(r"(transfer|send|call_contract_syscall)\([^)]*fees_recipient", lower)
+        or re.search(r"contractaddressinto{[^}]*value:\s*fees_recipient", lower)
+        or re.search(r"self\.\w*fees_recipient\w*\.read\(\)", lower)
+    )
+    return downstream_usage
+
+
+def detect_no_access_control_mutation(code: str) -> bool:
+    lower = code.lower()
+    if "#[starknet::contract]" not in lower:
+        return False
+    fn_iter = re.finditer(r"fn\s+([a-z_][a-z0-9_]*)\s*\(", lower)
+    risky_prefixes = (
+        "set_",
+        "register_",
+        "upgrade",
+        "pause",
+        "unpause",
+        "configure_",
+        "create_",
+        "grant_",
+        "revoke_",
+    )
+    access_markers = (
+        "assert_only_owner",
+        "assert_only_role",
+        "ownable.assert_only_owner",
+        "accesscontrol.assert_only_role",
+        "access_control.assert_only_role",
+        "get_caller_address() ==",
+        "get_caller_address()!=",
+        "caller == self.",
+        "caller != self.",
+    )
+    mutation_markers = (
+        ".write(",
+        "_grant_role(",
+        "_revoke_role(",
+        "replace_class_syscall(",
+        "upgradeable.upgrade(",
+        "initializer(",
+    )
+
+    for match in fn_iter:
+        fn_name = match.group(1)
+        if fn_name in {"constructor", "__validate__", "__execute__", "__validate_declare__"}:
+            continue
+        if not fn_name.startswith(risky_prefixes):
+            continue
+        start = match.start()
+        snippet = lower[start : start + 2600]
+        if "ref self" not in snippet:
+            continue
+        if not any(marker in snippet for marker in mutation_markers):
+            continue
+        if any(marker in snippet for marker in access_markers):
+            continue
+        if "view" in lower[max(0, start - 120) : start]:
+            continue
+        return True
+    return False
+
+
+def detect_cei_violation_erc1155(code: str) -> bool:
+    lower = code.lower()
+    if "safe_transfer_from" not in lower and "_transfer_item(" not in lower:
+        return False
+
+    for fn_match in re.finditer(r"fn\s+([a-z_][a-z0-9_]*)\s*\(", lower):
+        start = fn_match.start()
+        snippet = lower[start : start + 3600]
+        interaction_marker = None
+        if "safe_transfer_from" in snippet:
+            interaction_marker = "safe_transfer_from"
+        elif "_transfer_item(" in snippet:
+            interaction_marker = "_transfer_item("
+        if interaction_marker is None:
+            continue
+        if "reentrancy" in snippet or "non_reentrant" in snippet or "entered" in snippet:
+            continue
+
+        transfer_pos = snippet.find(interaction_marker)
+        before = snippet[:transfer_pos]
+        after = snippet[transfer_pos:]
+        state_markers = (
+            ".write(",
+            "status =",
+            "is_fulfilled",
+            "is_claimed",
+            "fulfilled =",
+            "order_status",
+            "state =",
+        )
+        has_state_update_after = any(marker in after for marker in state_markers)
+        has_state_update_before = any(marker in before for marker in state_markers)
+        if has_state_update_after and not has_state_update_before:
+            return True
+    return False
+
+
 DETECTORS = {
     "AA-SELF-CALL-SESSION": detect_aa_self_call_session,
     "UNCHECKED_FEE_BOUND": detect_unchecked_fee_bound,
@@ -301,6 +419,9 @@ DETECTORS = {
     "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": detect_upgrade_class_hash_without_nonzero_guard,
     "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": detect_critical_address_init_without_nonzero_guard,
     "CONSTRUCTOR_DEAD_PARAM": detect_constructor_dead_param,
+    "FEES_RECIPIENT_ZERO_DOS": detect_fees_recipient_zero_dos,
+    "NO_ACCESS_CONTROL_MUTATION": detect_no_access_control_mutation,
+    "CEI_VIOLATION_ERC1155": detect_cei_violation_erc1155,
 }
 
 
