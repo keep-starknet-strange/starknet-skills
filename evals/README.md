@@ -24,6 +24,8 @@ For changes affecting security detection behavior:
 - Full tier (`full-evals.yml`): parity checks + held-out leakage guard + deterministic benchmarks; run on schedule, workflow-dispatch, or automatically for pull requests that touch `SKILL.md`, `references/**`, `evals/**`, or `scripts/quality/**`.
 - LLM held-out tier (`full-evals.yml`): runs with GitHub Models via `GITHUB_TOKEN` and `permissions: models: read`, enforcing precision/recall gates on a separate held-out case pack.
   - The workflow probes GitHub Models first; if model access is not available for the repo/org token, the LLM tier is skipped and deterministic gates still run.
+- Build-generation tier (`full-evals.yml`): runs prompt-based contract generation against secure fixture projects and tracks compile/test/static-rule pass rate and vulnerability rate.
+  - This tier is currently informational (`continue-on-error`) while thresholds are calibrated.
 - External triage tier (`full-evals.yml`): scores human-labeled external findings (`tp`/`fp`) and emits release scorecards + trend markdown.
 
 ## Benchmark Runner
@@ -109,6 +111,21 @@ GITHUB_TOKEN=... python scripts/quality/run_llm_eval.py \
   --model openai/gpt-4o \
   --min-precision 0.75 \
   --min-recall 0.75
+```
+
+Run build-side contract generation eval (GitHub Models + `GITHUB_TOKEN`):
+
+```bash
+GITHUB_TOKEN=... python scripts/quality/run_contract_generation_eval.py \
+  --cases evals/cases/contract_skill_generation_eval.jsonl \
+  --output-json evals/scorecards/contract-generation-eval.json \
+  --output-md evals/scorecards/contract-generation-eval.md \
+  --model openai/gpt-4o \
+  --min-pass-rate 0.55 \
+  --max-vuln-rate 0.35 \
+  --min-evaluated 8 \
+  --enforce-min-evaluated \
+  --require-tools
 ```
 
 Run external triage scoring (human-labeled external findings):

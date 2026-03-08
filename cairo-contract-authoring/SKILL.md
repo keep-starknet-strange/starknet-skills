@@ -40,6 +40,7 @@ Use this as the entrypoint for implementation decisions; load references only as
   - guarded (`assert_only_owner` / role checks), or
   - intentionally public with a code comment stating why.
 - Upgrade flows must reject zero class hash inputs before applying state transitions.
+- Use anti-pattern/secure-pattern pairs to keep authoring behavior explicit and reviewable.
 - If any of these rules fail in fixture benchmarks, update both:
   - skill/reference text, and
   - deterministic cases in `../evals/cases/contract_skill_benchmark.jsonl`.
@@ -52,4 +53,5 @@ Use this as the entrypoint for implementation decisions; load references only as
 
 - Detailed authoring reference: [legacy reference](references/legacy-full.md)
 - Cairo language fundamentals reference: [language reference](references/language.md)
+- Build-side anti-pattern pairs: [anti-pattern pairs](references/anti-pattern-pairs.md)
 - Module index: [references index](references/README.md)

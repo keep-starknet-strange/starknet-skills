@@ -17,7 +17,9 @@
 4. Document
 - Record before/after metrics in the PR.
 - Link to the optimization class used from references.
+- Link to concrete rewrites in `../references/anti-pattern-pairs.md`.
 
 5. Lock the learning
 - Add or update deterministic contract benchmark cases for the optimized pattern.
 - Prefer operation-level static rules (for example, `amount / 2`) over variable-name-coupled patterns.
+- Update build-generation prompts/checks in `../../evals/cases/contract_skill_generation_eval.jsonl` when optimization guidance changes.

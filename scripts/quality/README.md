@@ -72,3 +72,13 @@
   - requires minimum consecutive reportable releases
   - requires explicit security reviewer signoff for latest release
   - emits `evals/scorecards/contract-kpi-publication-gate.md`
+
+- `run_contract_generation_eval.py` runs build-side contract generation quality checks:
+  - prompt pack:
+    - `evals/cases/contract_skill_generation_eval.jsonl`
+  - for each prompt:
+    - asks model to generate full `src/lib.cairo` in a fixture project
+    - runs `scarb build` and `snforge test`
+    - applies must-match/must-not-match security/optimization rules
+  - reports pass rate and vulnerability rate in markdown/json outputs
+  - intended as informative CI telemetry during calibration (`continue-on-error` in workflow)

@@ -105,6 +105,7 @@ Skills are authored from audit-backed source material, then checked against dete
 Current workflow status:
 - `quality.yml` is the required per-PR gate
 - `full-evals.yml` runs on schedule/workflow dispatch and auto-triggers for PRs touching `SKILL.md`, `references/**`, `evals/**`, or `scripts/quality/**`
+- build-side generation eval tracks contract authoring quality (prompt -> generated code -> build/test/static checks) as informational telemetry in `full-evals.yml`
 - external triage trends live under [`evals/scorecards/`](evals/scorecards)
 
 ## Website
