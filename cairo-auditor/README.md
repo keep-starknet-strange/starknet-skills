@@ -40,8 +40,8 @@ Flagship Cairo/Starknet security review skill.
 
 | Suite | Cases | Precision | Recall | Scorecard |
 | --- | ---: | ---: | ---: | --- |
-| Core deterministic | 12 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-benchmark.md) |
-| Real-world corpus | 11 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-realworld-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md) |
+| Core deterministic | 17 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-benchmark.md) |
+| Real-world corpus | 17 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-realworld-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md) |
 
 Case packs:
 

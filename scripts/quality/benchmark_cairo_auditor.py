@@ -116,11 +116,136 @@ def detect_selector_fallback_assumption(code: str) -> bool:
     return call_count >= 2 and has_error_branch and has_selector_alias
 
 
+def _upgrade_snippets(lower: str) -> list[str]:
+    snippets: list[str] = []
+    for match in re.finditer(r"fn\s+upgrade\s*\(", lower):
+        start = match.start()
+        snippets.append(lower[start : start + 1800])
+    return snippets
+
+
+def detect_immediate_upgrade_without_timelock(code: str) -> bool:
+    lower = code.lower()
+    snippets = _upgrade_snippets(lower)
+    if not snippets:
+        return False
+
+    timelock_markers = (
+        "timelock",
+        "schedule_upgrade",
+        "upgrade_delay",
+        "pending_upgrade",
+        "executable_after",
+    )
+
+    for snippet in snippets:
+        has_upgrade_call = (
+            "replace_class_syscall" in snippet or "upgradeable.upgrade" in snippet
+        )
+        if not has_upgrade_call:
+            continue
+        if any(marker in lower for marker in timelock_markers):
+            continue
+        return True
+    return False
+
+
+def detect_upgrade_class_hash_without_nonzero_guard(code: str) -> bool:
+    lower = code.lower()
+    snippets = _upgrade_snippets(lower)
+    if not snippets:
+        return False
+
+    for snippet in snippets:
+        has_upgrade_call = (
+            "replace_class_syscall" in snippet or "upgradeable.upgrade" in snippet
+        )
+        if not has_upgrade_call:
+            continue
+        if "new_class_hash" not in snippet:
+            continue
+        has_nonzero_guard = bool(
+            re.search(
+                r"assert\([^)]*new_class_hash[^)]*(is_non_zero|is_zero|!=\s*0)", snippet
+            )
+            or "new_class_hash.is_non_zero()" in snippet
+            or "new_class_hash.is_zero()" in snippet
+        )
+        if not has_nonzero_guard:
+            return True
+    return False
+
+
+def detect_critical_address_init_without_nonzero_guard(code: str) -> bool:
+    lower = code.lower()
+    if "fn constructor" not in lower:
+        return False
+
+    signature_match = re.search(
+        r"fn\s+constructor\s*\(([^)]*)\)\s*\{", lower, flags=re.IGNORECASE
+    )
+    if not signature_match:
+        return False
+    constructor_sig = signature_match.group(1)
+
+    params = re.findall(r"([a-z_][a-z0-9_]*)\s*:\s*contractaddress", constructor_sig)
+    if not params:
+        return False
+
+    body_match = re.search(
+        r"fn\s+constructor\s*\([^)]*\)\s*\{([\s\S]{0,1600})\}",
+        lower,
+        flags=re.IGNORECASE,
+    )
+    if not body_match:
+        return False
+    body = body_match.group(1)
+
+    critical_markers = (
+        "owner",
+        "admin",
+        "manager",
+        "registry",
+        "vault",
+        "token",
+        "oracle",
+        "reclaim",
+        "router",
+        "dispatcher",
+    )
+    critical_params = [p for p in params if any(marker in p for marker in critical_markers)]
+    if not critical_params:
+        return False
+
+    for param in critical_params:
+        has_guard = bool(
+            re.search(
+                rf"(assert|is_non_zero|is_zero|!=\s*0)[^\n]{{0,100}}\b{param}\b"
+                rf"|\b{param}\b[^\n]{{0,100}}(assert|is_non_zero|is_zero|!=\s*0)",
+                body,
+            )
+        )
+        if has_guard:
+            continue
+        used_for_init = bool(
+            re.search(
+                rf"\b{param}\b[^\n]{{0,120}}(write\(|initializer\(|_grant_role\()",
+                body,
+            )
+        )
+        if used_for_init:
+            return True
+    return False
+
+
 DETECTORS = {
     "AA-SELF-CALL-SESSION": detect_aa_self_call_session,
     "UNCHECKED_FEE_BOUND": detect_unchecked_fee_bound,
     "SHUTDOWN_OVERRIDE_PRECEDENCE": detect_shutdown_override_precedence,
     "SYSCALL_SELECTOR_FALLBACK_ASSUMPTION": detect_selector_fallback_assumption,
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": detect_immediate_upgrade_without_timelock,
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": detect_upgrade_class_hash_without_nonzero_guard,
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": detect_critical_address_init_without_nonzero_guard,
 }
 
 
