@@ -1,0 +1,21 @@
+.DS_Store
+*.swp
+*.swo
+
+# Local tooling
+.venv/
+.venv_jsonschema/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local audit ingest artifacts
+datasets/audits/raw/*
+!datasets/audits/raw/.gitkeep
+datasets/audits/extracted/*
+!datasets/audits/extracted/.gitkeep

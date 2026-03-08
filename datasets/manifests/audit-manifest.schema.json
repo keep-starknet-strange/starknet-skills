@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://keep-starknet-strange.github.io/starknet-skills/audit-manifest.schema.json",
+  "title": "Audit Manifest Record",
+  "type": "object",
+  "required": [
+    "audit_id",
+    "project",
+    "auditor",
+    "date",
+    "source_url",
+    "source_type",
+    "raw_path",
+    "extracted_path",
+    "raw_sha256",
+    "extracted_sha256"
+  ],
+  "properties": {
+    "audit_id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+    "project": { "type": "string", "minLength": 1 },
+    "auditor": { "type": "string", "minLength": 1 },
+    "date": { "type": "string", "format": "date" },
+    "source_url": { "type": "string", "format": "uri" },
+    "source_type": { "type": "string", "enum": ["github_blob", "github_raw", "html", "drive", "direct_pdf"] },
+    "repo_url": { "type": "string" },
+    "raw_path": { "type": "string" },
+    "extracted_path": { "type": "string" },
+    "raw_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "extracted_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "notes": { "type": "string" },
+    "ingested_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}
