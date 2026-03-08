@@ -20,3 +20,15 @@ For changes affecting security detection behavior:
 
 - Per-PR (`quality.yml`): schema validation, manifest uniqueness checks, and held-out leakage policy checks.
 - Full tier (`full-evals.yml`): parity checks + held-out leakage guard; run on schedule, workflow-dispatch, or pull requests labeled `full-evals`.
+
+## Benchmark Runner
+
+Run Cairo benchmark and generate a scorecard:
+
+```bash
+python scripts/quality/benchmark_cairo_auditor.py \
+  --cases evals/cases/cairo_auditor_benchmark.jsonl \
+  --output evals/scorecards/v0.2.0-cairo-auditor-benchmark.md \
+  --min-precision 0.90 \
+  --min-recall 0.90
+```
