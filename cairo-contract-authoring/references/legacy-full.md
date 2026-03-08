@@ -2,7 +2,7 @@
 
 Reference for writing Cairo smart contracts on Starknet. Covers structure, storage, events, interfaces, components, and OpenZeppelin v3 patterns.
 
-> **Optimization:** After your contract compiles and tests pass, use the [cairo-optimization](../cairo-optimization/) skill as a separate pass.
+> **Optimization:** After your contract compiles and tests pass, use [cairo-optimization](../../cairo-optimization/SKILL.md) as a separate pass.
 
 ## When to Use
 
@@ -20,8 +20,46 @@ Reference for writing Cairo smart contracts on Starknet. Covers structure, stora
 
 Before finalizing implementation for security-sensitive logic, cross-check:
 
-- `../datasets/distilled/fix-patterns/`
-- `../datasets/distilled/vuln-cards/`
+- `../../datasets/distilled/fix-patterns/`
+- `../../datasets/distilled/vuln-cards/`
+
+## Upgrade/Auth Hardening Rules
+
+### Timelock Time Source
+
+Never accept `now` as a user argument for timelock checks.
+
+```cairo
+// BAD
+fn execute_upgrade(ref self: ContractState, now: u64) {
+    assert!(now >= self.executable_after.read(), "timelock");
+}
+
+// GOOD
+use starknet::get_block_timestamp;
+
+fn execute_upgrade(ref self: ContractState) {
+    let now = get_block_timestamp();
+    assert!(now >= self.executable_after.read(), "timelock");
+}
+```
+
+### State Mutation Access Posture
+
+For every storage-mutating `#[external(v0)]` function, declare the posture explicitly:
+
+- guarded path (`assert_only_owner` / role check), or
+- intentionally public path with an inline comment justifying public mutability.
+
+Silent implicit posture is not acceptable in security-sensitive modules.
+
+### Non-Zero Upgrade Hash Guard
+
+Reject zero class hash in both schedule and immediate-upgrade flows:
+
+```cairo
+assert!(new_class_hash != 0, "class_hash_zero");
+```
 
 ## Contract Structure
 
@@ -215,6 +253,18 @@ mod MyToken {
 }
 ```
 
+#### Component Wiring Checklist
+
+1. Add the `use` import for each component.
+2. Register each component with `component!(...)`.
+3. Embed external ABI impls with `#[abi(embed_v0)]`.
+4. Add internal impl aliases for internal-only calls.
+5. Add `#[substorage(v0)]` fields in `Storage`.
+6. Add `#[flat]` variants in `Event`.
+7. Call each required `.initializer(...)` in constructor.
+
+If `MixinImpl` is not embedded, selectors are not exposed in the contract ABI.
+
 ### Writing a Component
 
 ```cairo
@@ -370,6 +420,36 @@ mod contract;
 mod interfaces;
 mod components;
 ```
+
+## Cross-Contract Calls (Dispatchers)
+
+Use compiler-generated dispatchers from an interface trait:
+
+```cairo
+#[starknet::interface]
+trait ITokenContract<TContractState> {
+    fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
+    fn transfer(ref self: TContractState, to: ContractAddress, amount: u256);
+}
+
+use super::{ITokenContractDispatcher, ITokenContractDispatcherTrait};
+
+fn check_balance(token_address: ContractAddress, account: ContractAddress) -> u256 {
+    let token = ITokenContractDispatcher { contract_address: token_address };
+    token.balance_of(account)
+}
+```
+
+- `IFooDispatcher` for external calls (`ref self`).
+- `IFooLibraryDispatcher` for library/delegate-style calls.
+
+## OpenZeppelin Hardening Checks
+
+1. Map each embedded component to externally reachable selectors.
+2. Verify owner/role checks on every privileged selector.
+3. Verify initializer/upgrade selectors are unauthorized for non-admins.
+4. Validate substorage layout compatibility before upgrades.
+5. Add regression tests for unauthorized upgrade/initializer paths.
 
 ## Common Patterns
 

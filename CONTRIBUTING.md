@@ -47,6 +47,17 @@ No merge without green quality gates:
 - static analysis where applicable
 - evaluator threshold: documented expected result in a scorecard and no regression versus the latest baseline
 
+## Third-Party Skill Sync Rules
+
+For any skill content sourced from outside this repository:
+
+- Keep original creator identity in `metadata.author`.
+- Add local maintainers in `metadata.contributors`.
+- Include provenance metadata fields: `upstream`, `upstream_commit`, `sync_date`, `upstream_paths`, `permission_ref`.
+- Add/update the entry in [THIRD_PARTY.md](THIRD_PARTY.md).
+- Add a short attribution note in imported reference docs.
+- Do not merge external sync PRs without explicit permission/license traceability in the PR description.
+
 ## Audit Data Handling
 
 When ingesting external audits into `datasets/audits/`:

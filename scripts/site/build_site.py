@@ -19,16 +19,24 @@ DEFAULT_REPO_REF = "main"
 DOMAIN_PATTERN = re.compile(r"(?=.{1,253}\Z)(?!-)(?:[A-Za-z0-9-]{1,63}\.)+[A-Za-z0-9-]{2,63}(?<!-)")
 REPO_SLUG_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 
-MODULES: list[tuple[str, str]] = [
-    ("cairo-auditor", "Deterministic + workflow-guided security review"),
-    ("cairo-contract-authoring", "Safe implementation patterns"),
-    ("cairo-testing", "Unit/integration/invariant strategy"),
-    ("cairo-optimization", "Performance/resource hardening"),
-    ("cairo-toolchain", "Build/declare/deploy/verify ops"),
-    ("account-abstraction", "Account/session-key threat patterns"),
-    ("starknet-network-facts", "Chain semantics and constraints"),
-    ("openzeppelin-cairo", "OZ Cairo composition footguns"),
+MODULES: list[tuple[str, str, str]] = [
+    ("cairo-auditor", "Audit workflow for Cairo contracts", "AUD"),
+    ("cairo-contract-authoring", "Contract implementation patterns", "AUTH"),
+    ("cairo-testing", "Unit, integration, and invariant testing", "TEST"),
+    ("cairo-optimization", "Performance and resource usage", "OPT"),
+    ("cairo-toolchain", "Build, declare, deploy, and verify", "OPS"),
+    ("account-abstraction", "Accounts, sessions, and threat patterns", "AA"),
+    ("starknet-network-facts", "Network semantics and constraints", "NET"),
 ]
+
+ASCII_LOGO = r"""
+███████╗████████╗ █████╗ ██████╗ ██╗  ██╗███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██║ ██╔╝██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+███████╗   ██║   ███████║██████╔╝█████╔╝ ███████╗█████╔╝ ██║██║     ██║     ███████╗
+╚════██║   ██║   ██╔══██║██╔══██╗██╔═██╗ ╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+███████║   ██║   ██║  ██║██║  ██║██║  ██╗███████║██║  ██╗██║███████╗███████╗███████║
+╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝
+""".strip("\n")
 
 
 @dataclass
@@ -88,13 +96,16 @@ def _find_float(pattern: str, text: str) -> float | None:
     return float(match.group(1)) if match else None
 
 
-def pick_latest_scorecards(scorecard_dir: Path) -> tuple[ScorecardMetrics | None, ScorecardMetrics | None]:
+def pick_latest_scorecards(
+    scorecard_dir: Path,
+) -> tuple[ScorecardMetrics | None, ScorecardMetrics | None, ScorecardMetrics | None]:
     files = [p for p in scorecard_dir.glob("v*.md") if p.is_file()]
     if not files:
-        return None, None
+        return None, None, None
 
-    real_world = [p for p in files if "realworld" in p.name]
-    deterministic = [p for p in files if "benchmark" in p.name and "realworld" not in p.name]
+    real_world = [p for p in files if "cairo-auditor-realworld-benchmark" in p.name]
+    deterministic = [p for p in files if "cairo-auditor-benchmark" in p.name and "realworld" not in p.name]
+    contract_skill = [p for p in files if "contract-skill-benchmark" in p.name]
 
     def _pick(candidates: list[Path]) -> ScorecardMetrics | None:
         if not candidates:
@@ -102,7 +113,7 @@ def pick_latest_scorecards(scorecard_dir: Path) -> tuple[ScorecardMetrics | None
         chosen = max(candidates, key=lambda item: (parse_version(item), item.name))
         return parse_scorecard(chosen)
 
-    return _pick(deterministic), _pick(real_world)
+    return _pick(deterministic), _pick(contract_skill), _pick(real_world)
 
 
 def parse_card_sections(markdown_text: str) -> dict[str, str]:
@@ -267,7 +278,9 @@ def build_dataset(root: Path, repo_slug: str, repo_ref: str) -> dict:
             )
         )
 
-    deterministic_scorecard, realworld_scorecard = pick_latest_scorecards(scorecards_dir)
+    deterministic_scorecard, contract_skill_scorecard, realworld_scorecard = pick_latest_scorecards(
+        scorecards_dir
+    )
     source_fingerprint = fingerprint_files(
         root,
         [
@@ -297,17 +310,19 @@ def build_dataset(root: Path, repo_slug: str, repo_ref: str) -> dict:
         },
         "latest_scorecards": {
             "deterministic": scorecard_to_dict(deterministic_scorecard, root, repo_github, repo_ref),
+            "contract_skill": scorecard_to_dict(contract_skill_scorecard, root, repo_github, repo_ref),
             "realworld": scorecard_to_dict(realworld_scorecard, root, repo_github, repo_ref),
         },
         "modules": [
             {
                 "name": name,
                 "description": description,
+                "sigil": sigil,
                 "skill_path": f"{name}/SKILL.md",
                 "raw_skill_url": raw_skill_url(name, repo_raw),
                 "github_url": f"{repo_github}/blob/{repo_ref}/{name}/SKILL.md",
             }
-            for name, description in MODULES
+            for name, description, sigil in MODULES
         ],
         "vuln_cards": [
             {
@@ -323,6 +338,7 @@ def build_dataset(root: Path, repo_slug: str, repo_ref: str) -> dict:
         "links": {
             "repo": repo_github,
             "repo_ref": repo_ref,
+            "license": f"{repo_github}/blob/{repo_ref}/LICENSE",
             "router_skill_raw": f"{repo_raw}/SKILL.md",
             "router_skill_github": f"{repo_github}/blob/{repo_ref}/SKILL.md",
             "quality_workflow": f"{repo_github}/actions/workflows/quality.yml",
@@ -362,6 +378,14 @@ def fmt_int(value: int) -> str:
     return f"{value:,}"
 
 
+def fmt_metric(value: int | float | None) -> str:
+    if value is None:
+        return "n/a"
+    if isinstance(value, float):
+        return f"{value:.1f}" if value.is_integer() else f"{value:.2f}".rstrip("0").rstrip(".")
+    return str(value)
+
+
 def severity_badges(counter: dict[str, int]) -> str:
     if not counter:
         return '<span class="pill pill-muted">none</span>'
@@ -392,207 +416,485 @@ def source_finding_links(ids: Iterable[str], repo_github: str) -> str:
     return "".join(output) if output else '<span class="muted">none</span>'
 
 
+def site_url(domain: str | None, path: str = "") -> str | None:
+    if not domain:
+        return None
+    path = path.lstrip("/")
+    return f"https://{domain}/{path}" if path else f"https://{domain}"
+
+
+def head_meta(title: str, description: str, css_path: str, domain: str | None, page_path: str) -> str:
+    canonical = site_url(domain, page_path)
+    og_image = site_url(domain, "assets/og-card.png")
+    favicon = site_url(domain, "assets/favicon.svg")
+    meta = [
+        '  <meta charset="utf-8" />',
+        '  <meta name="viewport" content="width=device-width, initial-scale=1" />',
+        f"  <title>{e(title)}</title>",
+        f'  <meta name="description" content="{e(description)}" />',
+        '  <meta name="theme-color" content="#0a0a0a" />',
+        '  <link rel="preconnect" href="https://fonts.googleapis.com" />',
+        '  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />',
+        '  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet" />',
+        f'  <link rel="stylesheet" href="{e(css_path)}" />',
+    ]
+    if favicon:
+        meta.append(f'  <link rel="icon" href="{e(favicon)}" type="image/svg+xml" />')
+    if canonical:
+        meta.extend(
+            [
+                f'  <link rel="canonical" href="{e(canonical)}" />',
+                f'  <meta property="og:url" content="{e(canonical)}" />',
+                '  <meta property="og:type" content="website" />',
+                f'  <meta property="og:title" content="{e(title)}" />',
+                f'  <meta property="og:description" content="{e(description)}" />',
+                '  <meta name="twitter:card" content="summary_large_image" />',
+                f'  <meta name="twitter:title" content="{e(title)}" />',
+                f'  <meta name="twitter:description" content="{e(description)}" />',
+            ]
+        )
+        if og_image:
+            meta.extend(
+                [
+                    f'  <meta property="og:image" content="{e(og_image)}" />',
+                    f'  <meta name="twitter:image" content="{e(og_image)}" />',
+                ]
+            )
+    return "\n".join(meta)
+
+
+def command_block(title: str, description: str, code: str, accent: str = "") -> str:
+    safe_accent = re.sub(r"[^a-z0-9-]", "", accent.lower())
+    modifier = f" command-card--{safe_accent}" if safe_accent else ""
+    return (
+        f'<article class="command-card{modifier} reveal">'
+        '<div class="command-head">'
+        f"<div><h2>{e(title)}</h2><p>{e(description)}</p></div>"
+        f'<button class="copy-button" type="button" data-copy="{e(code)}" aria-label="Copy {e(title)}">copy</button>'
+        "</div>"
+        f'<pre><code>{e(code)}</code></pre>'
+        "</article>"
+    )
+
+
+def module_card(item: dict) -> str:
+    return (
+        f'<article class="module-card reveal" data-href="{e(item["raw_skill_url"])}">'
+        '<div class="module-head">'
+        f'<span class="module-sigil">{e(item["sigil"])}</span>'
+        '<span class="status">stable</span>'
+        "</div>"
+        f'<h3><a href="{e(item["raw_skill_url"])}" target="_blank" rel="noreferrer">{e(item["name"])}</a></h3>'
+        f'<p>{e(item["description"])}</p>'
+        '<div class="module-actions">'
+        f'<button class="icon-button copy-button" type="button" data-copy="{e(item["raw_skill_url"])}" aria-label="Copy raw URL for {e(item["name"])}">cp</button>'
+        f'<a class="icon-button" href="{e(item["raw_skill_url"])}" target="_blank" rel="noreferrer" aria-label="Open raw SKILL.md for {e(item["name"])}">raw</a>'
+        f'<a class="icon-button" href="{e(item["github_url"])}" target="_blank" rel="noreferrer" aria-label="Open GitHub page for {e(item["name"])}">gh</a>'
+        "</div>"
+        "</article>"
+    )
+
+
+def pipeline_step(number: int, name: str, stat: str, note: str) -> str:
+    return (
+        '<article class="pipeline-step reveal">'
+        f'<div class="step-index">{number:02d}</div>'
+        f"<h3>{e(name)}</h3>"
+        f'<div class="step-stat">{e(stat)}</div>'
+        f'<p>{e(note)}</p>'
+        "</article>"
+    )
+
+
+def verify_link(label: str, href: str, meta: str) -> str:
+    return (
+        f'<a class="verify-link reveal" href="{e(href)}" target="_blank" rel="noreferrer">'
+        f'<span class="verify-name">{e(label)}</span>'
+        f'<span class="verify-meta">{e(meta)}</span>'
+        "</a>"
+    )
+
+
+def scorecard_metric(label: str, value: int | float | None, perfect: bool = False) -> str:
+    metric_value = fmt_metric(value)
+    ok = '<span class="metric-ok" aria-hidden="true"></span>' if perfect else ""
+    data_value = ""
+    if isinstance(value, (int, float)):
+        data_value = f' data-value="{value}"'
+    return (
+        '<article class="score-metric reveal">'
+        f'<p>{e(label)}</p>'
+        f'<strong class="count-up"{data_value}>{e(metric_value)}</strong>{ok}'
+        "</article>"
+    )
+
+
+def shared_script() -> str:
+    return """
+<script>
+(() => {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const setCopied = (button) => {
+    const previous = button.textContent;
+    button.textContent = 'copied';
+    button.classList.add('is-copied');
+    window.setTimeout(() => {
+      button.textContent = previous;
+      button.classList.remove('is-copied');
+    }, 2000);
+  };
+
+  document.addEventListener('click', async (event) => {
+    const copyButton = event.target.closest('.copy-button');
+    if (copyButton) {
+      const text = copyButton.getAttribute('data-copy');
+      if (text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(copyButton);
+        } catch (_error) {
+          copyButton.textContent = 'failed';
+          window.setTimeout(() => {
+            copyButton.textContent = copyButton.classList.contains('icon-button') ? 'cp' : 'copy';
+          }, 1500);
+        }
+      }
+      return;
+    }
+
+    const card = event.target.closest('.module-card[data-href]');
+    if (card && !event.target.closest('a, button')) {
+      const href = card.getAttribute('data-href');
+      if (href) {
+        window.open(href, '_blank', 'noopener,noreferrer');
+      }
+    }
+  });
+
+  if (prefersReducedMotion) {
+    document.querySelectorAll('.reveal').forEach((element) => element.classList.add('is-visible'));
+    return;
+  }
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      revealObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach((element) => revealObserver.observe(element));
+
+  const countObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const element = entry.target;
+      const target = Number(element.getAttribute('data-value'));
+      if (!Number.isFinite(target)) {
+        countObserver.unobserve(element);
+        return;
+      }
+      const decimals = String(target).includes('.') ? 1 : 0;
+      const duration = 450;
+      const start = performance.now();
+      const tick = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const value = target * progress;
+        element.textContent = value.toFixed(decimals);
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          element.textContent = target.toFixed(decimals);
+        }
+      };
+      requestAnimationFrame(tick);
+      countObserver.unobserve(element);
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.count-up[data-value]').forEach((element) => countObserver.observe(element));
+})();
+</script>
+""".strip()
+
+
 def build_index_html(data: dict, domain: str | None) -> str:
     counts = data["counts"]
     links = data["links"]
     scorecard = data["latest_scorecards"].get("realworld") or data["latest_scorecards"].get("deterministic")
 
-    modules_html = "\n".join(
-        (
-            '<article class="module-card">'
-            f'<h3>{e(item["name"])}<span class="status">stable</span></h3>'
-            f'<p>{e(item["description"])}</p>'
-            '<div class="card-links">'
-            f'<a href="{e(item["raw_skill_url"])}" target="_blank" rel="noreferrer">Raw SKILL.md</a>'
-            f'<a href="{e(item["github_url"])}" target="_blank" rel="noreferrer">Repo</a>'
-            "</div>"
-            "</article>"
-        )
-        for item in data["modules"]
+    stats_bar = "\n".join(
+        [
+            f'<span class="stat-pill">{fmt_int(counts["cataloged_audits"])} audits</span>',
+            f'<span class="stat-pill">{fmt_int(counts["normalized_findings"])} findings</span>',
+            f'<span class="stat-pill">{fmt_int(counts["skill_modules"])} modules</span>',
+            '<span class="stat-pill">router</span>',
+        ]
     )
 
-    scorecard_block = ""
+    modules_html = "\n".join(module_card(item) for item in data["modules"])
+
+    pipeline_html = "\n".join(
+        [
+            pipeline_step(1, "ingest", fmt_int(counts["cataloged_audits"]), "audit manifests"),
+            pipeline_step(2, "segment", fmt_int(counts["segmented_audits"]), "segmented corpora"),
+            pipeline_step(3, "normalize", fmt_int(counts["normalized_findings"]), "normalized findings"),
+            pipeline_step(4, "distill", fmt_int(counts["distilled_vuln_cards"]), "vuln cards"),
+            pipeline_step(5, "skillize", fmt_int(counts["skill_modules"]), "published modules"),
+        ]
+    )
+
+    scorecard_html = ""
+    scorecard_nav = ""
     if scorecard:
-        scorecard_block = (
-            '<div class="scorecard">'
-            '<h3>Latest Benchmark Snapshot</h3>'
-            '<div class="scorecard-grid">'
-            f'<div><span>Cases</span><strong>{e(scorecard.get("cases", "n/a"))}</strong></div>'
-            f'<div><span>Precision</span><strong>{e(scorecard.get("precision", "n/a"))}</strong></div>'
-            f'<div><span>Recall</span><strong>{e(scorecard.get("recall", "n/a"))}</strong></div>'
-            "</div>"
-            f'<a href="{e(scorecard["github_url"])}" target="_blank" rel="noreferrer">Open scorecard</a>'
-            "</div>"
+        perfect_precision = scorecard.get("precision") == 1.0
+        perfect_recall = scorecard.get("recall") == 1.0
+        scorecard_nav = '<a href="#scorecard">scorecard</a>'
+        scorecard_html = (
+            '<section class="section section-score reveal" id="scorecard">'
+            '<div class="section-head">'
+            '<div><p class="section-kicker">Scorecard</p><h2>Latest run</h2></div>'
+            f'<a href="{e(scorecard["github_url"])}" target="_blank" rel="noreferrer">open scorecard</a>'
+            '</div>'
+            '<div class="score-grid">'
+            f'{scorecard_metric("cases", scorecard.get("cases"))}'
+            f'{scorecard_metric("precision", scorecard.get("precision"), perfect_precision)}'
+            f'{scorecard_metric("recall", scorecard.get("recall"), perfect_recall)}'
+            '</div>'
+            '<p class="section-note">Real-world benchmark snapshot from the repo.</p>'
+            '</section>'
         )
 
-    domain_note = (
-        f'<div class="domain-note">Prepared for <strong>{e(domain)}</strong>.</div>'
-        if domain
-        else ""
+    verify_html = "\n".join(
+        [
+            verify_link("quality", links["quality_workflow"], "ci"),
+            verify_link("evals", links["full_evals_workflow"], "workflow"),
+            verify_link("held-out", links["heldout_policy"], "policy"),
+            verify_link("contributing", links["contributing"], "guide"),
+            verify_link("vuln cards", "vuln-cards/", "index"),
+            verify_link("site data", "data/site-data.json", "json"),
+        ]
+    )
+
+    primary_command = command_block("Raw URL", "Use the router skill directly.", links["router_skill_raw"], "primary")
+    secondary_commands = "\n".join(
+        [
+            command_block(
+                "Claude",
+                "Install in Claude.",
+                "/plugin marketplace add keep-starknet-strange/starknet-skills\n/plugin menu",
+            ),
+            command_block("Git clone", "Clone the repo locally.", f"git clone {links['repo']}.git"),
+        ]
     )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Starkskills | Cairo Security Skills for AI Agents</title>
-  <meta name="description" content="Production-grade Cairo security knowledge for AI agents, backed by manifest-tracked Starknet audit data." />
-  <link rel="stylesheet" href="assets/site.css" />
+{head_meta('starkskills', 'Cairo and Starknet skills, audit data, and direct links.', 'assets/site.css', domain, '')}
 </head>
 <body>
-  <header class="hero">
-    <div class="badge-row">
-      <span class="badge">Starknet Skills</span>
-      <span class="badge badge-soft">Flagship: cairo-auditor</span>
-    </div>
-    <h1>Production-grade Cairo security knowledge for AI agents.</h1>
-    <p class="hero-subtitle">Backed by <strong>{fmt_int(counts['cataloged_audits'])}</strong> manifest-cataloged audits, <strong>{fmt_int(counts['normalized_findings'])}</strong> normalized findings, and deterministic benchmark gates.</p>
-    {domain_note}
-    <div class="install-grid">
-      <article>
-        <h2>Claude marketplace</h2>
-        <pre><code>/plugin marketplace add keep-starknet-strange/starknet-skills
-/plugin menu</code></pre>
-      </article>
-      <article>
-        <h2>Raw router URL</h2>
-        <pre><code>{e(links['router_skill_raw'])}</code></pre>
-      </article>
-      <article>
-        <h2>Git clone</h2>
-        <pre><code>git clone {e(links['repo'])}.git</code></pre>
-      </article>
-    </div>
+  <header class="topbar">
+    <a class="brand" href="#top">starkskills</a>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="#skills">skills</a>
+      <a href="#data">pipeline</a>
+      {scorecard_nav}
+      <a href="#verify">verify</a>
+    </nav>
+    <a class="nav-icon" href="{e(links['repo'])}" target="_blank" rel="noreferrer" aria-label="Open GitHub repository">gh</a>
   </header>
 
-  <main>
-    <section class="section">
-      <div class="section-head">
-        <h2>Flagship: cairo-auditor</h2>
-        <a href="{e(links['cairo_auditor'])}" target="_blank" rel="noreferrer">Open SKILL.md</a>
+  <main class="shell" id="top">
+    <section class="hero reveal">
+      <pre class="ascii-logo" aria-label="STARKSKILLS">{e(ASCII_LOGO)}</pre>
+      <h1>Cairo and Starknet skills for agents.</h1>
+      <p class="hero-copy">Plain markdown skills, audit data, and direct links.</p>
+      <div class="stats-bar">
+        {stats_bar}
       </div>
-      <p>Systematic review workflow for Cairo contracts: discover in-scope files, run vectorized scans, verify findings through a false-positive gate, and report prioritized fixes with required regression tests.</p>
-      <div class="workflow">
-        <span>discover</span>
-        <span>scan</span>
-        <span>verify</span>
-        <span>report</span>
+      <div class="hero-install">
+        {primary_command}
+        <div class="command-stack">
+          {secondary_commands}
+        </div>
       </div>
-      {scorecard_block}
     </section>
 
-    <section class="section">
+    <section class="section section-card reveal" id="showcase">
       <div class="section-head">
-        <h2>Skill Modules</h2>
-        <a href="{e(links['router_skill_github'])}" target="_blank" rel="noreferrer">Router</a>
+        <div>
+          <p class="section-kicker">Example</p>
+          <h2>cairo-auditor</h2>
+        </div>
+        <div class="section-links">
+          <a href="{e(links['cairo_auditor'])}" target="_blank" rel="noreferrer">skill</a>
+          <a href="{e(links['cairo_auditor_readme'])}" target="_blank" rel="noreferrer">readme</a>
+        </div>
+      </div>
+      <p class="section-copy">One example module. Discover files, scan patterns, verify findings, write the report.</p>
+      <ul class="workflow" aria-label="Audit workflow">
+        <li><span>01</span> discover</li>
+        <li><span>02</span> scan</li>
+        <li><span>03</span> verify</li>
+        <li><span>04</span> report</li>
+      </ul>
+    </section>
+
+    <section class="section reveal" id="skills">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">Skills</p>
+          <h2>Index</h2>
+        </div>
+        <div class="section-links">
+          <a href="{e(links['router_skill_github'])}" target="_blank" rel="noreferrer">router</a>
+          <button class="copy-button inline-copy" type="button" data-copy="{e(links['router_skill_raw'])}">copy router url</button>
+        </div>
       </div>
       <div class="module-grid">
         {modules_html}
       </div>
     </section>
 
-    <section class="section">
+    <section class="section reveal" id="data">
       <div class="section-head">
-        <h2>Audit Data Pipeline</h2>
-        <a href="{e(links['pipeline_readme'])}" target="_blank" rel="noreferrer">Pipeline docs</a>
+        <div>
+          <p class="section-kicker">Pipeline</p>
+          <h2>Data flow</h2>
+        </div>
+        <a href="{e(links['pipeline_readme'])}" target="_blank" rel="noreferrer">datasets</a>
       </div>
       <div class="pipeline-grid">
-        <article><h3>ingest</h3><p>{fmt_int(counts['cataloged_audits'])} audits cataloged in manifest</p></article>
-        <article><h3>segment</h3><p>{fmt_int(counts['segmented_audits'])} segmented audit text sets</p></article>
-        <article><h3>normalize</h3><p>{fmt_int(counts['normalized_audits'])} normalized audits / {fmt_int(counts['normalized_findings'])} findings</p></article>
-        <article><h3>distill</h3><p>{fmt_int(counts['distilled_vuln_cards'])} vuln cards, {fmt_int(counts['distilled_fix_patterns'])} fix patterns, {fmt_int(counts['distilled_test_recipes'])} test recipes</p></article>
-        <article><h3>skillize</h3><p>{fmt_int(counts['skills_total_with_router'])} skills including router</p></article>
+        {pipeline_html}
       </div>
-      <p class="pipeline-footnote">Counts are generated from repository data at build time.</p>
+      <p class="section-note">Counts are generated from repo data at build time.</p>
     </section>
 
-    <section class="section trust">
+    {scorecard_html}
+
+    <section class="section reveal" id="verify">
       <div class="section-head">
-        <h2>Trust & Verification</h2>
-        <a href="vuln-cards/">Browse vuln cards</a>
+        <div>
+          <p class="section-kicker">Verify</p>
+          <h2>Repo links</h2>
+        </div>
+        <a href="vuln-cards/">vuln cards</a>
       </div>
-      <ul>
-        <li><a href="{e(links['quality_workflow'])}" target="_blank" rel="noreferrer">Quality gate CI</a></li>
-        <li><a href="{e(links['full_evals_workflow'])}" target="_blank" rel="noreferrer">Full evals workflow</a></li>
-        <li><a href="{e(links['heldout_policy'])}" target="_blank" rel="noreferrer">Held-out evaluation policy</a></li>
-        <li><a href="{e(links['contributing'])}" target="_blank" rel="noreferrer">Contributing guide</a></li>
-      </ul>
+      <div class="verify-grid">
+        {verify_html}
+      </div>
     </section>
   </main>
 
-  <footer>
-    <span>Source fingerprint: {e(data['source_fingerprint'])}</span>
-    <a href="data/site-data.json">site-data.json</a>
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="{e(links['license'])}" target="_blank" rel="noreferrer">MIT License</a>
+      <a href="{e(links['repo'])}" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="{e(links['contributing'])}" target="_blank" rel="noreferrer">Contributing</a>
+    </div>
+    <div class="fingerprint">$ fingerprint {e(data['source_fingerprint'])}</div>
   </footer>
+
+  {shared_script()}
 </body>
 </html>
 """
 
 
-def build_vuln_cards_html(data: dict) -> str:
+def build_vuln_cards_html(data: dict, domain: str | None) -> str:
     repo_github = data["links"]["repo"]
     rows = []
     for card in data["vuln_cards"]:
         rows.append(
-            "<tr>"
-            f"<td><a href=\"{e(card['github_url'])}\" target=\"_blank\" rel=\"noreferrer\">{e(card['name'])}</a></td>"
-            f"<td>{severity_badges(card['severity_distribution'])}</td>"
-            f"<td>{e(card['trigger'])}</td>"
-            f"<td>{e(card['detection_rule'])}</td>"
-            f"<td>{source_finding_links(card['source_findings'], repo_github)}</td>"
-            "</tr>"
+            '<article class="vuln-card reveal">'
+            '<div class="vuln-head">'
+            f"<h3><a href=\"{e(card['github_url'])}\" target=\"_blank\" rel=\"noreferrer\">{e(card['name'])}</a></h3>"
+            f"<div>{severity_badges(card['severity_distribution'])}</div>"
+            "</div>"
+            '<p class="meta-label">Trigger</p>'
+            f"<p>{e(card['trigger'])}</p>"
+            '<p class="meta-label">Detection</p>'
+            f"<p>{e(card['detection_rule'])}</p>"
+            '<p class="meta-label">Findings</p>'
+            f"<div>{source_finding_links(card['source_findings'], repo_github)}</div>"
+            "</article>"
         )
 
-    row_markup = "\n".join(rows) if rows else "<tr><td colspan=\"5\">No vuln cards published yet.</td></tr>"
+    row_markup = "\n".join(rows) if rows else '<article class="vuln-card"><p>No vuln cards published yet.</p></article>'
+    counts = data["counts"]
+    links = data["links"]
 
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Starkskills | Vulnerability Cards</title>
-  <meta name="description" content="Browsable vulnerability cards distilled from Starknet audit findings." />
-  <link rel="stylesheet" href="../assets/site.css" />
+{head_meta('starkskills | vuln cards', 'Distilled vulnerability cards from Starknet audit findings.', '../assets/site.css', domain, 'vuln-cards/')}
 </head>
 <body>
-  <header class="subpage-hero">
-    <a class="back-link" href="../">← Back to landing page</a>
-    <h1>Vulnerability Card Browser</h1>
-    <p>Distilled classes from <strong>{fmt_int(data['counts']['normalized_findings'])}</strong> normalized findings.</p>
+  <header class="topbar">
+    <a class="brand" href="../">starkskills</a>
+    <nav class="site-nav" aria-label="Secondary navigation">
+      <a href="../#skills">skills</a>
+      <a href="../#verify">verify</a>
+      <a href="../">home</a>
+    </nav>
+    <a class="nav-icon" href="{e(links['vuln_cards_dir'])}" target="_blank" rel="noreferrer" aria-label="Open vulnerability cards directory">gh</a>
   </header>
 
-  <main>
-    <section class="section">
-      <div class="section-head">
-        <h2>Card Index</h2>
-        <a href="{e(data['links']['vuln_cards_dir'])}" target="_blank" rel="noreferrer">Open repo directory</a>
+  <main class="shell">
+    <section class="hero reveal">
+      <pre class="ascii-logo ascii-logo--small" aria-label="STARKSKILLS">{e(ASCII_LOGO)}</pre>
+      <h1>Vuln cards.</h1>
+      <p class="hero-copy">Distilled classes from normalized findings.</p>
+      <div class="stats-bar">
+        <span class="stat-pill">{fmt_int(counts['distilled_vuln_cards'])} cards</span>
+        <span class="stat-pill">{fmt_int(counts['normalized_findings'])} findings</span>
+        <span class="stat-pill">{fmt_int(counts['cataloged_audits'])} audits</span>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Class</th>
-              <th>Severity Distribution</th>
-              <th>Trigger Condition</th>
-              <th>Detection Rule</th>
-              <th>Source Findings</th>
-            </tr>
-          </thead>
-          <tbody>
-            {row_markup}
-          </tbody>
-        </table>
+    </section>
+
+    <section class="section reveal">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">Index</p>
+          <h2>Browse</h2>
+        </div>
+        <a href="{e(links['vuln_cards_dir'])}" target="_blank" rel="noreferrer">repo dir</a>
+      </div>
+      <div class="vuln-grid">
+        {row_markup}
       </div>
     </section>
   </main>
 
-  <footer>
-    <span>Source fingerprint: {e(data['source_fingerprint'])}</span>
-    <a href="../data/site-data.json">site-data.json</a>
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="../">Home</a>
+      <a href="{e(links['repo'])}" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="../data/site-data.json">site-data.json</a>
+    </div>
+    <div class="fingerprint">$ fingerprint {e(data['source_fingerprint'])}</div>
   </footer>
+
+  {shared_script()}
 </body>
 </html>
+"""
+
+
+def build_og_card_svg(domain: str | None) -> str:
+    label = domain or "starkskills"
+    logo_lines = "&#10;".join(html.escape(line) for line in ASCII_LOGO.splitlines()[:3])
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="starkskills">
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+  <rect x="56" y="56" width="1088" height="518" rx="20" fill="#101010" stroke="#242424"/>
+  <text x="88" y="140" font-family="monospace" font-size="26" fill="#00d4aa" xml:space="preserve">{logo_lines}</text>
+  <text x="88" y="340" font-family="monospace" font-size="38" fill="#e0e0e0">Cairo and Starknet skills for agents.</text>
+  <text x="88" y="392" font-family="sans-serif" font-size="26" fill="#a0a0a0">Plain markdown skills, audit data, and direct links.</text>
+  <text x="88" y="500" font-family="monospace" font-size="24" fill="#00d4aa">{html.escape(label)}</text>
+</svg>
 """
 
 
@@ -638,6 +940,7 @@ def main() -> None:
 
     data = build_dataset(root, repo_slug=repo_slug, repo_ref=repo_ref)
 
+    (website / "assets").mkdir(parents=True, exist_ok=True)
     (website / "data").mkdir(parents=True, exist_ok=True)
     (website / "vuln-cards").mkdir(parents=True, exist_ok=True)
 
@@ -646,7 +949,8 @@ def main() -> None:
         encoding="utf-8",
     )
     (website / "index.html").write_text(build_index_html(data, domain), encoding="utf-8")
-    (website / "vuln-cards/index.html").write_text(build_vuln_cards_html(data), encoding="utf-8")
+    (website / "vuln-cards/index.html").write_text(build_vuln_cards_html(data, domain), encoding="utf-8")
+    (website / "assets/og-card.svg").write_text(build_og_card_svg(domain), encoding="utf-8")
 
     # Ensure GitHub Pages serves paths literally and applies custom domain when configured.
     (website / ".nojekyll").write_text("\n", encoding="utf-8")
