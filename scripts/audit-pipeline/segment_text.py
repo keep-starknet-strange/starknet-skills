@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 NUMERIC_HEADING = re.compile(r"^\s*(\d+(?:\.\d+)+)\s+(.+?)\s*$")
-ID_HEADING = re.compile(r"^\s*([A-Z]{1,3}-\d{2})\s+(.+?)\s*$")
+ID_HEADING = re.compile(r"^\s*([A-Z]{1,3}-\d{2,})\s+(.+?)\s*$")
 WATERMARK_TOKENS = {"V.", "Er", "im", "by", "Rev", "ev", "ie", "w", "R", "iew"}
 
 

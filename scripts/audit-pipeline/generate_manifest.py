@@ -43,8 +43,10 @@ def load_blocked_audit_ids(repo_root: Path) -> set[str]:
 
 def resolve_repo_path(repo_root: Path, candidate: str, label: str) -> Path:
     resolved = (repo_root / candidate).resolve(strict=False)
-    if not resolved.is_relative_to(repo_root):
-        raise ValueError(f"seed {label} escapes repo root: {candidate}")
+    try:
+        resolved.relative_to(repo_root)
+    except ValueError as exc:
+        raise ValueError(f"seed {label} escapes repo root: {candidate}") from exc
     return resolved
 
 
@@ -98,6 +100,8 @@ def main() -> int:
             raise FileNotFoundError(f"Missing extracted artifact: {extracted_path}")
 
         rec = dict(row)
+        rec["raw_path"] = raw_path.relative_to(repo_root_resolved).as_posix()
+        rec["extracted_path"] = extracted_path.relative_to(repo_root_resolved).as_posix()
         rec["raw_sha256"] = sha256_file(raw_path)
         rec["extracted_sha256"] = sha256_file(extracted_path)
         rec["ingested_at"] = now

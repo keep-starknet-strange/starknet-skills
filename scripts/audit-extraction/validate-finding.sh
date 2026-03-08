@@ -38,9 +38,7 @@ required=(
   exploit_path
   trigger_condition
   vulnerable_snippet
-  fixed_snippet
   recommendation
-  test_that_catches_it
   false_positive_lookalikes
   tags
   source_pages
@@ -58,6 +56,24 @@ for key in "${required[@]}"; do
     and ((.[$k] | type) != "array" or (.[$k] | length) > 0)
   ' "$FILE" >/dev/null || {
     echo "Missing required field: $key" >&2
+    exit 1
+  }
+done
+
+optional_nullable_string=(
+  fixed_snippet
+  test_that_catches_it
+)
+
+for key in "${optional_nullable_string[@]}"; do
+  jq -e --arg k "$key" '
+    if has($k) and .[$k] != null then
+      ((.[$k] | type) == "string") and ((.[$k] | length) > 0)
+    else
+      true
+    end
+  ' "$FILE" >/dev/null || {
+    echo "Invalid optional field: $key (must be null or non-empty string)" >&2
     exit 1
   }
 done

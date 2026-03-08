@@ -45,7 +45,7 @@ scarb 2.15.1
 starknet-foundry 0.56.0
 ```
 
-> **Note:** snforge 0.56.0 requires Scarb >= 2.12.0. Check [github.com/foundry-rs/starknet-foundry/releases](https://github.com/foundry-rs/starknet-foundry/releases) for the latest.
+> **Note:** Starknet Foundry 0.56.0 requires Scarb >= 2.12.0. Check [github.com/foundry-rs/starknet-foundry/releases](https://github.com/foundry-rs/starknet-foundry/releases) for the latest.
 
 ## Build
 
@@ -256,7 +256,7 @@ Verify source code on Voyager or Starkscan:
 # https://app.walnut.dev
 ```
 
-> **Note:** `sncast verify` currently only supports the Walnut verification backend. Voyager and Starkscan verification must be done through their respective web UIs.
+> **Note:** In Starknet Foundry 0.56.0+, `sncast verify` supports both Walnut and Voyager backends (for example, `sncast verify --verifier voyager`). Starkscan verification still uses its web UI.
 
 ## Upgradeable Contracts
 

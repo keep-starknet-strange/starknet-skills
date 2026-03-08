@@ -6,28 +6,17 @@ import argparse
 import json
 from pathlib import Path
 
+try:
+    from jsonschema import Draft202012Validator, FormatChecker
+except ImportError as exc:  # pragma: no cover - runtime dependency guard
+    raise RuntimeError("jsonschema is required. Install with: pip install jsonschema") from exc
 
-def validate_record(rec: dict, required: list[str], allowed: set[str]) -> list[str]:
+
+def format_validation_errors(rec: dict, validator: Draft202012Validator) -> list[str]:
     errors = []
-    for key in required:
-        if key not in rec:
-            errors.append(f"missing required key: {key}")
-        elif rec[key] in (None, "", []):
-            errors.append(f"empty required key: {key}")
-    if "severity_normalized" in rec and rec.get("severity_normalized") not in {
-        "critical",
-        "high",
-        "medium",
-        "low",
-        "info",
-        "best_practice",
-    }:
-        errors.append(f"invalid severity_normalized: {rec.get('severity_normalized')}")
-    if "confidence" in rec and rec.get("confidence") not in {"low", "medium", "high"}:
-        errors.append(f"invalid confidence: {rec.get('confidence')}")
-    unknown = set(rec.keys()) - allowed
-    if unknown:
-        errors.append("unknown keys: " + ", ".join(sorted(unknown)))
+    for err in sorted(validator.iter_errors(rec), key=lambda e: str(list(e.path))):
+        location = ".".join(str(p) for p in err.path) if err.path else "$"
+        errors.append(f"{location}: {err.message}")
     return errors
 
 
@@ -53,12 +42,7 @@ def main() -> int:
     schema = json.loads(Path(args.schema).read_text(encoding="utf-8"))
     if not isinstance(schema, dict):
         raise ValueError("schema must be a JSON object")
-    required = schema.get("required", [])
-    allowed = set(schema.get("properties", {}).keys())
-    if not isinstance(required, list) or not all(isinstance(k, str) for k in required):
-        raise ValueError("schema.required must be a string array")
-    if not allowed:
-        raise ValueError("schema.properties must define allowed keys")
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
     repo_root = Path(__file__).resolve().parents[2]
     blocked_audit_ids = load_blocked_audit_ids(repo_root)
 
@@ -76,7 +60,7 @@ def main() -> int:
             err_count += 1
             print(f"line {i}: top-level JSON value must be an object")
             continue
-        errs = validate_record(rec, required, allowed)
+        errs = format_validation_errors(rec, validator)
         for key in ("audit_id", "source_audit_id"):
             value = rec.get(key)
             if isinstance(value, str) and value in blocked_audit_ids:

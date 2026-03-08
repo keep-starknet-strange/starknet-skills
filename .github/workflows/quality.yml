@@ -21,6 +21,9 @@ jobs:
       - name: Setup Ruff
         uses: astral-sh/ruff-action@v3
 
+      - name: Install Python deps
+        run: python -m pip install jsonschema
+
       - name: Python compile check
         run: python -m py_compile scripts/audit-pipeline/*.py
 

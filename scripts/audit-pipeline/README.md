@@ -1,5 +1,9 @@
 # Audit Pipeline Scripts
 
+Prerequisite:
+
+- `python3 -m pip install jsonschema`
+
 ## 1) Generate manifest hashes
 
 ```bash

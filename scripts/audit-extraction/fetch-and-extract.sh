@@ -36,6 +36,20 @@ normalize_url() {
   printf "%s" "${url// /%20}"
 }
 
+short_hash() {
+  local value="$1"
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf "%s" "$value" | sha256sum | cut -c1-8
+    return
+  fi
+  if command -v shasum >/dev/null 2>&1; then
+    printf "%s" "$value" | shasum -a 256 | cut -c1-8
+    return
+  fi
+  echo "ERROR: sha256sum/shasum is required for collision-safe filenames." >&2
+  exit 1
+}
+
 extract_text() {
   local pdf_path="$1"
   local txt_path="$2"
@@ -91,7 +105,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     continue
   fi
 
-  filename="$(basename "${url%%\?*}")"
+  filename="$(basename "${normalized_url%%\?*}")"
   filename="${filename//%20/ }"
   filename="${filename// /_}"
   if [[ -z "$filename" || "$filename" == "/" ]]; then
@@ -104,6 +118,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
   if [[ "$filename" != *.pdf ]]; then
     filename="${filename}.pdf"
   fi
+  filename="$(short_hash "$normalized_url")_${filename}"
 
   pdf_path="${RAW_DIR}/${filename}"
   txt_path="${EXTRACTED_DIR}/${filename%.pdf}.txt"
