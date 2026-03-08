@@ -359,7 +359,7 @@ self.access_control.assert_only_role(MINTER_ROLE);
 
 ## Project Structure
 
-```
+```text
 my-project/
   Scarb.toml
   src/

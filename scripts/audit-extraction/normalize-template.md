@@ -15,8 +15,8 @@ Output fields:
 - status
 - contracts
 - functions
-- root cause
-- exploit path
+- root_cause
+- exploit_path
 - trigger_condition
 - vulnerable_snippet
 - fixed_snippet

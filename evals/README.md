@@ -12,5 +12,6 @@ Evaluation cases and scorecards for skill quality regression tracking.
 
 For changes affecting security detection behavior:
 
-- High/Critical recall must not regress.
-- False-positive rate must not increase beyond allowed threshold.
+- Baseline is the latest `main` scorecard for the same module and case set.
+- High/Critical recall must not regress on `evals/cases/` + documented held-out set.
+- False-positive rate must not increase by more than +1.0 percentage point and must remain <= 2.0% absolute.

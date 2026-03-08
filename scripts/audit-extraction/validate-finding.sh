@@ -13,6 +13,16 @@ fi
 
 FILE="$1"
 
+if [ ! -r "$FILE" ]; then
+  echo "Unreadable file: $FILE" >&2
+  exit 1
+fi
+
+jq -e 'type == "object"' "$FILE" >/dev/null 2>&1 || {
+  echo "Invalid JSON object: $FILE" >&2
+  exit 1
+}
+
 required=(
   finding_id
   source_audit_id

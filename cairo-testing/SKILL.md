@@ -266,22 +266,34 @@ fn test_deposit_any_amount(amount: u256) {
 
 ### Bounded Fuzzing
 
-Use `assume` to constrain fuzz inputs:
+Constrain fuzz inputs with a custom `Fuzzable` type:
 
 ```cairo
-#[test]
-#[fuzzer(runs: 100)]
-fn test_transfer_bounded(amount: u256) {
-    // Skip values that would overflow
-    if amount == 0 || amount > 1000000 {
-        return;
+use snforge_std::fuzzable::{Fuzzable, generate_arg};
+
+#[derive(Debug, Drop)]
+struct BoundedAmount {
+    value: u256,
+}
+
+impl FuzzableBoundedAmount of Fuzzable<BoundedAmount> {
+    fn blank() -> BoundedAmount {
+        BoundedAmount { value: 1 }
     }
 
+    fn generate() -> BoundedAmount {
+        BoundedAmount { value: generate_arg(1, 1000000) }
+    }
+}
+
+#[test]
+#[fuzzer(runs: 100)]
+fn test_transfer_bounded(amount: BoundedAmount) {
     let contract_address = deploy_contract();
     let dispatcher = IMyContractDispatcher { contract_address };
 
     start_cheat_caller_address(contract_address, OWNER());
-    dispatcher.transfer(USER(), amount);
+    dispatcher.transfer(USER(), amount.value);
 }
 ```
 

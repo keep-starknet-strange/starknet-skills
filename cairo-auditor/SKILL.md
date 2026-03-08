@@ -37,8 +37,8 @@ Workflow skill for systematic Cairo contract security review.
 
 1. Discover in-scope Cairo files.
 2. Run vectorized scans using vulnerability patterns in `references/vulnerability-db/`.
-3. Correlate with historical findings in `../../datasets/normalized/findings/`.
-4. Prefer distilled classes from `../../datasets/distilled/vuln-cards/` when available.
+3. Correlate with historical findings in `../datasets/normalized/findings/`.
+4. Prefer distilled classes from `../datasets/distilled/vuln-cards/` when available.
 5. Merge and deduplicate findings by root cause.
 6. Run false-positive verification gate.
 7. Emit prioritized report with remediation guidance and test requirements.
@@ -47,19 +47,37 @@ Workflow skill for systematic Cairo contract security review.
 
 Each finding must include:
 
-- severity
-- file/function location
-- root cause
-- exploit path
-- fix recommendation
-- required regression test
+- `finding_id`
+- `source_audit_id`
+- `project`
+- `auditor`
+- `date`
+- `severity_original`
+- `severity_normalized`
+- `status`
+- `contracts`
+- `functions`
+- `root_cause`
+- `exploit_path`
+- `trigger_condition`
+- `vulnerable_snippet`
+- `fixed_snippet`
+- `recommendation`
+- `test_that_catches_it`
+- `false_positive_lookalikes`
+- `tags`
+- `source_pages`
+- `confidence`
+- `evidence_strength`
+- `reproducibility`
+- `notes`
 
 ## Evidence Sources
 
 - canonical patterns: `references/vulnerability-db/`
-- audit-derived records: `../../datasets/normalized/findings/`
-- distilled security cards: `../../datasets/distilled/vuln-cards/`
-- evaluator regressions: `../../evals/cases/`
+- audit-derived records: `../datasets/normalized/findings/`
+- distilled security cards: `../datasets/distilled/vuln-cards/`
+- evaluator regressions: `../evals/cases/`
 
 ## Output Rule
 
