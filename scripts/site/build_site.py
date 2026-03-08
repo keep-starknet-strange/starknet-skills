@@ -455,7 +455,8 @@ def head_meta(title: str, description: str, css_path: str, domain: str | None, p
 
 
 def command_block(title: str, description: str, code: str, accent: str = "") -> str:
-    modifier = f" command-card--{accent}" if accent else ""
+    safe_accent = re.sub(r"[^a-z0-9-]", "", accent.lower())
+    modifier = f" command-card--{safe_accent}" if safe_accent else ""
     return (
         f'<article class="command-card{modifier} reveal">'
         '<div class="command-head">'
@@ -636,9 +637,11 @@ def build_index_html(data: dict, domain: str | None) -> str:
     )
 
     scorecard_html = ""
+    scorecard_nav = ""
     if scorecard:
         perfect_precision = scorecard.get("precision") == 1.0
         perfect_recall = scorecard.get("recall") == 1.0
+        scorecard_nav = '<a href="#scorecard">scorecard</a>'
         scorecard_html = (
             '<section class="section section-score reveal" id="scorecard">'
             '<div class="section-head">'
@@ -688,7 +691,7 @@ def build_index_html(data: dict, domain: str | None) -> str:
     <nav class="site-nav" aria-label="Primary navigation">
       <a href="#skills">skills</a>
       <a href="#data">pipeline</a>
-      <a href="#scorecard">scorecard</a>
+      {scorecard_nav}
       <a href="#verify">docs</a>
     </nav>
     <a class="nav-icon" href="{e(links['repo'])}" target="_blank" rel="noreferrer" aria-label="Open GitHub repository">gh</a>
@@ -877,10 +880,10 @@ def build_og_card_svg(domain: str | None) -> str:
     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="starkskills">
   <rect width="1200" height="630" fill="#0a0a0a"/>
   <rect x="56" y="56" width="1088" height="518" rx="20" fill="#101010" stroke="#242424"/>
-  <text x="88" y="140" font-family="'JetBrains Mono', monospace" font-size="26" fill="#00d4aa" xml:space="preserve">{logo_lines}</text>
-  <text x="88" y="340" font-family="'JetBrains Mono', monospace" font-size="38" fill="#e0e0e0">Cairo and Starknet skills for agents.</text>
-  <text x="88" y="392" font-family="Inter, system-ui, sans-serif" font-size="26" fill="#a0a0a0">Plain markdown skills, audit data, and direct links.</text>
-  <text x="88" y="500" font-family="'JetBrains Mono', monospace" font-size="24" fill="#00d4aa">{html.escape(label)}</text>
+  <text x="88" y="140" font-family="monospace" font-size="26" fill="#00d4aa" xml:space="preserve">{logo_lines}</text>
+  <text x="88" y="340" font-family="monospace" font-size="38" fill="#e0e0e0">Cairo and Starknet skills for agents.</text>
+  <text x="88" y="392" font-family="sans-serif" font-size="26" fill="#a0a0a0">Plain markdown skills, audit data, and direct links.</text>
+  <text x="88" y="500" font-family="monospace" font-size="24" fill="#00d4aa">{html.escape(label)}</text>
 </svg>
 """
 
