@@ -28,6 +28,16 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup Scarb
+        uses: software-mansion/setup-scarb@95ba816a4383938e2338cb793773d4670011b65f # v1
+        with:
+          scarb-version: "2.14.0"
+
+      - name: Setup Starknet Foundry
+        uses: foundry-rs/setup-snfoundry@84390a1602c157576ceefa6f9cfcb8b0504c94c7 # v3
+        with:
+          starknet-foundry-version: "0.56.0"
+
       - name: Install Python deps
         run: python -m pip install jsonschema==4.23.0 pyyaml==6.0.2 detect-secrets==1.5.0
 
@@ -56,6 +66,9 @@ jobs:
           python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/cases/benchmark-case.schema.json \
             --jsonl evals/cases/cairo_auditor_realworld_benchmark.jsonl
+          python scripts/audit-pipeline/validate_jsonl.py \
+            --schema evals/cases/contract-benchmark-case.schema.json \
+            --jsonl evals/cases/contract_skill_benchmark.jsonl
           python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/cases/benchmark-case.schema.json \
             --jsonl evals/heldout/cairo_auditor_llm_eval_cases.jsonl
@@ -111,6 +124,29 @@ jobs:
             --title "v0.2.0 Cairo Auditor Real-World Benchmark" \
             --min-precision 0.90 \
             --min-recall 0.90
+
+      - name: Contract skill benchmark
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          python scripts/quality/benchmark_contract_skills.py \
+            --cases evals/cases/contract_skill_benchmark.jsonl \
+            --output "${RUNNER_TEMP}/scorecards/contract-skill-benchmark.md" \
+            --version v0.4.0 \
+            --title "v0.4.0 Contract Skill Benchmark" \
+            --min-precision 0.95 \
+            --min-recall 0.95 \
+            --min-evaluated 22 \
+            --enforce-min-evaluated \
+            --require-tools
+
+      - name: Contract benchmark trend
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          python scripts/quality/render_contract_benchmark_trend.py \
+            --scorecards-glob 'evals/scorecards/v*-contract-skill-benchmark.md' \
+            --output "${RUNNER_TEMP}/scorecards/contract-skill-benchmark-trend.md" \
+            --min-cases 22 \
+            --min-consecutive 2
 
       - name: Cairo auditor external triage scorecard
         run: |
@@ -172,6 +208,8 @@ jobs:
           path: |
             ${{ runner.temp }}/scorecards/cairo-auditor-benchmark.md
             ${{ runner.temp }}/scorecards/cairo-auditor-realworld-benchmark.md
+            ${{ runner.temp }}/scorecards/contract-skill-benchmark.md
+            ${{ runner.temp }}/scorecards/contract-skill-benchmark-trend.md
             ${{ runner.temp }}/scorecards/cairo-auditor-external-triage.md
             ${{ runner.temp }}/scorecards/cairo-auditor-external-trend.md
             ${{ runner.temp }}/scorecards/cairo-auditor-external-triage.json

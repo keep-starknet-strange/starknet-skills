@@ -5,6 +5,7 @@ Evaluation cases and scorecards for skill quality regression tracking.
 ## Structure
 
 - `cases/`: held-out cases for detection and remediation quality.
+- `contracts/`: runnable Cairo fixture projects for contract skill checks.
 - `heldout/`: explicit hold-out policy and reserved sets excluded from distillation.
 - `reports/`: external repository scan reports and triage notes.
 - `scorecards/`: run outputs and aggregate metrics by version.
@@ -35,6 +36,37 @@ python scripts/quality/benchmark_cairo_auditor.py \
   --output evals/scorecards/v0.2.0-cairo-auditor-benchmark.md \
   --min-precision 0.90 \
   --min-recall 0.90
+```
+
+Run contract skill benchmark (compiles/tests fixture contracts and enforces policy assertions):
+
+```bash
+python scripts/quality/benchmark_contract_skills.py \
+  --cases evals/cases/contract_skill_benchmark.jsonl \
+  --output evals/scorecards/v0.4.0-contract-skill-benchmark.md \
+  --version v0.4.0 \
+  --min-precision 0.95 \
+  --min-recall 0.95 \
+  --min-evaluated 22 \
+  --enforce-min-evaluated \
+  --require-tools
+```
+
+Interpretation guidance for contract benchmark metrics:
+
+- If evaluated cases are fewer than `22`, treat results as a deterministic smoke gate only.
+- Smoke-gate pass means fixture checks are wired correctly and caught seeded regressions.
+- Smoke-gate pass does **not** justify broad claims like "overall skill quality is 100%."
+- Publishable KPI status requires at least `2` consecutive reportable releases (tracked in trend scorecard).
+
+Render contract benchmark trend report:
+
+```bash
+python scripts/quality/render_contract_benchmark_trend.py \
+  --scorecards-glob 'evals/scorecards/v*-contract-skill-benchmark.md' \
+  --output evals/scorecards/contract-skill-benchmark-trend.md \
+  --min-cases 22 \
+  --min-consecutive 2
 ```
 
 Run the real-world Cairo corpus benchmark (public snippets + normalized audit findings):

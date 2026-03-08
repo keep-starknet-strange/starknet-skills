@@ -88,7 +88,13 @@ cairo-auditor real-world benchmark:
 | Precision | 1.0 |
 | Recall | 1.0 |
 
-Full scorecards: [smoke](evals/scorecards/v0.2.0-cairo-auditor-benchmark.md) · [real-world](evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md) · [external triage](evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
+Scorecards:
+- [v0.2.0-cairo-auditor-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-benchmark.md)
+- [v0.2.0-cairo-auditor-realworld-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md)
+- [v0.4.0-contract-skill-benchmark.md](evals/scorecards/v0.4.0-contract-skill-benchmark.md)
+- [contract-skill-benchmark-trend.md](evals/scorecards/contract-skill-benchmark-trend.md)
+- [v0.2.0-cairo-auditor-external-triage.md](evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
+- [cairo-auditor-external-trend.md](evals/scorecards/cairo-auditor-external-trend.md)
 
 ## Methodology
 

@@ -36,3 +36,28 @@
   - computes TP/FP/FN/TN, precision, recall from `tp`/`fp` outcomes
   - emits release scorecard (`evals/scorecards/v*.md`) and trend table
   - enforces minimum precision/recall thresholds in CI
+
+- `benchmark_contract_skills.py` runs deterministic contract-oriented skill checks:
+  - case pack:
+    - `evals/cases/contract_skill_benchmark.jsonl`
+  - fixture projects:
+    - `evals/contracts/secure_owned_vault/`
+    - `evals/contracts/insecure_owned_vault/`
+    - `evals/contracts/secure_upgrade_controller/`
+    - `evals/contracts/insecure_upgrade_controller/`
+    - `evals/contracts/secure_math_patterns/`
+    - `evals/contracts/insecure_math_patterns/`
+  - checks:
+    - `scarb build`
+    - `snforge test`
+    - source-level must-match / must-not-match regex assertions
+  - emits scorecard markdown and enforces precision/recall thresholds
+  - supports reportable-gate thresholds (`--min-evaluated`, `--enforce-min-evaluated`)
+  - defaults to `22` minimum evaluated cases for reportable interpretation
+  - fails on zero evaluated cases unless `--allow-empty-evaluated` is explicitly set
+
+- `render_contract_benchmark_trend.py` builds release trend reporting for contract benchmarks:
+  - scans `evals/scorecards/v*-contract-skill-benchmark.md`
+  - marks releases as reportable/non-reportable via minimum case policy
+  - tracks consecutive reportable releases for KPI publication readiness
+  - emits `evals/scorecards/contract-skill-benchmark-trend.md`
