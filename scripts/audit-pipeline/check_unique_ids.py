@@ -33,8 +33,14 @@ def main() -> int:
         for line_no, rec in rows:
             value = rec.get(key)
             if value is None:
+                failures += 1
+                print(f"missing {key} at line {line_no}")
                 continue
             text = str(value)
+            if not text.strip():
+                failures += 1
+                print(f"empty {key} at line {line_no}")
+                continue
             if text in seen:
                 failures += 1
                 print(f"duplicate {key}: '{text}' at line {seen[text]} and line {line_no}")

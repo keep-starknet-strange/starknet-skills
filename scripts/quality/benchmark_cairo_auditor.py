@@ -88,8 +88,9 @@ def detect_unchecked_fee_bound(code: str) -> bool:
         or re.search(r"\b(array!|vec!\s*\[)[^\n]*(swap_fee|fee_bps)", lower)
     )
     has_bound = bool(
-        re.search(r"assert\([^)]*(swap_fee|fee_bps)[^)]*(<=|<)", lower)
+        re.search(r"assert!?\b[^;\n]{0,220}(swap_fee|fee_bps)[^;\n]{0,220}(<=|<)", lower)
         or re.search(r"(swap_fee|fee_bps)\s*(<=|<)\s*(max|10_?000|10000|2_?000|2000)", lower)
+        or re.search(r"(swap_fee|fee_bps)\s*\.into\(\)\s*(<=|<)", lower)
     )
     return has_forward and not has_bound
 

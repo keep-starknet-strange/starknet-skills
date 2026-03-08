@@ -336,6 +336,7 @@ def main() -> int:
     rows = load_catalog(Path(args.catalog))
     existing_records = load_existing_manifest_records(manifest_path)
     existing_id_by_source_url: dict[str, str] = {}
+    existing_source_sha_by_url: dict[str, str] = {}
     used_audit_ids: set[str] = set()
     seen_content_key_to_id: dict[str, str] = {}
     for rec in existing_records:
@@ -345,6 +346,9 @@ def main() -> int:
         source_url = rec.get("source_url")
         if isinstance(source_url, str) and isinstance(audit_id, str):
             existing_id_by_source_url[source_url] = audit_id
+        source_sha = rec.get("source_sha256")
+        if isinstance(source_url, str) and isinstance(source_sha, str):
+            existing_source_sha_by_url[source_url] = source_sha
         raw_sha = rec.get("raw_sha256")
         extracted_sha = rec.get("extracted_sha256")
         if isinstance(audit_id, str) and isinstance(raw_sha, str) and isinstance(extracted_sha, str):
@@ -406,7 +410,9 @@ def main() -> int:
         try:
             if raw_path.exists() and extracted_path.exists():
                 reused_existing_artifacts = True
-                source_sha256 = sha256_file(raw_path)
+                source_sha256 = existing_source_sha_by_url.get(row.source_url or "")
+                if not source_sha256:
+                    source_sha256 = sha256_file(raw_path)
             else:
                 source_sha256 = download_pdf(normalized_url, raw_path)
                 extract_text(raw_path, extracted_path)
