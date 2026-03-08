@@ -112,7 +112,7 @@ button:focus-visible {
   align-items: center;
   padding: 16px 0;
   backdrop-filter: blur(12px);
-  background: rgba(10, 10, 10, 0.85);
+  background: rgba(10, 10, 10, 0.8);
   border-bottom: 1px solid rgba(42, 42, 42, 0.9);
 }
 
@@ -162,14 +162,14 @@ button:focus-visible {
 .ascii-logo {
   max-width: 100%;
   overflow-x: auto;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--panel);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--accent);
   font-size: 11px;
   line-height: 1.2;
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 .ascii-logo--small {
@@ -180,7 +180,7 @@ button:focus-visible {
   max-width: 18ch;
   font-size: clamp(2rem, 5vw, 3rem);
   line-height: 1.1;
-  color: var(--text);
+  color: #f2f2f2;
   font-family: "JetBrains Mono", "Fira Code", monospace;
 }
 
@@ -333,6 +333,14 @@ code {
   gap: 24px;
 }
 
+.section-card {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
 .section-head {
   align-items: flex-end;
   gap: 20px;
@@ -464,9 +472,20 @@ code {
   position: absolute;
   top: 34px;
   right: -12px;
-  width: 10px;
+  width: 18px;
   height: 1px;
   background: var(--accent);
+}
+
+.pipeline-step:not(:last-child)::before {
+  content: ">";
+  position: absolute;
+  top: 23px;
+  right: -12px;
+  color: var(--accent);
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.78rem;
+  line-height: 1;
 }
 
 .step-index {
@@ -627,6 +646,10 @@ code {
   .pipeline-step:not(:last-child)::after {
     display: none;
   }
+
+  .pipeline-step:not(:last-child)::before {
+    display: none;
+  }
 }
 
 @media (max-width: 720px) {
@@ -649,7 +672,6 @@ code {
   }
 
   .ascii-logo {
-    padding: 14px;
     font-size: 8px;
   }
 
