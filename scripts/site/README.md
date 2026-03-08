@@ -10,6 +10,15 @@ From repo root:
 python3 scripts/site/build_site.py --domain starkskills.org
 ```
 
+Optional link-target overrides:
+
+```bash
+python3 scripts/site/build_site.py \
+  --domain starkskills.org \
+  --repo-slug keep-starknet-strange/starknet-skills \
+  --repo-ref main
+```
+
 Output files:
 
 - `website/index.html`

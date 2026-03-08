@@ -35,6 +35,7 @@
     "pipeline_readme": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/README.md",
     "quality_workflow": "https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/quality.yml",
     "repo": "https://github.com/keep-starknet-strange/starknet-skills",
+    "repo_ref": "main",
     "router_skill_github": "https://github.com/keep-starknet-strange/starknet-skills/blob/main/SKILL.md",
     "router_skill_raw": "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md",
     "vuln_cards_dir": "https://github.com/keep-starknet-strange/starknet-skills/tree/main/datasets/distilled/vuln-cards"

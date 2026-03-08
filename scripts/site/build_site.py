@@ -12,9 +12,12 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import quote_plus
 
-REPO_GITHUB = "https://github.com/keep-starknet-strange/starknet-skills"
-REPO_RAW = "https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main"
+DEFAULT_REPO_SLUG = "keep-starknet-strange/starknet-skills"
+DEFAULT_REPO_REF = "main"
+DOMAIN_PATTERN = re.compile(r"(?=.{1,253}\Z)(?!-)(?:[A-Za-z0-9-]{1,63}\.)+[A-Za-z0-9-]{2,63}(?<!-)")
+REPO_SLUG_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 
 MODULES: list[tuple[str, str]] = [
     ("cairo-auditor", "Deterministic + workflow-guided security review"),
@@ -146,13 +149,40 @@ def parse_source_findings(section: str) -> list[str]:
     return ids
 
 
-def github_blob(path: Path, root: Path) -> str:
+def github_blob(path: Path, root: Path, repo_github: str, repo_ref: str) -> str:
     rel = path.relative_to(root).as_posix()
-    return f"{REPO_GITHUB}/blob/main/{rel}"
+    return f"{repo_github}/blob/{repo_ref}/{rel}"
 
 
-def raw_skill_url(skill_name: str) -> str:
-    return f"{REPO_RAW}/{skill_name}/SKILL.md"
+def raw_skill_url(skill_name: str, repo_raw: str) -> str:
+    return f"{repo_raw}/{skill_name}/SKILL.md"
+
+
+def normalize_domain(value: str | None) -> str | None:
+    if value is None:
+        return None
+    domain = value.strip().lower()
+    if not domain:
+        raise ValueError("Domain must not be empty.")
+    if any(ch.isspace() for ch in domain):
+        raise ValueError(f"Domain contains whitespace: {value!r}")
+    if not DOMAIN_PATTERN.fullmatch(domain):
+        raise ValueError(f"Invalid domain: {value!r}")
+    return domain
+
+
+def normalize_repo_slug(value: str) -> str:
+    slug = value.strip()
+    if not REPO_SLUG_PATTERN.fullmatch(slug):
+        raise ValueError(f"Invalid repo slug: {value!r}. Expected OWNER/REPO.")
+    return slug
+
+
+def normalize_repo_ref(value: str) -> str:
+    ref = value.strip()
+    if not ref or any(ch.isspace() for ch in ref):
+        raise ValueError(f"Invalid repo ref: {value!r}")
+    return ref
 
 
 def require_file(path: Path) -> Path:
@@ -178,7 +208,9 @@ def fingerprint_files(root: Path, files: list[Path]) -> str:
     return digest.hexdigest()[:16]
 
 
-def build_dataset(root: Path) -> dict:
+def build_dataset(root: Path, repo_slug: str, repo_ref: str) -> dict:
+    repo_github = f"https://github.com/{repo_slug}"
+    repo_raw = f"https://raw.githubusercontent.com/{repo_slug}/{repo_ref}"
     manifest_path = require_file(root / "datasets/manifests/audits.jsonl")
     manifests = read_jsonl(manifest_path)
 
@@ -264,16 +296,16 @@ def build_dataset(root: Path) -> dict:
             "skills_total_with_router": len(MODULES) + 1,
         },
         "latest_scorecards": {
-            "deterministic": scorecard_to_dict(deterministic_scorecard, root),
-            "realworld": scorecard_to_dict(realworld_scorecard, root),
+            "deterministic": scorecard_to_dict(deterministic_scorecard, root, repo_github, repo_ref),
+            "realworld": scorecard_to_dict(realworld_scorecard, root, repo_github, repo_ref),
         },
         "modules": [
             {
                 "name": name,
                 "description": description,
                 "skill_path": f"{name}/SKILL.md",
-                "raw_skill_url": raw_skill_url(name),
-                "github_url": f"{REPO_GITHUB}/blob/main/{name}/SKILL.md",
+                "raw_skill_url": raw_skill_url(name, repo_raw),
+                "github_url": f"{repo_github}/blob/{repo_ref}/{name}/SKILL.md",
             }
             for name, description in MODULES
         ],
@@ -284,32 +316,38 @@ def build_dataset(root: Path) -> dict:
                 "detection_rule": card.detection_rule,
                 "source_findings": card.source_findings,
                 "severity_distribution": card.severity_distribution,
-                "github_url": github_blob(card.path, root),
+                "github_url": github_blob(card.path, root, repo_github, repo_ref),
             }
             for card in vuln_cards
         ],
         "links": {
-            "repo": REPO_GITHUB,
-            "router_skill_raw": f"{REPO_RAW}/SKILL.md",
-            "router_skill_github": f"{REPO_GITHUB}/blob/main/SKILL.md",
-            "quality_workflow": f"{REPO_GITHUB}/actions/workflows/quality.yml",
-            "full_evals_workflow": f"{REPO_GITHUB}/actions/workflows/full-evals.yml",
-            "heldout_policy": f"{REPO_GITHUB}/blob/main/evals/heldout/README.md",
-            "contributing": f"{REPO_GITHUB}/blob/main/CONTRIBUTING.md",
-            "cairo_auditor": f"{REPO_GITHUB}/blob/main/cairo-auditor/SKILL.md",
-            "cairo_auditor_readme": f"{REPO_GITHUB}/blob/main/cairo-auditor/README.md",
-            "pipeline_readme": f"{REPO_GITHUB}/blob/main/datasets/README.md",
-            "vuln_cards_dir": f"{REPO_GITHUB}/tree/main/datasets/distilled/vuln-cards",
+            "repo": repo_github,
+            "repo_ref": repo_ref,
+            "router_skill_raw": f"{repo_raw}/SKILL.md",
+            "router_skill_github": f"{repo_github}/blob/{repo_ref}/SKILL.md",
+            "quality_workflow": f"{repo_github}/actions/workflows/quality.yml",
+            "full_evals_workflow": f"{repo_github}/actions/workflows/full-evals.yml",
+            "heldout_policy": f"{repo_github}/blob/{repo_ref}/evals/heldout/README.md",
+            "contributing": f"{repo_github}/blob/{repo_ref}/CONTRIBUTING.md",
+            "cairo_auditor": f"{repo_github}/blob/{repo_ref}/cairo-auditor/SKILL.md",
+            "cairo_auditor_readme": f"{repo_github}/blob/{repo_ref}/cairo-auditor/README.md",
+            "pipeline_readme": f"{repo_github}/blob/{repo_ref}/datasets/README.md",
+            "vuln_cards_dir": f"{repo_github}/tree/{repo_ref}/datasets/distilled/vuln-cards",
         },
     }
 
 
-def scorecard_to_dict(scorecard: ScorecardMetrics | None, root: Path) -> dict | None:
+def scorecard_to_dict(
+    scorecard: ScorecardMetrics | None,
+    root: Path,
+    repo_github: str,
+    repo_ref: str,
+) -> dict | None:
     if scorecard is None:
         return None
     return {
         "path": scorecard.path.relative_to(root).as_posix(),
-        "github_url": github_blob(scorecard.path, root),
+        "github_url": github_blob(scorecard.path, root, repo_github, repo_ref),
         "cases": scorecard.cases,
         "precision": scorecard.precision,
         "recall": scorecard.recall,
@@ -340,13 +378,14 @@ def severity_badges(counter: dict[str, int]) -> str:
     return "".join(parts)
 
 
-def source_finding_links(ids: Iterable[str]) -> str:
+def source_finding_links(ids: Iterable[str], repo_github: str) -> str:
     output: list[str] = []
     for item_id in ids:
+        encoded_id = quote_plus(item_id)
         output.append(
             (
                 '<a class="finding-link" '
-                f'href="{e(REPO_GITHUB)}/search?q={e(item_id)}" '
+                f'href="{e(repo_github)}/search?q={e(encoded_id)}" '
                 f'target="_blank" rel="noreferrer">{e(item_id)}</a>'
             )
         )
@@ -492,6 +531,7 @@ def build_index_html(data: dict, domain: str | None) -> str:
 
 
 def build_vuln_cards_html(data: dict) -> str:
+    repo_github = data["links"]["repo"]
     rows = []
     for card in data["vuln_cards"]:
         rows.append(
@@ -500,7 +540,7 @@ def build_vuln_cards_html(data: dict) -> str:
             f"<td>{severity_badges(card['severity_distribution'])}</td>"
             f"<td>{e(card['trigger'])}</td>"
             f"<td>{e(card['detection_rule'])}</td>"
-            f"<td>{source_finding_links(card['source_findings'])}</td>"
+            f"<td>{source_finding_links(card['source_findings'], repo_github)}</td>"
             "</tr>"
         )
 
@@ -568,12 +608,35 @@ def main() -> None:
         default=None,
         help="Optional production domain to write into website/CNAME",
     )
+    parser.add_argument(
+        "--repo-slug",
+        default=DEFAULT_REPO_SLUG,
+        help="Repository slug used for generated links (OWNER/REPO).",
+    )
+    parser.add_argument(
+        "--repo-ref",
+        default=DEFAULT_REPO_REF,
+        help="Repository ref used for generated links (branch, tag, or commit).",
+    )
     args = parser.parse_args()
 
     root = Path(args.repo_root).resolve()
     website = root / "website"
+    cname_path = website / "CNAME"
 
-    data = build_dataset(root)
+    try:
+        repo_slug = normalize_repo_slug(args.repo_slug)
+        repo_ref = normalize_repo_ref(args.repo_ref)
+    except ValueError as exc:
+        raise SystemExit(f"[build_site] {exc}") from exc
+    try:
+        domain = normalize_domain(args.domain)
+    except ValueError as exc:
+        if cname_path.exists():
+            cname_path.unlink()
+        raise SystemExit(f"[build_site] {exc}") from exc
+
+    data = build_dataset(root, repo_slug=repo_slug, repo_ref=repo_ref)
 
     (website / "data").mkdir(parents=True, exist_ok=True)
     (website / "vuln-cards").mkdir(parents=True, exist_ok=True)
@@ -582,13 +645,15 @@ def main() -> None:
         json.dumps(data, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    (website / "index.html").write_text(build_index_html(data, args.domain), encoding="utf-8")
+    (website / "index.html").write_text(build_index_html(data, domain), encoding="utf-8")
     (website / "vuln-cards/index.html").write_text(build_vuln_cards_html(data), encoding="utf-8")
 
     # Ensure GitHub Pages serves paths literally and applies custom domain when configured.
     (website / ".nojekyll").write_text("\n", encoding="utf-8")
-    if args.domain:
-        (website / "CNAME").write_text(args.domain.strip() + "\n", encoding="utf-8")
+    if domain:
+        cname_path.write_text(domain + "\n", encoding="utf-8")
+    elif cname_path.exists():
+        cname_path.unlink()
 
 
 if __name__ == "__main__":

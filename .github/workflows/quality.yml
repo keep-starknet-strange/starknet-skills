@@ -31,7 +31,7 @@ jobs:
         run: python scripts/quality/validate_skills.py
 
       - name: Ruff lint
-        run: ruff check scripts/audit-pipeline scripts/audit-extraction scripts/quality
+        run: ruff check scripts/audit-pipeline scripts/audit-extraction scripts/quality scripts/site
 
       - name: Shellcheck
         run: shellcheck scripts/audit-extraction/*.sh
