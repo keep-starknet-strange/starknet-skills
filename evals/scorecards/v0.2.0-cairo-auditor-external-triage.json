@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-08T22:03:01+00:00",
+  "generated_at": "2026-03-09T01:09:27+00:00",
   "release": "v0.2.0",
   "labels_path": "evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl",
   "totals": {
@@ -10,9 +10,23 @@
   },
   "precision": 0.95,
   "recall": 1.0,
+  "labels_distinct_total": 28,
+  "labeled_in_scan": 20,
+  "findings_distinct_total": 39,
+  "labeled_coverage": 0.5128205128205128,
+  "unlabeled_count": 19,
+  "unlabeled_by_class": {
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": 3,
+    "CONSTRUCTOR_DEAD_PARAM": 1,
+    "IRREVOCABLE_ADMIN": 11,
+    "FEES_RECIPIENT_ZERO_DOS": 1,
+    "NO_ACCESS_CONTROL_MUTATION": 2,
+    "CEI_VIOLATION_ERC1155": 1
+  },
   "gate": {
     "min_precision": 0.7,
     "min_recall": 0.9,
+    "min_labeled_coverage": 0.5,
     "passed": true
   }
 }

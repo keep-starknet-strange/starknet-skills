@@ -12,6 +12,7 @@
 - `score_external_triage.py`
   - computes precision/recall from manually labeled external findings
   - emits release scorecard + trend table
+  - tracks labeled coverage against full findings and emits unlabeled backlog queue
 - `check_manual_gold_recall.py`
   - validates recall against frozen manual gold findings
   - emits markdown/json recall reports
