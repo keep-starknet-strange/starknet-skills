@@ -94,6 +94,7 @@ def _run_scan(
     detectors: str,
     git_host: str,
     manual_prefix: str,
+    timeout_seconds: float,
 ) -> dict[str, object]:
     scan_script = repo_root / "scripts/quality/scan_external_repos.py"
     cmd = [
@@ -133,7 +134,10 @@ def _run_scan(
         cwd=repo_root,
         text=True,
         capture_output=True,
+        timeout=timeout_seconds,
     )
+    if proc.stdout.strip():
+        print(proc.stdout.strip())
     if proc.stderr.strip():
         print(proc.stderr.strip(), file=sys.stderr)
     return json.loads(outputs.json.read_text(encoding="utf-8"))
@@ -141,6 +145,8 @@ def _run_scan(
 
 def _load_reference(repo_root: Path, rel: str) -> str:
     path = (repo_root / rel).resolve()
+    if not path.exists():
+        raise FileNotFoundError(f"required stage-2 reference missing: {path}")
     return path.read_text(encoding="utf-8")
 
 
@@ -154,7 +160,7 @@ def _render_bundle(
     report_formatting_text: str,
     vector_text: str,
     vector_file: str,
-    truncated: bool,
+    truncation_notes: list[str],
 ) -> str:
     lines: list[str] = []
     lines.append(f"# Stage-2 Specialist Bundle: {repo_slug}")
@@ -175,10 +181,11 @@ def _render_bundle(
     lines.append("")
     lines.append("## In-Scope Source (Production Files)")
     lines.append("")
-    if truncated:
-        lines.append(
-            "Warning: source file list truncated by `--bundle-max-files`; review uncovered files separately if needed."
-        )
+    if truncation_notes:
+        lines.append("Warnings:")
+        lines.append("")
+        for note in truncation_notes:
+            lines.append(f"- {note}")
         lines.append("")
     for rel_path, code in included_sources:
         lines.append(f"### {rel_path}")
@@ -209,6 +216,7 @@ def _prepare_stage2(
     workdir: Path,
     excluded_markers: tuple[str, ...],
     bundle_max_files: int,
+    bundle_max_bytes: int,
 ) -> None:
     findings = [row for row in payload.get("findings", []) if isinstance(row, dict)]
     actionable = [row for row in findings if row.get("actionability") == "actionable"]
@@ -216,16 +224,6 @@ def _prepare_stage2(
     by_repo: dict[str, list[dict[str, object]]] = defaultdict(list)
     for row in actionable:
         by_repo[str(row["repo"])].append(row)
-
-    judging_text = _load_reference(repo_root, "cairo-auditor/references/judging.md")
-    report_formatting_text = _load_reference(repo_root, "cairo-auditor/references/report-formatting.md")
-    vector_files = [
-        "cairo-auditor/references/attack-vectors/attack-vectors-1.md",
-        "cairo-auditor/references/attack-vectors/attack-vectors-2.md",
-        "cairo-auditor/references/attack-vectors/attack-vectors-3.md",
-        "cairo-auditor/references/attack-vectors/attack-vectors-4.md",
-    ]
-    vector_texts = [_load_reference(repo_root, rel) for rel in vector_files]
 
     stage2_dir = output_paths.stage2_manifest_json.parent / f"{output_paths.json.stem}.stage2-bundles"
     stage2_dir.mkdir(parents=True, exist_ok=True)
@@ -237,6 +235,7 @@ def _prepare_stage2(
         "generated_at": payload.get("generated_at", ""),
         "stage": "deterministic_stage1_plus_stage2_bundle_prepare",
         "repos_with_actionable_findings": len(by_repo),
+        "warnings": [],
         "repos": [],
     }
 
@@ -247,17 +246,91 @@ def _prepare_stage2(
     runbook_lines.append("Use `cairo-auditor` in `deep` mode with each bundle below.")
     runbook_lines.append("")
 
+    vector_files = [
+        "cairo-auditor/references/attack-vectors/attack-vectors-1.md",
+        "cairo-auditor/references/attack-vectors/attack-vectors-2.md",
+        "cairo-auditor/references/attack-vectors/attack-vectors-3.md",
+        "cairo-auditor/references/attack-vectors/attack-vectors-4.md",
+    ]
+    required_refs = [
+        "cairo-auditor/references/judging.md",
+        "cairo-auditor/references/report-formatting.md",
+        *vector_files,
+    ]
+    reference_map: dict[str, str] = {}
+    missing_refs: list[str] = []
+    for rel in required_refs:
+        try:
+            reference_map[rel] = _load_reference(repo_root, rel)
+        except FileNotFoundError as exc:
+            missing_refs.append(str(exc))
+
+    if missing_refs:
+        manifest["warnings"] = missing_refs
+        runbook_lines.append("Stage-2 bundle preparation skipped due to missing reference files:")
+        runbook_lines.append("")
+        for msg in missing_refs:
+            runbook_lines.append(f"- {msg}")
+        runbook_lines.append("")
+        output_paths.stage2_manifest_json.write_text(
+            json.dumps(manifest, indent=2, ensure_ascii=True) + "\n",
+            encoding="utf-8",
+        )
+        output_paths.stage2_runbook_md.write_text("\n".join(runbook_lines) + "\n", encoding="utf-8")
+        return
+
+    judging_text = reference_map["cairo-auditor/references/judging.md"]
+    report_formatting_text = reference_map["cairo-auditor/references/report-formatting.md"]
+    vector_texts = [reference_map[rel] for rel in vector_files]
+
     for repo_slug, repo_findings in sorted(by_repo.items()):
         ref = str(repo_index.get(repo_slug, {}).get("ref", ""))
         repo_clone_dir = workdir / repo_slug.replace("/", "__")
         if not repo_clone_dir.exists():
+            warning = (
+                f"clone directory missing for actionable repo: {repo_slug} "
+                f"({repo_clone_dir.as_posix()})"
+            )
+            cast_warnings = manifest.get("warnings")
+            if isinstance(cast_warnings, list):
+                cast_warnings.append(warning)
+            runbook_lines.append(f"## {repo_slug}")
+            runbook_lines.append("")
+            runbook_lines.append(f"- Ref: `{ref}`")
+            runbook_lines.append(f"- Warning: {warning}")
+            runbook_lines.append("")
+            manifest["repos"].append(
+                {
+                    "repo": repo_slug,
+                    "ref": ref,
+                    "clone_dir": repo_clone_dir.as_posix(),
+                    "skipped": True,
+                    "skip_reason": "clone_dir_missing",
+                    "actionable_findings": len(repo_findings),
+                }
+            )
             continue
 
         prod_files = [
             path for path in iter_cairo_files(repo_clone_dir) if not is_excluded(path, excluded_markers)
         ]
-        truncated = len(prod_files) > bundle_max_files
-        selected_files = prod_files[:bundle_max_files]
+        selected_files: list[Path] = []
+        total_bytes = 0
+        truncated_by_count = False
+        truncated_by_bytes = False
+        for path in prod_files:
+            if len(selected_files) >= bundle_max_files:
+                truncated_by_count = True
+                break
+            try:
+                file_size = path.stat().st_size
+            except OSError:
+                file_size = 0
+            if selected_files and (total_bytes + file_size) > bundle_max_bytes:
+                truncated_by_bytes = True
+                break
+            selected_files.append(path)
+            total_bytes += file_size
 
         included_sources: list[tuple[str, str]] = []
         for path in selected_files:
@@ -270,6 +343,20 @@ def _prepare_stage2(
 
         repo_bundle_dir = stage2_dir / repo_slug.replace("/", "__")
         repo_bundle_dir.mkdir(parents=True, exist_ok=True)
+
+        truncation_notes: list[str] = []
+        if truncated_by_count:
+            truncation_notes.append(
+                f"Source list truncated by file-count cap (`--bundle-max-files={bundle_max_files}`)."
+            )
+        if truncated_by_bytes:
+            truncation_notes.append(
+                f"Source list truncated by byte-size cap (`--bundle-max-bytes={bundle_max_bytes}`)."
+            )
+        if not selected_files and prod_files:
+            truncation_notes.append(
+                "No files were included under current limits; increase bundle caps for full context."
+            )
 
         bundle_entries: list[dict[str, object]] = []
         for i, (vector_file, vector_text) in enumerate(zip(vector_files, vector_texts), start=1):
@@ -288,7 +375,7 @@ def _prepare_stage2(
                 report_formatting_text=report_formatting_text,
                 vector_text=vector_text,
                 vector_file=vector_file,
-                truncated=truncated,
+                truncation_notes=truncation_notes,
             )
             bundle_path = repo_bundle_dir / f"audit-agent-{i}-bundle.md"
             bundle_path.write_text(bundle_text, encoding="utf-8")
@@ -325,7 +412,10 @@ def _prepare_stage2(
                 "bundle_dir": repo_bundle_dir.as_posix(),
                 "prod_files_total": len(prod_files),
                 "prod_files_included": len(selected_files),
-                "truncated": truncated,
+                "bundle_bytes_included": total_bytes,
+                "truncated": bool(truncation_notes),
+                "truncated_by_count": truncated_by_count,
+                "truncated_by_bytes": truncated_by_bytes,
                 "actionable_findings": len(repo_findings),
                 "bundles": bundle_entries,
             }
@@ -356,6 +446,12 @@ def main() -> int:
     parser.add_argument("--git-host", default="https://github.com")
     parser.add_argument("--manual-triage-id-prefix", default="")
     parser.add_argument(
+        "--scan-timeout-seconds",
+        type=float,
+        default=1200,
+        help="Timeout budget for the Stage-1 scan subprocess.",
+    )
+    parser.add_argument(
         "--prepare-stage2",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -366,6 +462,12 @@ def main() -> int:
         type=int,
         default=150,
         help="Maximum production cairo files embedded per Stage-2 bundle.",
+    )
+    parser.add_argument(
+        "--bundle-max-bytes",
+        type=int,
+        default=800_000,
+        help="Maximum cumulative source bytes embedded per Stage-2 bundle.",
     )
     args = parser.parse_args()
 
@@ -396,6 +498,7 @@ def main() -> int:
         detectors=args.detectors,
         git_host=args.git_host,
         manual_prefix=manual_prefix,
+        timeout_seconds=args.scan_timeout_seconds,
     )
 
     if args.prepare_stage2:
@@ -407,6 +510,7 @@ def main() -> int:
             workdir=workdir,
             excluded_markers=excluded_markers,
             bundle_max_files=args.bundle_max_files,
+            bundle_max_bytes=args.bundle_max_bytes,
         )
 
     findings = [row for row in payload.get("findings", []) if isinstance(row, dict)]

@@ -139,6 +139,11 @@ python scripts/quality/audit_external_pack.py \
   --output-dir evals/reports/data
 ```
 
+Useful hardening flags:
+
+- `--scan-timeout-seconds 1200` to bound Stage-1 scan runtime.
+- `--bundle-max-files` and `--bundle-max-bytes` to keep Stage-2 bundles within context budgets.
+
 Run direct external scan with native CSV outputs:
 
 ```bash
