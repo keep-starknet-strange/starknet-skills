@@ -274,6 +274,7 @@ jobs:
 
       - name: Contract generation eval (build side, informational)
         if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && steps.models_probe.outputs.available == 'true' }}
+        # Informational telemetry: non-zero exits are recorded in logs/artifacts but do not fail the workflow.
         continue-on-error: true
         timeout-minutes: 40
         env:

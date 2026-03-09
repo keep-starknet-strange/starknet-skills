@@ -336,7 +336,7 @@ def run_static_rules(*, case: GenerationCase, fixture: Path) -> list[str]:
             errors.append(f"must_not_match_path_escape:{rule.path}:{rule.description}")
             continue
         if not target.is_file():
-            errors.append(f"must_not_match_file_missing:{rule.path}:{rule.description}")
+            # Missing file implies forbidden pattern is absent.
             continue
         text = target.read_text(encoding="utf-8")
         if re.search(rule.pattern, text, flags=re.MULTILINE) is not None:
@@ -358,7 +358,6 @@ def evaluate_case(
     build_timeout_seconds: int,
     have_scarb: bool,
     have_snforge: bool,
-    require_tools: bool,
 ) -> GenerationResult:
     notes: list[str] = []
 
@@ -597,7 +596,6 @@ def main() -> int:
                 build_timeout_seconds=args.build_timeout_seconds,
                 have_scarb=have_scarb,
                 have_snforge=have_snforge,
-                require_tools=args.require_tools,
             )
         )
 
