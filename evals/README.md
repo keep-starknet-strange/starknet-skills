@@ -170,12 +170,15 @@ Run one-shot external pack benchmark (first-time friendly):
 - `<scan-id>.findings.csv`
 - `<scan-id>.manual-triage.csv`
 
-The manual triage CSV is category-first (`category`, `needs_poc`) and includes manual signoff columns (`triage_category`, `reviewer_1`, `reviewer_2`, `security_countable`, `manual_severity`).
-
 `audit deep` produces the same base artifacts plus:
 
 - `<scan-id>.stage2-manifest.json`
 - `<scan-id>.stage2-runbook.md`
+
+Manual triage CSV format:
+
+- Category-first scanner columns: `category`, `needs_poc`.
+- Reviewer signoff columns: `triage_category`, `reviewer_1`, `reviewer_2`, `security_countable`, `manual_severity`.
 
 Export SARIF for GitHub Code Scanning:
 

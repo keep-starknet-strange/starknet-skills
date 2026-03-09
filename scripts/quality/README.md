@@ -88,6 +88,7 @@
   - in build mode, retries toolchains (`scarb`, and `asdf`-managed versions when available) and `--ignore-cairo-version` fallback
   - parses `.sierra.json`, `.starknet_artifacts.json`, and `*.contract_class.json`
   - emits function-order signal (`external_call` before `state_write`) for CEI triage
+  - emits per-finding IR evidence fields (`ir_confirmation`, `signal_quality`, `artifact_source`)
 - `run_contract_generation_eval.py`
   - build-side contract generation quality evaluation
   - prompt pack: `evals/cases/contract_skill_generation_eval.jsonl`
@@ -142,6 +143,11 @@ python scripts/quality/audit_local_repo.py \
 Warning: any command using `--allow-build` (for example `audit_local_repo.py` and
 `run_caracal_adapter.py`) may execute repository build steps/tooling. Use build
 mode only on trusted code, or run in an isolated environment.
+
+When `--sierra-confirm` is enabled, local findings are enriched with:
+- `ir_confirmation`: `confirmed | missing | unknown`
+- `signal_quality`: `high | medium | low`
+- `artifact_source`: `sierra_json | contract_class | sierra_text | none`
 
 Fail CI if any findings are detected:
 

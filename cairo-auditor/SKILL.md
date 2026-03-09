@@ -165,9 +165,10 @@ PY
 1. Merge outputs.
 2. Deduplicate by root cause (keep higher-confidence variant).
 3. Run composability pass when multiple findings interact.
-4. If Scarb/Sierra is available, run Sierra confirmation for CEI and upgrade classes.
-5. Sort by priority and confidence.
-6. Emit actionable findings + required regression tests.
+4. If Scarb/Sierra is available, run Sierra confirmation with class-to-signal mapping (first-wave: CEI and upgrade classes).
+5. Use Sierra v3 per-finding evidence (`ir_confirmation`, `signal_quality`, `artifact_source`) and keep `unknown` for unmapped classes.
+6. Sort findings by `actionable` first, then confidence descending.
+7. Emit actionable findings + required regression tests.
 
 ## Reporting Contract
 
@@ -181,8 +182,11 @@ Each finding must include:
 - `entry_point`
 - `attack_path`
 - `guard_analysis`
+- `ir_confirmation` (`confirmed` | `missing` | `unknown`)
+- `signal_quality` (`high` | `medium` | `low`)
+- `artifact_source` (`sierra_json` | `contract_class` | `sierra_text` | `none`)
 - `affected_files`
-- `recommended_fix`
+- `recommended_improvement`
 - `required_tests`
 
 Do not auto-assign `high/critical` severity in scanner output. Severity is manual signoff metadata only.

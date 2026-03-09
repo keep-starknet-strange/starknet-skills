@@ -95,6 +95,24 @@ python scripts/quality/audit_local_repo.py \
 Warning: `--allow-build` may execute repository build steps/tooling.
 Use build mode only on trusted code, or run in an isolated environment.
 
+### Reading Sierra v3 Output
+
+`ir_confirmation` is evidence status, not severity:
+
+| ir_confirmation | signal_quality | Interpretation |
+| --- | --- | --- |
+| `confirmed` | `high` | Strong IR evidence for the improvement candidate. |
+| `confirmed` | `medium`/`low` | Pattern-level IR support; useful but weaker confidence. |
+| `missing` | `high` | High-quality IR path checked and no matching signal found. |
+| `missing` | `medium`/`low` | Weak negative evidence; usually treat as inconclusive. |
+| `unknown` | any | No analyzable IR path for this class/artifact combination. |
+
+`artifact_source` indicates where the IR evidence came from:
+- `sierra_json`: strongest, function-level analysis.
+- `contract_class`: marker-level analysis.
+- `sierra_text`: grep-level fallback.
+- `none`: no analyzable artifact was available.
+
 Reports are written under `<repo-root>/evals/reports/local/` by default (`.md`, `.json`).
 Add `--write-findings-jsonl` to emit `.findings.jsonl`.
 If a target filename already exists, the script appends `-N` to avoid overwrite.

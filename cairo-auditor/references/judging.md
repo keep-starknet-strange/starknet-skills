@@ -14,12 +14,13 @@ Drop the finding if any check fails.
 
 Start at `100`, apply deductions:
 
-- Privileged caller required (`owner/admin/governance`) -> `-25`
-- Partial path (cannot prove full transition to impact) -> `-20`
-- Impact self-contained to attacker-only funds -> `-15`
-- Requires narrow environmental assumptions (sequencer timing / unusual off-chain behavior) -> `-10`
+- Privileged caller required (`owner/admin/governance`) -> `-20`
+- Partial path (cannot prove full transition from entrypoint to state effect) -> `-20`
+- Reachability depends on narrow environmental assumptions (sequencer timing / unusual off-chain behavior) -> `-10`
 - Safety depends on indirect framework behavior that is present but not locally asserted -> `-10`
+- IR confirmation indicates `missing` under `high` signal quality -> `-10`
 
+Confidence is evidence-quality only, not severity.
 Report format uses `[score]` confidence tags.
 Findings with confidence `<75` may be reported as low-confidence notes, without fix blocks.
 

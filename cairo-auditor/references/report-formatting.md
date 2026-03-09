@@ -4,17 +4,19 @@ Use this exact structure for each finding.
 
 ## Finding Template
 
-`[P{priority}] **{title}**`
+`[{confidence}] **{title}**`
 
 `Location: {file}:{line}`
 
-`Class: {class_id} | Category: {category} | Confidence: [{score}] | Needs PoC: {needs_poc} | Actionability: {actionability}`
+`Class: {class_id} | Category: {category} | Actionability: {actionability}`
+
+`Needs PoC: {needs_poc} | IR: {ir_confirmation} [{signal_quality}] via {artifact_source}`
 
 `Description:`
 
 - One paragraph explaining exploit path and impact.
 
-`Fix:`
+`Recommended improvement:`
 
 ```diff
 - vulnerable line(s)
@@ -26,18 +28,17 @@ Use this exact structure for each finding.
 - Regression test that reproduces the vulnerable path.
 - Guard test that proves fix blocks exploit.
 
-## Priority Mapping
+## Actionability Rules
 
-- `P0`: direct loss, permanent lock, or upgrade takeover.
-- `P1`: high-impact auth/logic flaw with realistic exploit path.
-- `P2`: medium-impact misconfiguration or constrained exploit.
-- `P3`: low-impact hardening issue.
+- `actionable`: concrete, reviewable improvement path exists.
+- `low_confidence`: pattern matched but proof path is incomplete; report without diff block.
+- `suppressed`: FP gate failed; do not report.
 
 ## Confidence Threshold Rule
 
-- Findings with confidence `<75` can be reported, but omit the `Fix` diff block.
+- Findings with confidence `<75` can be reported, but omit the `Recommended improvement` diff block.
 - Findings that fail FP gate must be dropped and not reported.
-- Severity labels (`high/critical`) are manual signoff-only metadata and should not be auto-assigned by deterministic scanners.
+- Severity labels (`high/critical`) are manual signoff-only metadata and should never be auto-assigned by deterministic scanners.
 
 ## Deduplication Rule
 
