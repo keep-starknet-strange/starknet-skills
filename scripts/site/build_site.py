@@ -518,15 +518,12 @@ def verify_link(label: str, href: str, meta: str) -> str:
 def scorecard_metric(label: str, value: int | float | None) -> str:
     metric_value = fmt_metric(value)
     data_value = ""
-    data_decimals = ""
     if isinstance(value, (int, float)):
         data_value = f' data-value="{value}"'
-        decimals = metric_value.partition(".")[2]
-        data_decimals = f' data-decimals="{len(decimals)}"'
     return (
         '<article class="score-metric reveal">'
         f'<p>{e(label)}</p>'
-        f'<strong class="count-up"{data_value}{data_decimals}>{e(metric_value)}</strong>'
+        f'<strong class="count-up"{data_value}>{e(metric_value)}</strong>'
         "</article>"
     )
 
@@ -598,8 +595,7 @@ def shared_script() -> str:
         countObserver.unobserve(element);
         return;
       }
-      const parsedDecimals = Number(element.getAttribute('data-decimals') ?? 0);
-      const decimals = Number.isFinite(parsedDecimals) && parsedDecimals >= 0 ? parsedDecimals : 0;
+      const decimals = String(target).includes('.') ? 1 : 0;
       const duration = 450;
       const start = performance.now();
       const tick = (now) => {
