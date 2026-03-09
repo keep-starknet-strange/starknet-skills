@@ -83,6 +83,8 @@ PRIVILEGED_PATH_CLASSES = {
 }
 
 SELF_CONTAINED_IMPACT_CLASSES = {
+    # Intentionally paired with PARTIAL_PATH_CLASSES so this class remains
+    # informational (max score 65 => low_confidence).
     "CONSTRUCTOR_DEAD_PARAM",
 }
 

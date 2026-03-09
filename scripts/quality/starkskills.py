@@ -101,14 +101,14 @@ def _resolve_path(value: str | None, fallback: Path) -> Path:
     return fallback.resolve()
 
 
-def _remap_external_findings_for_sarif(*, findings_jsonl: str, workdir: Path) -> Path:
+def _remap_external_findings_for_sarif(*, findings_jsonl: str, workdir: Path, output_path: Path) -> Path:
     src = Path(findings_jsonl)
     if not src.is_file():
         raise FileNotFoundError(f"findings jsonl not found: {src.as_posix()}")
     workdir_resolved = workdir.resolve()
 
-    out_dir = Path(tempfile.mkdtemp(prefix="starkskills-sarif-remap-"))
-    out_path = out_dir / src.name
+    out_path = output_path.resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     remapped_lines: list[str] = []
 
     for line_no, line in enumerate(src.read_text(encoding="utf-8").splitlines(), start=1):
@@ -487,19 +487,27 @@ def _external_common(args: argparse.Namespace, *, deep_mode: bool) -> int:
         resolved_workdir = str(payload.get("_resolved_workdir", "")).strip()
         if sarif_findings_jsonl and resolved_workdir:
             workdir_path = Path(resolved_workdir).resolve()
-            remapped_findings = _remap_external_findings_for_sarif(
+            with tempfile.TemporaryDirectory(prefix="starkskills-sarif-remap-") as temp_dir:
+                remapped_findings = _remap_external_findings_for_sarif(
+                    findings_jsonl=sarif_findings_jsonl,
+                    workdir=workdir_path,
+                    output_path=Path(temp_dir) / Path(sarif_findings_jsonl).name,
+                )
+                sarif_path = _maybe_export_sarif(
+                    findings_jsonl=remapped_findings.as_posix(),
+                    scan_json=base_json.as_posix() if base_json else None,
+                    output_path=sarif_out,
+                    root=workdir_path,
+                    run_name=f"starkskills-external-{args.scan_id}",
+                )
+        else:
+            sarif_path = _maybe_export_sarif(
                 findings_jsonl=sarif_findings_jsonl,
-                workdir=workdir_path,
+                scan_json=base_json.as_posix() if base_json else None,
+                output_path=sarif_out,
+                root=sarif_root,
+                run_name=f"starkskills-external-{args.scan_id}",
             )
-            sarif_findings_jsonl = remapped_findings.as_posix()
-            sarif_root = workdir_path
-        sarif_path = _maybe_export_sarif(
-            findings_jsonl=sarif_findings_jsonl,
-            scan_json=base_json.as_posix() if base_json else None,
-            output_path=sarif_out,
-            root=sarif_root,
-            run_name=f"starkskills-external-{args.scan_id}",
-        )
         print(json.dumps({"sarif_output": sarif_path.as_posix()}, ensure_ascii=True))
 
     title = "deep" if deep_mode else "external"
