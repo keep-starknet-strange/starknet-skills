@@ -86,9 +86,20 @@ Deterministic benchmark scorecards are **smoke/regression gates**, not final pro
 - Manual gold recall:
   - [v0.2.0-cairo-auditor-manual-19-gold-recall.md](evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.md)
 - Contract-skill benchmark:
+  - [v0.5.0-contract-skill-benchmark.md](evals/scorecards/v0.5.0-contract-skill-benchmark.md)
   - [v0.4.0-contract-skill-benchmark.md](evals/scorecards/v0.4.0-contract-skill-benchmark.md)
   - [contract-skill-benchmark-trend.md](evals/scorecards/contract-skill-benchmark-trend.md)
+- KPI publication gate:
+  - [contract-kpi-publication-gate.md](evals/scorecards/contract-kpi-publication-gate.md)
 
+## Methodology
+
+Skills are authored from audit-backed source material, then checked against deterministic benchmarks and held-out evaluation rules before landing. The goal is narrow, reusable corrections for common Cairo and Starknet failure modes, not general prose documentation.
+
+Current workflow status:
+- `quality.yml` is the required per-PR gate
+- `full-evals.yml` runs on schedule/workflow dispatch and auto-triggers for PRs touching `SKILL.md`, `references/**`, `evals/**`, `scripts/quality/**`, or `.github/workflows/**`
+- external triage trends live under [`evals/scorecards/`](evals/scorecards)
 Evaluation policy: [evals/README.md](evals/README.md)
 
 ## Website

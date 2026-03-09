@@ -12,3 +12,12 @@ Deterministic Cairo contract fixtures used by `scripts/quality/benchmark_contrac
 - `insecure_math_patterns/`: anti-pattern math and loop variants used as negative controls.
 
 Each fixture is a standalone Scarb package with local unit tests runnable via `snforge test`.
+
+Case pack rules are organized by security class and applied across secure/insecure fixture pairs:
+
+- `auth`
+- `input_validation`
+- `timelock`
+- `upgrade_safety`
+- `optimization_arithmetic`
+- `optimization_loops`

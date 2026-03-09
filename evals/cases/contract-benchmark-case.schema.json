@@ -5,6 +5,7 @@
   "required": [
     "case_id",
     "skill_id",
+    "security_class",
     "fixture",
     "expected_pass",
     "run_build",
@@ -20,6 +21,17 @@
     "skill_id": {
       "type": "string",
       "pattern": "^[a-z0-9][a-z0-9-]{2,80}$"
+    },
+    "security_class": {
+      "type": "string",
+      "enum": [
+        "auth",
+        "input_validation",
+        "optimization_arithmetic",
+        "optimization_loops",
+        "timelock",
+        "upgrade_safety"
+      ]
     },
     "fixture": {
       "type": "string",

@@ -21,7 +21,7 @@ For changes affecting security detection behavior:
 ## CI Tiers
 
 - Per-PR (`quality.yml`): schema validation, manifest uniqueness checks, and held-out leakage policy checks.
-- Full tier (`full-evals.yml`): parity checks + held-out leakage guard + deterministic benchmarks; run on schedule, workflow-dispatch, or pull requests labeled `full-evals`.
+- Full tier (`full-evals.yml`): parity checks + held-out leakage guard + deterministic benchmarks; run on schedule, workflow-dispatch, or automatically for pull requests that touch `SKILL.md`, `references/**`, `evals/**`, `scripts/quality/**`, or `.github/workflows/**`.
 - LLM held-out tier (`full-evals.yml`): runs with GitHub Models via `GITHUB_TOKEN` and `permissions: models: read`, enforcing precision/recall gates on a separate held-out case pack.
   - The workflow probes GitHub Models first; if model access is not available for the repo/org token, the LLM tier is skipped and deterministic gates still run.
 - External triage tier (`full-evals.yml`): scores human-labeled external findings (`tp`/`fp`) and emits release scorecards + trend markdown.
@@ -45,18 +45,18 @@ Run contract skill benchmark (compiles/tests fixture contracts and enforces poli
 ```bash
 python scripts/quality/benchmark_contract_skills.py \
   --cases evals/cases/contract_skill_benchmark.jsonl \
-  --output evals/scorecards/v0.4.0-contract-skill-benchmark.md \
-  --version v0.4.0 \
+  --output evals/scorecards/v0.5.0-contract-skill-benchmark.md \
+  --version v0.5.0 \
   --min-precision 0.95 \
   --min-recall 0.95 \
-  --min-evaluated 22 \
+  --min-evaluated 60 \
   --enforce-min-evaluated \
   --require-tools
 ```
 
 Interpretation guidance for contract benchmark metrics:
 
-- If evaluated cases are fewer than `22`, treat results as a deterministic smoke gate only.
+- If evaluated cases are fewer than `60`, treat results as a deterministic smoke gate only.
 - Smoke-gate pass means fixture checks are wired correctly and caught seeded regressions.
 - Smoke-gate pass does **not** justify broad claims like "overall skill quality is 100%."
 - Publishable KPI status requires at least `2` consecutive reportable releases (tracked in trend scorecard).
@@ -67,7 +67,27 @@ Render contract benchmark trend report:
 python scripts/quality/render_contract_benchmark_trend.py \
   --scorecards-glob 'evals/scorecards/v*-contract-skill-benchmark.md' \
   --output evals/scorecards/contract-skill-benchmark-trend.md \
-  --min-cases 22 \
+  --min-cases 60 \
+  --min-consecutive 2
+```
+
+Run mutation coverage for contract benchmark rules:
+
+```bash
+python scripts/quality/mutation_test_contract_benchmark.py \
+  --cases evals/cases/contract_skill_benchmark.jsonl \
+  --min-precision 1.0 \
+  --min-recall 1.0 \
+  --min-evaluated 60
+```
+
+Run KPI publication gate check (consecutive releases + security signoff):
+
+```bash
+python scripts/quality/check_contract_kpi_release_gate.py \
+  --trend evals/scorecards/contract-skill-benchmark-trend.md \
+  --signoffs evals/scorecards/security-review-signoffs.contract-skill-benchmark.jsonl \
+  --output evals/scorecards/contract-kpi-publication-gate.md \
   --min-consecutive 2
 ```
 

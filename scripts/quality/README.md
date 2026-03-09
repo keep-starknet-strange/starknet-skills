@@ -32,6 +32,28 @@
   - compares two scan JSON artifacts
   - outputs class/file deltas and added/removed findings
 
+## Contract-Skill Benchmarks
+
+- `benchmark_contract_skills.py`
+  - deterministic contract fixture benchmark for authoring/testing/toolchain skills
+  - case pack: `evals/cases/contract_skill_benchmark.jsonl`
+  - validates `scarb build`, `snforge test`, and source must-match/must-not-match assertions
+  - reports security-class coverage (`auth`, `timelock`, `upgrade_safety`, etc.)
+  - enforces precision/recall thresholds
+  - supports reportable-gate thresholds (`--min-evaluated`, `--enforce-min-evaluated`)
+  - defaults to `60` minimum evaluated cases for reportable interpretation
+  - fails on zero evaluated cases unless `--allow-empty-evaluated` is explicitly set
+- `mutation_test_contract_benchmark.py`
+  - mutates secure fixtures and reruns the benchmark
+  - every mutation must be caught by the benchmark gate
+- `render_contract_benchmark_trend.py`
+  - aggregates `evals/scorecards/v*-contract-skill-benchmark.md`
+  - marks releases reportable/non-reportable by minimum-case policy
+  - tracks consecutive reportable releases for KPI readiness
+- `check_contract_kpi_release_gate.py`
+  - enforces KPI publication policy
+  - requires minimum consecutive reportable releases + explicit security signoff
+
 ## LLM and Sierra Signals
 
 - `run_llm_eval.py`
@@ -68,11 +90,3 @@ python scripts/quality/audit_local_repo.py \
 
 Warning: `--allow-build` may execute repository build steps/tooling.
 Use build mode only on trusted code, or run in an isolated environment.
-
-## Contract-Skill Benchmarks
-
-- `benchmark_contract_skills.py`
-  - deterministic contract fixture benchmark for authoring/testing/toolchain skills
-  - validates build/test + regex assertions over secure/insecure fixtures
-- `render_contract_benchmark_trend.py`
-  - aggregates versioned contract benchmark scorecards into trend markdown
