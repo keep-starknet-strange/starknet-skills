@@ -431,6 +431,29 @@ def run_static_rules(*, case: GenerationCase, fixture: Path) -> list[str]:
     return errors
 
 
+def _is_vuln_static_error(error: str) -> bool:
+    if error.startswith("must_not_match_failed:"):
+        return True
+    if not error.startswith("must_match_failed:"):
+        return False
+    parts = error.split(":", 2)
+    if len(parts) < 3:
+        return False
+    desc = parts[2].lower()
+    security_hints = (
+        "guard",
+        "timelock",
+        "reject",
+        "require",
+        "owner",
+        "non-zero",
+        "must clear",
+        "must bound",
+        "must source time",
+    )
+    return any(hint in desc for hint in security_hints)
+
+
 def evaluate_case(
     *,
     case: GenerationCase,
@@ -575,7 +598,7 @@ def evaluate_case(
         static_ok = len(static_errors) == 0
         notes.extend(static_errors)
 
-    vuln_flag = not static_ok
+    vuln_flag = any(_is_vuln_static_error(err) for err in static_errors)
     passed = build_ok and tests_ok and static_ok
     return GenerationResult(
         case_id=case.case_id,
@@ -686,21 +709,40 @@ def main() -> int:
 
     results: list[GenerationResult] = []
     for case in cases:
-        results.append(
-            evaluate_case(
-                case=case,
-                repo_root=repo_root,
-                api_url=args.api_url,
-                api_key=api_key,
-                model=args.model,
-                timeout_seconds=args.timeout_seconds,
-                retries=args.retries,
-                retry_base_seconds=args.retry_base_seconds,
-                build_timeout_seconds=args.build_timeout_seconds,
-                have_scarb=have_scarb,
-                have_snforge=have_snforge,
+        try:
+            results.append(
+                evaluate_case(
+                    case=case,
+                    repo_root=repo_root,
+                    api_url=args.api_url,
+                    api_key=api_key,
+                    model=args.model,
+                    timeout_seconds=args.timeout_seconds,
+                    retries=args.retries,
+                    retry_base_seconds=args.retry_base_seconds,
+                    build_timeout_seconds=args.build_timeout_seconds,
+                    have_scarb=have_scarb,
+                    have_snforge=have_snforge,
+                )
             )
-        )
+        except Exception as exc:
+            results.append(
+                GenerationResult(
+                    case_id=case.case_id,
+                    skill_id=case.skill_id,
+                    security_class=case.security_class,
+                    fixture=case.fixture,
+                    build_attempted=case.run_build,
+                    build_ok=False,
+                    tests_ok=False,
+                    static_ok=False,
+                    passed=False,
+                    vuln_flag=False,
+                    skipped=False,
+                    generation_error=f"case_eval_exception:{type(exc).__name__}",
+                    notes=[f"case_eval_exception:{str(exc)[:240]}"],
+                )
+            )
 
     total = len(results)
     skipped = sum(1 for row in results if row.skipped)
