@@ -52,6 +52,23 @@ CEI_CLASSES = {
 }
 
 STARKNET_DEP_RE = re.compile(r'^\s*starknet\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)"\s*$', re.MULTILINE)
+SEMVER_RE = re.compile(r"^([0-9]+)\.([0-9]+)\.([0-9]+)$")
+SENSITIVE_ENV_PREFIXES = (
+    "AWS_",
+    "AZURE_",
+    "GCP_",
+    "GOOGLE_",
+    "OPENAI_",
+    "ANTHROPIC_",
+    "STARKNET_",
+)
+SENSITIVE_ENV_FRAGMENTS = (
+    "PRIVATE_KEY",
+    "SECRET",
+    "TOKEN",
+    "PASSWORD",
+    "API_KEY",
+)
 
 
 def _safe_repo_rel(path: Path, repo_dir: Path) -> str:
@@ -65,6 +82,58 @@ def _safe_repo_rel(path: Path, repo_dir: Path) -> str:
             return Path(rel).as_posix()
         except Exception:
             return path.name
+
+
+def _is_sensitive_env_key(key: str) -> bool:
+    upper = key.upper()
+    if any(upper.startswith(prefix) for prefix in SENSITIVE_ENV_PREFIXES):
+        return True
+    if any(fragment in upper for fragment in SENSITIVE_ENV_FRAGMENTS):
+        return True
+    return False
+
+
+def run_unchecked(
+    cmd: list[str],
+    cwd: Path,
+    timeout_s: float = 300,
+    *,
+    extra_env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    env = {k: v for k, v in os.environ.items() if not _is_sensitive_env_key(k)}
+    if extra_env:
+        env.update(extra_env)
+    try:
+        return subprocess.run(
+            cmd,
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_s,
+            env=env,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=124,
+            stdout="",
+            stderr=f"command timed out after {timeout_s:.0f}s: {' '.join(cmd)}",
+        )
+    except FileNotFoundError as exc:
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=127,
+            stdout="",
+            stderr=f"command not found: {cmd[0]} ({exc})",
+        )
+    except OSError as exc:
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=126,
+            stdout="",
+            stderr=f"os error while running {' '.join(cmd)}: {exc}",
+        )
 
 
 def _iter_tool_versions_paths(project_root: Path, repo_dir: Path) -> list[Path]:
@@ -92,21 +161,47 @@ def _extract_scarb_version_candidates(project_root: Path, repo_dir: Path) -> lis
                 continue
             parts = line.split()
             if len(parts) >= 2 and parts[0] == "scarb":
-                version = parts[1].strip()
-                if version and version not in seen:
-                    seen.add(version)
-                    versions.append(version)
+                for raw_version in parts[1:]:
+                    version = raw_version.strip()
+                    if version and version not in seen:
+                        seen.add(version)
+                        versions.append(version)
 
     manifest = project_root / "Scarb.toml"
     if manifest.exists():
         match = STARKNET_DEP_RE.search(manifest.read_text(encoding="utf-8", errors="ignore"))
         if match:
+            # `starknet = "X.Y.Z"` is only an approximate hint for Scarb toolchains.
+            # We keep it as best-effort fallback behind explicit `.tool-versions`.
             version = match.group(1).strip()
             if version and version not in seen:
                 seen.add(version)
                 versions.append(version)
 
     return versions
+
+
+def _semver_tuple(raw: str) -> tuple[int, int, int] | None:
+    match = SEMVER_RE.match(raw.strip())
+    if not match:
+        return None
+    return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+
+
+def _compatible_installed_versions(requested: str, installed: set[str]) -> list[str]:
+    parsed = _semver_tuple(requested)
+    if parsed is None:
+        return []
+    major_minor = parsed[:2]
+    compatible: list[tuple[tuple[int, int, int], str]] = []
+    for candidate in installed:
+        c_parsed = _semver_tuple(candidate)
+        if c_parsed is None:
+            continue
+        if c_parsed[:2] == major_minor:
+            compatible.append((c_parsed, candidate))
+    compatible.sort(reverse=True)
+    return [raw for _, raw in compatible]
 
 
 def _asdf_installed_scarb_versions() -> set[str]:
@@ -134,11 +229,17 @@ def _candidate_scarb_invocations(project_root: Path, repo_dir: Path) -> list[tup
     if not installed:
         return candidates
 
-    for version in _extract_scarb_version_candidates(project_root, repo_dir):
-        if version not in installed:
-            continue
-        label = f"asdf-scarb-{version}"
-        candidates.append((label, [asdf_bin, "exec", "scarb"], {"ASDF_SCARB_VERSION": version}))
+    appended_versions: set[str] = set()
+    for requested in _extract_scarb_version_candidates(project_root, repo_dir):
+        matched_versions = [requested] if requested in installed else _compatible_installed_versions(
+            requested, installed
+        )
+        for version in matched_versions:
+            if version in appended_versions:
+                continue
+            appended_versions.add(version)
+            label = f"asdf-scarb-{version}"
+            candidates.append((label, [asdf_bin, "exec", "scarb"], {"ASDF_SCARB_VERSION": version}))
 
     deduped: list[tuple[str, list[str], dict[str, str]]] = []
     seen: set[tuple[tuple[str, ...], tuple[tuple[str, str], ...]]] = set()
@@ -160,35 +261,6 @@ def _extract_build_error(proc: subprocess.CompletedProcess[str]) -> str:
         if "error" in line.lower():
             return line[:280]
     return tail[-1][:280]
-
-
-def run_unchecked(
-    cmd: list[str],
-    cwd: Path,
-    timeout_s: float = 300,
-    *,
-    extra_env: dict[str, str] | None = None,
-) -> subprocess.CompletedProcess[str]:
-    env = os.environ.copy()
-    if extra_env:
-        env.update(extra_env)
-    try:
-        return subprocess.run(
-            cmd,
-            cwd=cwd,
-            text=True,
-            capture_output=True,
-            check=False,
-            timeout=timeout_s,
-            env=env,
-        )
-    except subprocess.TimeoutExpired:
-        return subprocess.CompletedProcess(
-            args=cmd,
-            returncode=124,
-            stdout="",
-            stderr=f"command timed out after {timeout_s:.0f}s: {' '.join(cmd)}",
-        )
 
 
 def find_scarb_projects(repo_dir: Path) -> list[Path]:
@@ -524,6 +596,7 @@ def analyze_repo(
         target_dirs: set[Path] = {(project / "target").resolve()}
         if allow_build:
             build_ok = False
+            proc: subprocess.CompletedProcess[str] | None = None
             chosen_prefix: list[str] = ["scarb"]
             chosen_env: dict[str, str] = {}
             for label, scarb_prefix, scarb_env in _candidate_scarb_invocations(project, repo_dir):
@@ -544,6 +617,7 @@ def analyze_repo(
                             "toolchain": label,
                             "ignore_cairo_version": str(ignore_cairo).lower(),
                             "status": "ok" if proc.returncode == 0 else "failed",
+                            "error": "" if proc.returncode == 0 else _extract_build_error(proc),
                         }
                     )
                     if proc.returncode == 0:
@@ -556,7 +630,7 @@ def analyze_repo(
 
             if not build_ok:
                 projects_failed += 1
-                msg = _extract_build_error(proc)
+                msg = _extract_build_error(proc) if proc is not None else "no build attempted"
                 errors.append(f"{_safe_repo_rel(project, repo_dir)}: {msg}")
                 continue
 
