@@ -24,7 +24,6 @@
     "./cairo-optimization",
     "./cairo-toolchain",
     "./account-abstraction",
-    "./starknet-network-facts",
-    "./openzeppelin-cairo"
+    "./starknet-network-facts"
   ]
 }

@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+ROOT_RESOLVED = ROOT.resolve()
 PLUGIN_PATH = ROOT / ".claude-plugin" / "plugin.json"
 MARKETPLACE_PATH = ROOT / ".claude-plugin" / "marketplace.json"
 
@@ -88,7 +89,18 @@ def main() -> int:
             if not isinstance(entry, str) or not entry:
                 errors.append(f"plugin.json skills[{idx}] must be a non-empty string path")
                 continue
-            skill_path = ROOT / entry
+            entry_path = Path(entry)
+            if entry_path.is_absolute() or ".." in entry_path.parts:
+                errors.append(f"plugin.json skills[{idx}] path must stay within repository: {entry}")
+                continue
+            skill_path = (ROOT / entry_path).resolve()
+            try:
+                skill_path.relative_to(ROOT_RESOLVED)
+            except ValueError:
+                errors.append(
+                    f"plugin.json skills[{idx}] resolves outside repository root: {entry}"
+                )
+                continue
             if not skill_path.exists():
                 errors.append(f"plugin.json skills[{idx}] path does not exist: {entry}")
                 continue
@@ -105,7 +117,7 @@ def main() -> int:
                 matched = entry
                 break
 
-    if matched is None:
+    if matched is None and isinstance(plugin_name, str) and plugin_name:
         errors.append(f"marketplace.json does not contain plugin entry for '{plugin_name}'")
     else:
         if matched.get("source") != "./":
