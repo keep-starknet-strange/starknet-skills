@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 import time
 from collections import Counter, defaultdict
 from collections.abc import Collection
@@ -93,8 +94,13 @@ def _build_command_env(cwd: Path, extra_env: dict[str, str] | None) -> dict[str,
         value = os.environ.get(key)
         if value:
             env[key] = value
-    # Isolate build-home from host credentials and per-user shell state.
-    env["HOME"] = str(cwd.resolve())
+    # Isolate build-home from host credentials and avoid polluting cloned repos.
+    sandbox_home = (Path(tempfile.gettempdir()) / "starknet-skills-sierra-home").resolve()
+    sandbox_home.mkdir(parents=True, exist_ok=True)
+    env["HOME"] = sandbox_home.as_posix()
+    env.setdefault("XDG_CACHE_HOME", (sandbox_home / ".cache").as_posix())
+    env.setdefault("XDG_CONFIG_HOME", (sandbox_home / ".config").as_posix())
+    env.setdefault("XDG_DATA_HOME", (sandbox_home / ".local" / "share").as_posix())
     host_home = os.environ.get("HOME")
     if "ASDF_DATA_DIR" not in env and host_home:
         env["ASDF_DATA_DIR"] = str((Path(host_home) / ".asdf").resolve())
@@ -487,6 +493,15 @@ def _resolve_target_dirs(
         timeout_s=timeout_s,
         extra_env=scarb_env,
     )
+    if proc.returncode != 0 and metadata_ignore_cairo_version:
+        fallback_proc = run_unchecked(
+            [*scarb_prefix, "metadata", "--format-version", "1", "--no-deps"],
+            cwd=project_root,
+            timeout_s=timeout_s,
+            extra_env=scarb_env,
+        )
+        if fallback_proc.returncode == 0:
+            proc = fallback_proc
     if proc.returncode != 0:
         msg = proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else "scarb metadata failed"
         errors.append(f"{_safe_repo_rel(project_root, repo_dir)}: {msg[:280]}")
