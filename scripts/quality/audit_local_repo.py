@@ -87,6 +87,12 @@ def _write_text_output(path: Path, content: str, *, overwrite: bool) -> None:
         handle.write(content)
 
 
+def _render_findings_jsonl(findings: list[dict[str, object]]) -> str:
+    if not findings:
+        return ""
+    return "".join(json.dumps(row, ensure_ascii=True) + "\n" for row in findings)
+
+
 def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tuple[str, ...]) -> tuple[dict[str, object], list[dict[str, object]]]:
     repo_resolved = repo_root.resolve()
     all_files: list[Path] = []
@@ -312,6 +318,16 @@ def main() -> int:
             lock_path.unlink(missing_ok=True)
             lock_path = None
         parser.error(f"output paths must be distinct ({detail})")
+    if json_explicit and out_json.exists():
+        if lock_path:
+            lock_path.unlink(missing_ok=True)
+            lock_path = None
+        parser.error(f"explicit JSON output path already exists: {out_json.as_posix()}")
+    if md_explicit and out_md.exists():
+        if lock_path:
+            lock_path.unlink(missing_ok=True)
+            lock_path = None
+        parser.error(f"explicit Markdown output path already exists: {out_md.as_posix()}")
     if out_jsonl is not None and jsonl_explicit and out_jsonl.exists():
         if lock_path:
             lock_path.unlink(missing_ok=True)
@@ -389,9 +405,11 @@ def main() -> int:
 
         if out_jsonl:
             out_jsonl.parent.mkdir(parents=True, exist_ok=True)
-            with out_jsonl.open("x", encoding="utf-8") as handle:
-                for row in findings:
-                    handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+            _write_text_output(
+                out_jsonl,
+                _render_findings_jsonl(findings),
+                overwrite=False,
+            )
 
         print(
             json.dumps(
