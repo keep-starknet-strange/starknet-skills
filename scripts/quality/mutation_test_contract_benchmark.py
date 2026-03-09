@@ -3,12 +3,19 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+
+from contract_benchmark_policy import (
+    BENCHMARK_GATE_FAILURE_EXIT_CODE,
+    MIN_REPORTABLE_CASES,
+)
 
 
 @dataclass(frozen=True)
@@ -73,7 +80,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--min-precision", type=float, default=1.0, help="Benchmark precision gate")
     parser.add_argument("--min-recall", type=float, default=1.0, help="Benchmark recall gate")
-    parser.add_argument("--min-evaluated", type=int, default=60, help="Benchmark minimum evaluated gate")
+    parser.add_argument(
+        "--min-evaluated",
+        type=int,
+        default=MIN_REPORTABLE_CASES,
+        help="Benchmark minimum evaluated gate",
+    )
     parser.add_argument(
         "--timeout-seconds",
         type=int,
@@ -156,21 +168,77 @@ def apply_mutation(original_text: str, mutation: Mutation) -> str:
     return mutated_text
 
 
+def build_mutated_case_pack(*, repo_root: Path, source_cases: Path, temp_root: Path) -> Path:
+    rel_prefix = temp_root.resolve().relative_to(repo_root.resolve()).as_posix()
+    output = temp_root / "contract_skill_benchmark.mutated.jsonl"
+    rendered: list[str] = []
+
+    for line_no, line in enumerate(source_cases.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            raw = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                f"{source_cases}:{line_no}: invalid JSON while building mutation case pack ({exc.msg})"
+            ) from exc
+        if not isinstance(raw, dict):
+            raise RuntimeError(f"{source_cases}:{line_no}: case entry must be object")
+        fixture = raw.get("fixture")
+        if not isinstance(fixture, str) or not fixture:
+            raise RuntimeError(f"{source_cases}:{line_no}: fixture must be non-empty string")
+        raw["fixture"] = f"{rel_prefix}/{fixture.lstrip('./')}"
+        rendered.append(json.dumps(raw, separators=(",", ":")))
+
+    output.write_text("\n".join(rendered) + "\n", encoding="utf-8")
+    return output
+
+
 def main() -> int:
     args = parse_args()
     repo_root = Path(__file__).resolve().parents[2]
+    source_cases = (repo_root / args.cases).resolve()
+
+    baseline_code, baseline_output = run_benchmark(
+        repo_root=repo_root,
+        cases=str(source_cases),
+        min_precision=args.min_precision,
+        min_recall=args.min_recall,
+        min_evaluated=args.min_evaluated,
+        timeout_seconds=args.timeout_seconds,
+        process_timeout_seconds=args.process_timeout_seconds,
+    )
+    if baseline_code != 0:
+        print("FAIL: baseline contract benchmark must pass before running mutations")
+        if baseline_output:
+            print(baseline_output)
+        return 1
 
     failures: list[str] = []
     for mutation in MUTATIONS:
-        target = repo_root / mutation.path
-        original_text = target.read_text(encoding="utf-8")
-        mutated_text = apply_mutation(original_text, mutation)
+        with tempfile.TemporaryDirectory(
+            prefix=".mutation-contract-bench-",
+            dir=repo_root,
+        ) as temp_dir:
+            temp_root = Path(temp_dir)
+            contracts_src = repo_root / "evals/contracts"
+            contracts_dst = temp_root / "evals/contracts"
+            contracts_dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(contracts_src, contracts_dst)
 
-        try:
+            target = temp_root / mutation.path
+            original_text = target.read_text(encoding="utf-8")
+            mutated_text = apply_mutation(original_text, mutation)
             target.write_text(mutated_text, encoding="utf-8")
+
+            mutated_cases = build_mutated_case_pack(
+                repo_root=repo_root,
+                source_cases=source_cases,
+                temp_root=temp_root,
+            )
             code, output = run_benchmark(
                 repo_root=repo_root,
-                cases=args.cases,
+                cases=str(mutated_cases),
                 min_precision=args.min_precision,
                 min_recall=args.min_recall,
                 min_evaluated=args.min_evaluated,
@@ -181,12 +249,16 @@ def main() -> int:
                 failures.append(
                     f"{mutation.mutation_id}: benchmark unexpectedly passed ({mutation.description})"
                 )
-            else:
+            elif code == BENCHMARK_GATE_FAILURE_EXIT_CODE:
                 print(f"OK: mutation caught: {mutation.mutation_id}")
                 if output:
                     print(f"  {output.splitlines()[-1]}")
-        finally:
-            target.write_text(original_text, encoding="utf-8")
+            else:
+                failures.append(
+                    f"{mutation.mutation_id}: runner failure (exit={code}) ({mutation.description})"
+                )
+                if output:
+                    print(output)
 
     if failures:
         print("FAIL: mutation coverage gaps detected")
