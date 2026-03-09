@@ -32,6 +32,12 @@ Install only this module from the plugin marketplace:
 Deterministic local repo audit entrypoint:
 
 ```bash
+./starkskills audit local --repo-root /path/to/your/cairo-repo --scan-id local-cairo-audit
+```
+
+Direct script entrypoint:
+
+```bash
 python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/your/cairo-repo \
   --scan-id local-cairo-audit \

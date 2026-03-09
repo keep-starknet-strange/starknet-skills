@@ -1,5 +1,11 @@
 # Quality Scripts
 
+- `starkskills.py`
+  - unified first-time CLI for `doctor`, `audit local`, `audit external`, and `audit deep`
+  - supports config defaults from `.starkskills.toml`
+  - supports SARIF export for code scanning pipelines
+- `export_findings_sarif.py`
+  - converts deterministic findings (`.findings.jsonl` or scan `.json`) to SARIF 2.1.0
 - `validate_skills.py`: skill contract/lint checks for SKILL.md structure and links.
 - `validate_marketplace.py`: enforces `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` parity (name/version/source/description/author and skill path validity).
 - `parity_check.py`: required repository parity and local tool checks.
@@ -93,9 +99,27 @@
 Run a local deterministic audit:
 
 ```bash
+./starkskills audit local --repo-root /path/to/your/cairo-repo --scan-id local-audit
+```
+
+Or direct:
+
+```bash
 python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/your/cairo-repo \
   --scan-id local-audit
+```
+
+Run toolchain doctor:
+
+```bash
+./starkskills doctor --probe-models
+```
+
+Optional shared defaults:
+
+```bash
+cp .starkskills.toml.example .starkskills.toml
 ```
 
 Run local audit + Sierra confirmation (build mode):
@@ -133,16 +157,23 @@ python scripts/quality/audit_local_repo.py \
 Run one-shot external pack audit (deterministic Stage-1 + Stage-2 bundle prep):
 
 ```bash
-python scripts/quality/audit_external_pack.py \
-  --pack less-known \
-  --scan-id community-less-known \
-  --output-dir evals/reports/data
+./starkskills audit external --pack less-known --scan-id community-less-known
+./starkskills audit deep --pack less-known --scan-id community-less-known-deep
 ```
 
 Useful hardening flags:
 
 - `--scan-timeout-seconds 1200` to bound Stage-1 scan runtime.
 - `--bundle-max-files` and `--bundle-max-bytes` to keep Stage-2 bundles within context budgets.
+
+Export SARIF from deterministic findings:
+
+```bash
+python scripts/quality/export_findings_sarif.py \
+  --findings-jsonl /path/to/scan.findings.jsonl \
+  --output /path/to/scan.sarif.json \
+  --root /path/to/source/root
+```
 
 Run direct external scan with native CSV outputs:
 

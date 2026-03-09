@@ -683,6 +683,11 @@ def build_index_html(data: dict, domain: str | None) -> str:
                 "Install in Claude.",
                 "/plugin marketplace add keep-starknet-strange/starknet-skills\n/plugin install starknet-skills",
             ),
+            command_block(
+                "starkskills CLI",
+                "First local audit in one command.",
+                "./starkskills doctor\n./starkskills audit local --repo-root /path/to/repo --scan-id local-audit",
+            ),
             command_block("Git clone", "Clone the repo locally.", f"git clone {links['repo']}.git"),
         ]
     )

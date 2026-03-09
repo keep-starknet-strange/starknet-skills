@@ -150,10 +150,8 @@ python scripts/quality/score_external_triage.py \
 Run one-shot external pack benchmark (first-time friendly):
 
 ```bash
-python scripts/quality/audit_external_pack.py \
-  --pack less-known \
-  --scan-id community-less-known \
-  --output-dir evals/reports/data
+./starkskills audit external --pack less-known --scan-id community-less-known
+./starkskills audit deep --pack less-known --scan-id community-less-known-deep
 ```
 
 This command produces:
@@ -166,6 +164,15 @@ This command produces:
 - `<scan-id>.manual-triage.csv`
 - `<scan-id>.stage2-manifest.json`
 - `<scan-id>.stage2-runbook.md`
+
+Export SARIF for GitHub Code Scanning:
+
+```bash
+./starkskills audit local --repo-root /path/to/repo --format sarif
+```
+
+Upload SARIF reference:
+- https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/uploading-a-sarif-file-to-github
 
 Run manual-19 gold recall check:
 

@@ -1,0 +1,17 @@
+[defaults]
+exclude = "test,tests,mock,mocks,example,examples,preset,presets,fixture,fixtures,vendor,vendors"
+output_dir = "evals/reports/data"
+workdir = "/tmp/starknet-skills-external-scan"
+scan_timeout_seconds = 1200
+bundle_max_files = 150
+bundle_max_bytes = 800000
+
+[local]
+output_dir = "evals/reports/local"
+write_findings_jsonl = true
+sierra_confirm = false
+allow_build = false
+scarb_timeout_seconds = 240
+
+[external]
+prepare_stage2 = false

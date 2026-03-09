@@ -61,6 +61,21 @@ git clone https://github.com/keep-starknet-strange/starknet-skills.git
 
 ## First Local Audit (60s)
 
+Unified CLI (recommended):
+
+```bash
+./starkskills doctor
+./starkskills audit local --repo-root /path/to/your/cairo-repo --scan-id local-audit
+```
+
+Optional defaults file:
+
+```bash
+cp .starkskills.toml.example .starkskills.toml
+```
+
+Script entrypoint (direct):
+
 ```bash
 python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/your/cairo-repo \
@@ -83,6 +98,19 @@ Use build mode only on trusted code, or run in an isolated environment.
 Reports are written under `<repo-root>/evals/reports/local/` by default (`.md`, `.json`).
 Add `--write-findings-jsonl` to emit `.findings.jsonl`.
 If a target filename already exists, the script appends `-N` to avoid overwrite.
+
+External benchmark packs in one command:
+
+```bash
+./starkskills audit external --pack less-known --scan-id community-wave
+./starkskills audit deep --pack less-known --scan-id community-wave-deep
+```
+
+Optional SARIF export for code scanning:
+
+```bash
+./starkskills audit local --repo-root /path/to/repo --format sarif
+```
 
 ## How It Works
 

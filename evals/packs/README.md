@@ -12,3 +12,9 @@ Built-in pack names:
 - `less-known` -> `evals/packs/less-known.txt`
 - `low-profile` -> `evals/reports/data/external-repo-scan-low-profile-repos.txt`
 - `wave2` -> `evals/reports/data/external-repo-scan-wave2-repos.txt`
+
+Quick run:
+
+```bash
+./starkskills audit external --pack less-known --scan-id community-less-known
+```
