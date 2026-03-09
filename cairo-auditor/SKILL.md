@@ -34,9 +34,9 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 ## Quick Start
 
 1. Open [workflows/default.md](workflows/default.md) for standard audits, or [workflows/deep.md](workflows/deep.md) for adversarial mode.
-2. Load [agents/vector-scan.md](agents/vector-scan.md) and [references/judging.md](references/judging.md).
-3. Select attack-vector partitions from [references/attack-vectors/attack-vectors-1.md](references/attack-vectors/attack-vectors-1.md) through [attack-vectors-4.md](references/attack-vectors/attack-vectors-4.md).
-4. Format output using [references/report-formatting.md](references/report-formatting.md), then validate against [references/vulnerability-db/README.md](references/vulnerability-db/README.md).
+2. Load [agents/vector-scan.md](agents/vector-scan.md), [references/judging.md](references/judging.md), and [references/README.md](references/README.md).
+3. Select attack-vector partitions from `references/attack-vectors/attack-vectors-1.md` through `references/attack-vectors/attack-vectors-4.md`.
+4. Format output using [references/report-formatting.md](references/report-formatting.md), then validate against `references/vulnerability-db/README.md`.
 
 ## Orchestration (4 Turns)
 
@@ -55,10 +55,10 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 2. Build four specialist bundles. Each bundle includes:
    - full in-scope Cairo code,
    - one vector partition:
-     - [references/attack-vectors/attack-vectors-1.md](references/attack-vectors/attack-vectors-1.md)
-     - [references/attack-vectors/attack-vectors-2.md](references/attack-vectors/attack-vectors-2.md)
-     - [references/attack-vectors/attack-vectors-3.md](references/attack-vectors/attack-vectors-3.md)
-     - [references/attack-vectors/attack-vectors-4.md](references/attack-vectors/attack-vectors-4.md)
+     - `references/attack-vectors/attack-vectors-1.md`
+     - `references/attack-vectors/attack-vectors-2.md`
+     - `references/attack-vectors/attack-vectors-3.md`
+     - `references/attack-vectors/attack-vectors-4.md`
 3. Record line counts per bundle for parallel chunk-reading instructions.
 
 ### Turn 3: Spawn
