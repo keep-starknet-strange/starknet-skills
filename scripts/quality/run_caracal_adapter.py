@@ -62,6 +62,12 @@ def main() -> int:
     parser.add_argument("--scarb-timeout-seconds", type=float, default=240.0)
     parser.add_argument("--caracal-bin", default="caracal")
     parser.add_argument(
+        "--caracal-timeout-seconds",
+        type=float,
+        default=60.0,
+        help="Timeout for each Caracal subprocess invocation.",
+    )
+    parser.add_argument(
         "--caracal-args-template",
         default="{artifact}",
         help="Arguments template for each artifact. Supported placeholders: {artifact}, {repo_root}.",
@@ -102,13 +108,17 @@ def main() -> int:
         print(json.dumps({"status": payload["status"], "reason": payload["reason"]}, ensure_ascii=True))
         return 0
 
-    version_proc = subprocess.run(
-        [caracal_bin, "--version"],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    if version_proc.returncode == 0:
+    try:
+        version_proc = subprocess.run(
+            [caracal_bin, "--version"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=min(30.0, args.caracal_timeout_seconds),
+        )
+    except subprocess.TimeoutExpired:
+        version_proc = None
+    if version_proc and version_proc.returncode == 0:
         payload["caracal_version"] = version_proc.stdout.strip()
 
     artifacts = _collect_sierra_artifacts(repo_root)
@@ -129,7 +139,7 @@ def main() -> int:
                 text=True,
                 capture_output=True,
                 check=False,
-                timeout=args.scarb_timeout_seconds,
+                timeout=args.caracal_timeout_seconds,
             )
             payload["build_exit_code"] = build_proc.returncode
             artifacts = _collect_sierra_artifacts(repo_root)

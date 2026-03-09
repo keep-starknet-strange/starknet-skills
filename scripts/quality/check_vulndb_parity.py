@@ -5,7 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent.parent
+if SCRIPT_DIR.as_posix() not in sys.path:
+    sys.path.insert(0, SCRIPT_DIR.as_posix())
 
 from benchmark_cairo_auditor import DETECTORS
 
@@ -40,6 +46,13 @@ def _load_vulndb_ids(vulndb_dir: Path) -> set[str]:
     return ids
 
 
+def _resolve_under_repo(raw: str, repo_root: Path) -> Path:
+    candidate = Path(raw)
+    if candidate.is_absolute():
+        return candidate.resolve()
+    return (repo_root / candidate).resolve()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
@@ -65,8 +78,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    case_paths = [Path(p).resolve() for p in args.cases]
-    vulndb_dir = Path(args.vulndb_dir).resolve()
+    case_paths = [_resolve_under_repo(p, REPO_ROOT) for p in args.cases]
+    vulndb_dir = _resolve_under_repo(args.vulndb_dir, REPO_ROOT)
     if not vulndb_dir.exists() or not vulndb_dir.is_dir():
         raise SystemExit(f"vuln-db directory not found: {vulndb_dir}")
 

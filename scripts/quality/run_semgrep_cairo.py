@@ -11,6 +11,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 
+def _resolve_from_repo(raw: str, repo_root: Path) -> Path:
+    candidate = Path(raw)
+    if candidate.is_absolute():
+        return candidate.resolve()
+    return (repo_root / candidate).resolve()
+
+
 def _render_md(payload: dict[str, object]) -> str:
     lines: list[str] = []
     lines.append("# Semgrep Cairo Adapter")
@@ -79,9 +86,9 @@ def main() -> int:
     args = parser.parse_args()
 
     repo_root = Path(args.repo_root).resolve()
-    config_path = Path(args.config).resolve()
-    out_json = Path(args.output_json).resolve()
-    out_md = Path(args.output_md).resolve()
+    config_path = _resolve_from_repo(args.config, repo_root)
+    out_json = _resolve_from_repo(args.output_json, repo_root)
+    out_md = _resolve_from_repo(args.output_md, repo_root)
     out_json.parent.mkdir(parents=True, exist_ok=True)
     out_md.parent.mkdir(parents=True, exist_ok=True)
 
@@ -100,11 +107,13 @@ def main() -> int:
 
     semgrep_bin = shutil.which("semgrep")
     if semgrep_bin is None:
+        if args.strict:
+            payload["status"] = "error"
         payload["reason"] = "semgrep_not_installed"
         out_json.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
         out_md.write_text(_render_md(payload), encoding="utf-8")
         print(json.dumps({"status": payload["status"], "reason": payload["reason"]}, ensure_ascii=True))
-        return 0
+        return 1 if args.strict else 0
 
     if not config_path.exists():
         payload["reason"] = "config_not_found"
@@ -113,13 +122,17 @@ def main() -> int:
         print(json.dumps({"status": payload["status"], "reason": payload["reason"]}, ensure_ascii=True))
         return 1 if args.strict else 0
 
-    version_proc = subprocess.run(
-        [semgrep_bin, "--version"],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    if version_proc.returncode == 0:
+    try:
+        version_proc = subprocess.run(
+            [semgrep_bin, "--version"],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=min(30.0, args.semgrep_timeout_seconds),
+        )
+    except subprocess.TimeoutExpired:
+        version_proc = None
+    if version_proc and version_proc.returncode == 0:
         payload["semgrep_version"] = version_proc.stdout.strip()
 
     try:

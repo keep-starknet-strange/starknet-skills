@@ -215,6 +215,16 @@ def main() -> int:
 
             manifest_name = plugin_manifest.get("name")
             manifest_version = plugin_manifest.get("version")
+            manifest_description = plugin_manifest.get("description")
+            manifest_author = plugin_manifest.get("author")
+            manifest_author_name = (
+                manifest_author.get("name") if isinstance(manifest_author, dict) else None
+            )
+            entry_description = entry.get("description")
+            entry_author = entry.get("author")
+            entry_author_name = (
+                entry_author.get("name") if isinstance(entry_author, dict) else None
+            )
             if manifest_name != entry_name:
                 errors.append(
                     f"name mismatch for source {entry_source}: marketplace='{entry_name}' vs plugin.json='{manifest_name}'"
@@ -222,6 +232,22 @@ def main() -> int:
             if manifest_version != entry_version:
                 errors.append(
                     f"version mismatch for source {entry_source}: marketplace='{entry_version}' vs plugin.json='{manifest_version}'"
+                )
+            if not isinstance(entry_description, str) or not entry_description:
+                errors.append(
+                    f"marketplace.json plugins[{idx}] missing non-empty 'description'"
+                )
+            elif manifest_description != entry_description:
+                errors.append(
+                    f"description mismatch for source {entry_source}: marketplace='{entry_description}' vs plugin.json='{manifest_description}'"
+                )
+            if not isinstance(entry_author_name, str) or not entry_author_name:
+                errors.append(
+                    f"marketplace.json plugins[{idx}].author.name missing/non-string"
+                )
+            elif manifest_author_name != entry_author_name:
+                errors.append(
+                    f"author.name mismatch for source {entry_source}: marketplace='{entry_author_name}' vs plugin.json='{manifest_author_name}'"
                 )
 
             version_file = plugin_dir / "VERSION"

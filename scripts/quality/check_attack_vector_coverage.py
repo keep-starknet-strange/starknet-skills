@@ -3,12 +3,31 @@
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import re
 from pathlib import Path
 
 
 VECTOR_PATTERN = re.compile(r"^\*\*(\d+)\.\s+", re.MULTILINE)
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent.parent
+
+
+def _glob_paths(repo_root: Path, pattern: str) -> list[Path]:
+    if Path(pattern).is_absolute():
+        return sorted(Path(p).resolve() for p in glob.glob(pattern, recursive=True))
+    return sorted(
+        (repo_root / p).resolve()
+        for p in glob.glob(pattern, root_dir=repo_root.as_posix(), recursive=True)
+    )
+
+
+def _display_path(path: Path, repo_root: Path) -> str:
+    try:
+        return path.relative_to(repo_root).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _extract_vector_ids(path: Path) -> list[int]:
@@ -33,7 +52,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    vector_paths = sorted(Path(".").glob(args.vectors_glob))
+    vector_paths = _glob_paths(REPO_ROOT, args.vectors_glob)
     if not vector_paths:
         raise SystemExit(f"no vector files matched: {args.vectors_glob}")
 
@@ -44,7 +63,7 @@ def main() -> int:
 
     for path in vector_paths:
         ids = _extract_vector_ids(path)
-        by_file[path.as_posix()] = len(ids)
+        by_file[_display_path(path, REPO_ROOT)] = len(ids)
         total += len(ids)
         for vector_id in ids:
             if vector_id in seen:
@@ -52,15 +71,15 @@ def main() -> int:
                     {
                         "vector_id": vector_id,
                         "first_file": seen[vector_id],
-                        "duplicate_file": path.as_posix(),
+                        "duplicate_file": _display_path(path, REPO_ROOT),
                     }
                 )
             else:
-                seen[vector_id] = path.as_posix()
+                seen[vector_id] = _display_path(path, REPO_ROOT)
 
     total_unique = len(seen)
     summary = {
-        "vector_files": [p.as_posix() for p in vector_paths],
+        "vector_files": [_display_path(p, REPO_ROOT) for p in vector_paths],
         "by_file": by_file,
         "total_vectors": total_unique,
         "total_vectors_raw": total,

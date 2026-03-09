@@ -82,7 +82,7 @@ rules:
         - "**/*.cairo"
     patterns:
       - pattern-regex: "(upgrade|revoke|role|relayer|trusted)"
-      - pattern-not-regex: "(emit|Event|old_class_hash|new_class_hash|previous|current)"
+      - pattern-not-regex: "(emit|Event|old_class_hash|new_class_hash|previous_owner|current_owner|previous_epoch|current_epoch)"
 
   - id: cairo.storage.init-and-registry-deadlock
     message: "Initialization/registry flow may deadlock or allow unbounded growth."

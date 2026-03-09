@@ -47,9 +47,10 @@ claude plugin validate cairo-auditor
 python3 scripts/quality/validate_marketplace.py
 
 # 2) Merge to main, then cut release
-git tag v0.2.0
-git push origin v0.2.0
-gh release create v0.2.0 --generate-notes
+VERSION="<sync with .claude-plugin/marketplace.json metadata.version>"
+git tag "v${VERSION}"
+git push origin "v${VERSION}"
+gh release create "v${VERSION}" --generate-notes
 ```
 
 ### Local clone

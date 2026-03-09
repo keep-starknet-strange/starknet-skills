@@ -3,13 +3,32 @@
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import re
 from pathlib import Path
 
 VECTOR_PATTERN = re.compile(r"^\*\*(\d+)\.\s+", re.MULTILINE)
-CORE_LIST_PATTERN = re.compile(r"attack_vectors_core:\s*\[([^\]]*)\]")
+VECTOR_LIST_PATTERN = re.compile(r"attack_vectors_(?:core|extended):\s*\[([^\]]*)\]")
 INT_PATTERN = re.compile(r"\d+")
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent.parent
+
+
+def _glob_paths(repo_root: Path, pattern: str) -> list[Path]:
+    if Path(pattern).is_absolute():
+        return sorted(Path(p).resolve() for p in glob.glob(pattern, recursive=True))
+    return sorted(
+        (repo_root / p).resolve()
+        for p in glob.glob(pattern, root_dir=repo_root.as_posix(), recursive=True)
+    )
+
+
+def _display_path(path: Path, repo_root: Path) -> str:
+    try:
+        return path.relative_to(repo_root).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _extract_attack_vectors(path: Path) -> set[int]:
@@ -20,7 +39,7 @@ def _extract_attack_vectors(path: Path) -> set[int]:
 def _extract_semgrep_core_vectors(path: Path) -> set[int]:
     content = path.read_text(encoding="utf-8")
     found: set[int] = set()
-    for raw_list in CORE_LIST_PATTERN.findall(content):
+    for raw_list in VECTOR_LIST_PATTERN.findall(content):
         for raw_int in INT_PATTERN.findall(raw_list):
             found.add(int(raw_int))
     return found
@@ -49,16 +68,16 @@ def main() -> int:
     parser.add_argument(
         "--core-max",
         type=int,
-        default=80,
+        default=120,
         help="Inclusive upper bound for required core vectors.",
     )
     args = parser.parse_args()
 
-    vector_paths = sorted(Path(".").glob(args.vectors_glob))
+    vector_paths = _glob_paths(REPO_ROOT, args.vectors_glob)
     if not vector_paths:
         raise SystemExit(f"no vector files matched: {args.vectors_glob}")
 
-    rule_paths = sorted(Path(".").glob(args.rules_glob))
+    rule_paths = _glob_paths(REPO_ROOT, args.rules_glob)
     if not rule_paths:
         raise SystemExit(f"no semgrep rule files matched: {args.rules_glob}")
 
@@ -76,7 +95,7 @@ def main() -> int:
     by_rule_file: dict[str, list[int]] = {}
     for path in rule_paths:
         present = sorted(_extract_semgrep_core_vectors(path))
-        by_rule_file[path.as_posix()] = present
+        by_rule_file[_display_path(path, REPO_ROOT)] = present
         semgrep_vectors.update(present)
 
     missing = sorted(required_vectors - semgrep_vectors)
@@ -87,8 +106,8 @@ def main() -> int:
     )
 
     summary = {
-        "vector_files": [p.as_posix() for p in vector_paths],
-        "rules_files": [p.as_posix() for p in rule_paths],
+        "vector_files": [_display_path(p, REPO_ROOT) for p in vector_paths],
+        "rules_files": [_display_path(p, REPO_ROOT) for p in rule_paths],
         "core_min": args.core_min,
         "core_max": args.core_max,
         "required_count": len(required_vectors),
@@ -100,7 +119,7 @@ def main() -> int:
     }
     print(json.dumps(summary, ensure_ascii=True))
 
-    return 1 if missing else 0
+    return 1 if missing or out_of_range else 0
 
 
 if __name__ == "__main__":

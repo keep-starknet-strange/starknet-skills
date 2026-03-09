@@ -25,7 +25,7 @@ rules:
         - "**/*.cairo"
     patterns:
       - pattern-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?new_class_hash[\\s\\S]{0,320}?(replace_class_syscall\\(|upgradeable\\.upgrade\\()"
-      - pattern-not-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?(is_non_zero\\(|!=\\s*0)"
+      - pattern-not-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?(is_non_zero\\(|!=\\s*0(\\b|\\s|\\)|;)|Zeroable::zero\\(|ContractAddressZeroable::zero\\(|Zero::zero\\(|assert_ne!\\(|0\\.into\\(\\))"
 
   - id: cairo.critical-address-init-no-guard
     message: "Constructor seeds privileged/dependency ContractAddress without non-zero guard."

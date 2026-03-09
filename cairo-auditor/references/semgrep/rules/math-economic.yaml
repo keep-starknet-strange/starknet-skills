@@ -132,8 +132,11 @@ rules:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "(block_timestamp|block_number|expiry|stale|freshness|epoch)"
-      - pattern-regex: "(<|>|<=|>=)"
+      - pattern-inside: |
+          fn $FN(...) {
+            ...
+          }
+      - pattern-regex: "(?s)(?=.*\\bblock_timestamp\\b)(?=.*\\bblock_number\\b).*?(<=|>=|<|>)"
 
   - id: cairo.math.reciprocal-and-denominator-guards
     message: "Reciprocal/division path may miss zero/bounds guard."

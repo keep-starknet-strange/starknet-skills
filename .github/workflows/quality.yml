@@ -88,7 +88,7 @@ jobs:
             --min-vectors 120
           python scripts/quality/check_semgrep_vector_coverage.py \
             --core-min 1 \
-            --core-max 80
+            --core-max 120
 
       - name: Manual-19 gold recall smoke
         run: |

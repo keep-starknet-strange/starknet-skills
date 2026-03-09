@@ -8,6 +8,7 @@ rules:
       triage: manual-ordering-review-required
       detection_scope: function-heuristic
       attack_vectors_core: [21, 24, 26, 30, 33]
+      attack_vectors_extended: [92]
     paths:
       include:
         - "**/*.cairo"
@@ -81,6 +82,10 @@ rules:
       include:
         - "**/*.cairo"
     patterns:
+      - pattern-inside: |
+          fn $FN(...) {
+            ...
+          }
       - pattern-regex: "(match\\s+.*Err|if\\s+.*is_err|unwrap_or|unwrap_or_default)"
       - pattern-regex: "(transfer\\(|call_contract_syscall\\()"
       - pattern-regex: "\\.write\\("
