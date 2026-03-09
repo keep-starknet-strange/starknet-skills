@@ -58,10 +58,12 @@ def main() -> int:
             else:
                 seen[vector_id] = path.as_posix()
 
+    total_unique = len(seen)
     summary = {
         "vector_files": [p.as_posix() for p in vector_paths],
         "by_file": by_file,
-        "total_vectors": total,
+        "total_vectors": total_unique,
+        "total_vectors_raw": total,
         "min_vectors": args.min_vectors,
         "duplicates": duplicates,
     }
@@ -69,7 +71,7 @@ def main() -> int:
 
     if duplicates:
         return 1
-    if total < args.min_vectors:
+    if total_unique < args.min_vectors:
         return 1
     return 0
 

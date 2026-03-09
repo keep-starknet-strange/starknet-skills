@@ -143,13 +143,13 @@ Run auxiliary adapters (optional, non-blocking):
 python scripts/quality/run_caracal_adapter.py \
   --repo-root /path/to/your/cairo-repo \
   --allow-build \
-  --output-json /tmp/caracal-adapter.json \
-  --output-md /tmp/caracal-adapter.md
+  --output-json /path/to/output/caracal-adapter.json \
+  --output-md /path/to/output/caracal-adapter.md
 
 python scripts/quality/run_semgrep_cairo.py \
   --repo-root /path/to/your/cairo-repo \
-  --output-json /tmp/semgrep-adapter.json \
-  --output-md /tmp/semgrep-adapter.md
+  --output-json /path/to/output/semgrep-adapter.json \
+  --output-md /path/to/output/semgrep-adapter.md
 ```
 
 Exit code behavior:

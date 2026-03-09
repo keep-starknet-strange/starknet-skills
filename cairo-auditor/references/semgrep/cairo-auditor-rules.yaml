@@ -3,6 +3,9 @@ rules:
     message: "Immediate upgrade path without schedule/execute split."
     severity: WARNING
     languages: [generic]
+    metadata:
+      confidence: low
+      triage: "manual-review-required"
     paths:
       include:
         - "**/*.cairo"
@@ -14,6 +17,9 @@ rules:
     message: "Upgrade path uses new_class_hash without explicit non-zero guard."
     severity: WARNING
     languages: [generic]
+    metadata:
+      confidence: low
+      triage: "manual-review-required"
     paths:
       include:
         - "**/*.cairo"
@@ -26,6 +32,9 @@ rules:
     message: "Constructor seeds privileged/dependency ContractAddress without non-zero guard."
     severity: WARNING
     languages: [generic]
+    metadata:
+      confidence: low
+      triage: "manual-review-required"
     paths:
       include:
         - "**/*.cairo"
@@ -54,6 +63,9 @@ rules:
     message: "fees_recipient write appears without non-zero validation."
     severity: WARNING
     languages: [generic]
+    metadata:
+      confidence: low
+      triage: "manual-review-required"
     paths:
       include:
         - "**/*.cairo"
@@ -65,13 +77,16 @@ rules:
     message: "Fee/rate parameter appears to be written without explicit max bound."
     severity: WARNING
     languages: [generic]
+    metadata:
+      confidence: low
+      triage: "manual-review-required"
     paths:
       include:
         - "**/*.cairo"
     patterns:
       - pattern-regex: "(fee|bps|rate)\\s*:\\s*(u16|u32|u64|u128|u256|felt252)"
       - pattern-regex: "\\.write\\([^)]*(fee|bps|rate)"
-      - pattern-not-regex: "(<=\\s*MAX_|>=\\s*MIN_|is_le\\()"
+      - pattern-not-regex: "(<=\\s*MAX_|is_le\\()"
 
   - id: cairo.erc1155-cei-risk
     message: "Potential ERC1155 CEI ordering risk (triage hint, verify ordering manually)."
@@ -91,6 +106,9 @@ rules:
     message: "Constructor seeds owner/admin but no obvious rotation path is present."
     severity: WARNING
     languages: [generic]
+    metadata:
+      confidence: low
+      triage: "manual-review-required"
     paths:
       include:
         - "**/*.cairo"

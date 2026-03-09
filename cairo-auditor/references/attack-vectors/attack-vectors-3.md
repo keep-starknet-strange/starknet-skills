@@ -89,8 +89,8 @@
 - **FP:** cap/limit validation is enforced prior to state mutation.
 
 **103. Interest accrual uses stale timestamp snapshot**
-- **D:** accrual math uses pre-interaction timestamp after external calls that can delay/update state.
-- **FP:** accrual snapshot refreshed at the final accounting boundary.
+- **D:** accrual math reuses stale/cached timestamp state (or validation-phase rounded timestamp) instead of refreshing execution-phase time at accounting boundary.
+- **FP:** accrual reads execution-phase timestamp fresh at settlement/accounting boundary and tests validation-vs-execution semantics.
 
 **104. BPS denominator mismatch**
 - **D:** one path uses `10_000` while another uses alternate denominator for same fee/rate domain.
