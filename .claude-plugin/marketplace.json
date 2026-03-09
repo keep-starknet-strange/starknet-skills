@@ -5,7 +5,7 @@
   },
   "metadata": {
     "version": "0.2.0",
-    "description": "Cairo/Starknet skills for security-aware contract authoring, testing, optimization, and auditing."
+    "description": "Cairo/Starknet reasoning and audit-quality skills for secure contract authoring, testing, and review."
   },
   "plugins": [
     {

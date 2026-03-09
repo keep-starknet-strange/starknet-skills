@@ -54,6 +54,10 @@ def main() -> int:
 
     plugin_name = plugin.get("name")
     plugin_version = plugin.get("version")
+    plugin_description = plugin.get("description")
+    plugin_author = plugin.get("author")
+    plugin_author_name = plugin_author.get("name") if isinstance(plugin_author, dict) else None
+    plugin_skills = plugin.get("skills")
 
     if not isinstance(plugin_name, str) or not plugin_name:
         errors.append("plugin.json missing non-empty 'name'")
@@ -61,7 +65,14 @@ def main() -> int:
         errors.append("plugin.json missing non-empty 'version'")
 
     market_name = marketplace.get("name")
-    market_version = (marketplace.get("metadata") or {}).get("version")
+    metadata = marketplace.get("metadata")
+    if metadata is None:
+        metadata = {}
+    elif not isinstance(metadata, dict):
+        errors.append("marketplace.json metadata must be a JSON object")
+        metadata = {}
+    market_version = metadata.get("version")
+    market_description = metadata.get("description")
     plugins = marketplace.get("plugins")
 
     if not isinstance(market_name, str) or not market_name:
@@ -70,6 +81,22 @@ def main() -> int:
         errors.append("marketplace.json metadata.version missing/non-string")
     if not isinstance(plugins, list) or not plugins:
         errors.append("marketplace.json plugins must be a non-empty array")
+    if not isinstance(plugin_skills, list) or not plugin_skills:
+        errors.append("plugin.json missing non-empty 'skills' array")
+    else:
+        for idx, entry in enumerate(plugin_skills):
+            if not isinstance(entry, str) or not entry:
+                errors.append(f"plugin.json skills[{idx}] must be a non-empty string path")
+                continue
+            skill_path = ROOT / entry
+            if not skill_path.exists():
+                errors.append(f"plugin.json skills[{idx}] path does not exist: {entry}")
+                continue
+            if not skill_path.is_dir():
+                errors.append(f"plugin.json skills[{idx}] path is not a directory: {entry}")
+                continue
+            if not (skill_path / "SKILL.md").exists():
+                errors.append(f"plugin.json skills[{idx}] missing SKILL.md: {entry}")
 
     matched = None
     if isinstance(plugins, list) and isinstance(plugin_name, str) and plugin_name:
@@ -87,6 +114,29 @@ def main() -> int:
             errors.append(
                 f"version mismatch: plugin.json={plugin_version} vs marketplace.plugins[{plugin_name}].version={matched.get('version')}"
             )
+        matched_description = matched.get("description")
+        if (
+            isinstance(plugin_description, str)
+            and plugin_description
+            and isinstance(matched_description, str)
+            and matched_description
+            and matched_description != plugin_description
+        ):
+            errors.append(
+                "description mismatch: plugin.json.description vs marketplace.plugins[].description"
+            )
+        matched_author = matched.get("author")
+        matched_author_name = matched_author.get("name") if isinstance(matched_author, dict) else None
+        if (
+            isinstance(plugin_author_name, str)
+            and plugin_author_name
+            and isinstance(matched_author_name, str)
+            and matched_author_name
+            and matched_author_name != plugin_author_name
+        ):
+            errors.append(
+                "author.name mismatch: plugin.json.author.name vs marketplace.plugins[].author.name"
+            )
 
     if plugin_version and market_version and plugin_version != market_version:
         errors.append(
@@ -95,6 +145,16 @@ def main() -> int:
 
     if market_name and plugin_name and market_name != plugin_name:
         errors.append(f"name mismatch: marketplace.name={market_name} vs plugin.name={plugin_name}")
+    if (
+        isinstance(plugin_description, str)
+        and plugin_description
+        and isinstance(market_description, str)
+        and market_description
+        and market_description != plugin_description
+    ):
+        errors.append(
+            "description mismatch: marketplace.metadata.description vs plugin.json.description"
+        )
 
     if errors:
         print("Marketplace validation failed:")
