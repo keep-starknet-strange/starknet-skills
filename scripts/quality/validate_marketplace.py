@@ -23,6 +23,26 @@ def load_json(path: Path) -> dict:
     return obj
 
 
+def _resolve_repo_file(
+    path: Path,
+    root_resolved: Path,
+    *,
+    label: str,
+    errors: list[str],
+) -> Path | None:
+    try:
+        resolved = path.resolve()
+    except OSError as exc:
+        errors.append(f"{label} cannot resolve path '{path}': {exc}")
+        return None
+    try:
+        resolved.relative_to(root_resolved)
+    except ValueError:
+        errors.append(f"{label} resolves outside repository root: {path}")
+        return None
+    return resolved
+
+
 def validate_skill_paths(
     *,
     skills: object,
@@ -58,8 +78,20 @@ def validate_skill_paths(
         if not skill_path.is_dir():
             errors.append(f"{label} skills[{idx}] path is not a directory: {entry}")
             continue
-        if not (skill_path / "SKILL.md").exists():
+        skill_doc = skill_path / "SKILL.md"
+        if not skill_doc.exists():
             errors.append(f"{label} skills[{idx}] missing SKILL.md: {entry}")
+            continue
+        skill_doc_resolved = _resolve_repo_file(
+            skill_doc,
+            root_resolved,
+            label=f"{label} skills[{idx}]",
+            errors=errors,
+        )
+        if skill_doc_resolved is None:
+            continue
+        if not skill_doc_resolved.is_file():
+            errors.append(f"{label} skills[{idx}] SKILL.md is not a file: {entry}")
 
 
 def main() -> int:
@@ -206,11 +238,24 @@ def main() -> int:
             if not manifest_path.exists():
                 errors.append(f"{manifest_path} missing for marketplace plugin '{entry_name}'")
                 continue
+            manifest_resolved = _resolve_repo_file(
+                manifest_path,
+                ROOT_RESOLVED,
+                label=f"marketplace.json plugins[{idx}]",
+                errors=errors,
+            )
+            if manifest_resolved is None:
+                continue
+            if not manifest_resolved.is_file():
+                errors.append(
+                    f"marketplace.json plugins[{idx}] manifest is not a file: {manifest_path}"
+                )
+                continue
 
             try:
-                plugin_manifest = load_json(manifest_path)
+                plugin_manifest = load_json(manifest_resolved)
             except (OSError, ValueError) as exc:
-                errors.append(f"invalid {manifest_path}: {exc}")
+                errors.append(f"invalid {manifest_resolved}: {exc}")
                 continue
 
             manifest_name = plugin_manifest.get("name")
@@ -254,13 +299,26 @@ def main() -> int:
             if not version_file.exists():
                 errors.append(f"{version_file} missing for marketplace plugin '{entry_name}'")
             else:
+                version_resolved = _resolve_repo_file(
+                    version_file,
+                    ROOT_RESOLVED,
+                    label=f"marketplace.json plugins[{idx}]",
+                    errors=errors,
+                )
+                if version_resolved is None:
+                    continue
+                if not version_resolved.is_file():
+                    errors.append(
+                        f"marketplace.json plugins[{idx}] VERSION is not a file: {version_file}"
+                    )
+                    continue
                 try:
-                    module_version = version_file.read_text(encoding="utf-8").strip()
+                    module_version = version_resolved.read_text(encoding="utf-8").strip()
                 except OSError as exc:
-                    errors.append(f"cannot read {version_file}: {exc}")
+                    errors.append(f"cannot read {version_resolved}: {exc}")
                     module_version = ""
                 if not module_version:
-                    errors.append(f"{version_file} must contain a non-empty version")
+                    errors.append(f"{version_resolved} must contain a non-empty version")
                 elif manifest_version != module_version:
                     errors.append(
                         f"version mismatch for source {entry_source}: plugin.json='{manifest_version}' vs VERSION='{module_version}'"

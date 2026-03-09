@@ -14,7 +14,7 @@ rules:
         - "**/*.cairo"
     patterns:
       - pattern-regex: "(fee|bps|rate)\\s*:\\s*(u16|u32|u64|u128|u256|felt252)"
-      - pattern-regex: "(\\.write\\([^)]*(fee|bps|rate)|transfer_fee|swap_fee|protocol_fee)"
+      - pattern-regex: "(\\.write\\([^)]*(fee|bps|rate)|\\b(fee|bps|rate)[a-zA-Z0-9_]*\\s*=)"
       - pattern-not-regex: "(<=\\s*MAX_|is_le\\(|max_fee|max_bps|max_rate)"
 
   - id: cairo.math.fee-recipient-zero-risk

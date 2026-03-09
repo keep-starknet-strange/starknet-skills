@@ -12,13 +12,21 @@ from pathlib import Path
 
 
 def _collect_sierra_artifacts(repo_root: Path) -> list[Path]:
+    repo_root = repo_root.resolve()
     artifacts: set[Path] = set()
     patterns = ("*.sierra.json", "*.contract_class.json", "*.sierra")
     for pattern in patterns:
         for path in repo_root.rglob(pattern):
+            if path.is_symlink():
+                continue
             if ".git/" in path.as_posix():
                 continue
-            artifacts.add(path.resolve())
+            resolved = path.resolve()
+            try:
+                resolved.relative_to(repo_root)
+            except ValueError:
+                continue
+            artifacts.add(resolved)
     return sorted(artifacts)
 
 

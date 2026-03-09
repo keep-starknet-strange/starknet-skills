@@ -80,6 +80,9 @@ def main() -> int:
 
     case_paths = [_resolve_under_repo(p, REPO_ROOT) for p in args.cases]
     vulndb_dir = _resolve_under_repo(args.vulndb_dir, REPO_ROOT)
+    for case_path in case_paths:
+        if not case_path.exists() or not case_path.is_file():
+            raise SystemExit(f"case file not found: {case_path}")
     if not vulndb_dir.exists() or not vulndb_dir.is_dir():
         raise SystemExit(f"vuln-db directory not found: {vulndb_dir}")
 

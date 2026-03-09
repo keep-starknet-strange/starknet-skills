@@ -13,7 +13,7 @@ rules:
         - "**/*.cairo"
     patterns:
       - pattern-regex: "constructor\\s*\\([^)]*(owner|admin|manager|vault)[^)]*\\)"
-      - pattern-regex: "(unused\\s*[:=]|//\\s*DEAD|dead_code|#\\[allow\\(unused\\)\\])"
+      - pattern-regex: "(//\\s*DEAD\\b|\\bdead_code\\b|#\\[allow\\(unused(_variables|_parameters)?\\)\\])"
 
   - id: cairo.storage.zero-default-and-stale-auth
     message: "Zero-default map state or stale revocation residue may be relied on for auth."
