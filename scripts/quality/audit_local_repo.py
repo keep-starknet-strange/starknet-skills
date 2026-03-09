@@ -53,13 +53,22 @@ def _resolve_path(raw: str, base: Path) -> Path:
     return (base / candidate).resolve()
 
 
-def _next_available_stem(output_dir: Path, base_stem: str, fallback_suffixes: list[str]) -> str:
+def _next_available_stem(
+    output_dir: Path,
+    base_stem: str,
+    fallback_suffixes: list[str],
+    *,
+    max_attempts: int = 10_000,
+) -> str:
     idx = 0
-    while True:
+    while idx < max_attempts:
         candidate = base_stem if idx == 0 else f"{base_stem}-{idx}"
         if all(not (output_dir / f"{candidate}{suffix}").exists() for suffix in fallback_suffixes):
             return candidate
         idx += 1
+    raise RuntimeError(
+        f"could not allocate unique output stem after {max_attempts} attempts: {base_stem}"
+    )
 
 
 def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tuple[str, ...]) -> tuple[dict[str, object], list[dict[str, object]]]:
