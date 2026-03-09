@@ -1,6 +1,6 @@
 {
   "scan_id": "external-repo-scan-wave2-2026-03-09-v3",
-  "generated_at": "2026-03-09T01:00:56+00:00",
+  "generated_at": "2026-03-09T01:42:20+00:00",
   "scanner": {
     "tool": "scripts/quality/scan_external_repos.py",
     "detectors_source": "scripts/quality/benchmark_cairo_auditor.py",
@@ -41,7 +41,7 @@
       "ref": "2ce56dd7d736095e874e9649aec29d6bc90736cc",
       "all_cairo_files": 307,
       "prod_cairo_files": 145,
-      "prod_hits": 3
+      "prod_hits": 0
     },
     {
       "repo": "atomiqlabs/atomiq-contracts-starknet",
@@ -81,7 +81,7 @@
       "ref": "4a374ac64300f4e166b3f5b141b4ab6b1434b835",
       "all_cairo_files": 105,
       "prod_cairo_files": 39,
-      "prod_hits": 3
+      "prod_hits": 2
     },
     {
       "repo": "spiko-tech/starknet-contracts",
@@ -89,37 +89,16 @@
       "ref": "487823179d75dfd7a9702f7f8adf3d1e24d52423",
       "all_cairo_files": 5,
       "prod_cairo_files": 4,
-      "prod_hits": 9
+      "prod_hits": 8
     }
   ],
   "summary": {
     "all_cairo_files": 621,
     "prod_cairo_files": 289,
-    "prod_hits": 29
+    "prod_hits": 24
   },
   "failures": [],
   "findings": [
-    {
-      "repo": "OpenZeppelin/cairo-contracts",
-      "ref": "2ce56dd7d736095e874e9649aec29d6bc90736cc",
-      "file": "packages/token/src/erc1155/erc1155.cairo",
-      "class_id": "CEI_VIOLATION_ERC1155",
-      "scope": "prod_scan"
-    },
-    {
-      "repo": "OpenZeppelin/cairo-contracts",
-      "ref": "2ce56dd7d736095e874e9649aec29d6bc90736cc",
-      "file": "packages/token/src/erc721/erc721.cairo",
-      "class_id": "CEI_VIOLATION_ERC1155",
-      "scope": "prod_scan"
-    },
-    {
-      "repo": "OpenZeppelin/cairo-contracts",
-      "ref": "2ce56dd7d736095e874e9649aec29d6bc90736cc",
-      "file": "packages/upgrades/src/upgradeable.cairo",
-      "class_id": "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK",
-      "scope": "prod_scan"
-    },
     {
       "repo": "typhoonmixer/typhoon-contracts",
       "ref": "e11dffbe1c8c4cc96eba91b5f300c82425f2ae4e",
@@ -186,15 +165,15 @@
     {
       "repo": "karnotxyz/starknet_bridge",
       "ref": "44e2255dae07f64bdbec0c12c23d678f86c46fdc",
-      "file": "starknet_bridge/src/fee_token/fee_token.cairo",
-      "class_id": "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK",
+      "file": "starknet_bridge/src/bridge/token_bridge.cairo",
+      "class_id": "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD",
       "scope": "prod_scan"
     },
     {
       "repo": "karnotxyz/starknet_bridge",
       "ref": "44e2255dae07f64bdbec0c12c23d678f86c46fdc",
       "file": "starknet_bridge/src/fee_token/fee_token.cairo",
-      "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
+      "class_id": "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK",
       "scope": "prod_scan"
     },
     {
@@ -208,7 +187,7 @@
       "repo": "keep-starknet-strange/piltover",
       "ref": "658d707a5cc3ccc3e37b710609cbf0f83917a421",
       "file": "src/appchain.cairo",
-      "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
+      "class_id": "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD",
       "scope": "prod_scan"
     },
     {
@@ -216,13 +195,6 @@
       "ref": "658d707a5cc3ccc3e37b710609cbf0f83917a421",
       "file": "src/appchain.cairo",
       "class_id": "IRREVOCABLE_ADMIN",
-      "scope": "prod_scan"
-    },
-    {
-      "repo": "dojoengine/dojo",
-      "ref": "4a374ac64300f4e166b3f5b141b4ab6b1434b835",
-      "file": "crates/dojo/core/src/contract/components/upgradeable.cairo",
-      "class_id": "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK",
       "scope": "prod_scan"
     },
     {
@@ -250,7 +222,7 @@
       "repo": "spiko-tech/starknet-contracts",
       "ref": "487823179d75dfd7a9702f7f8adf3d1e24d52423",
       "file": "src/lib.cairo",
-      "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
+      "class_id": "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD",
       "scope": "prod_scan"
     },
     {
@@ -277,13 +249,6 @@
     {
       "repo": "spiko-tech/starknet-contracts",
       "ref": "487823179d75dfd7a9702f7f8adf3d1e24d52423",
-      "file": "src/permission_manager.cairo",
-      "class_id": "IRREVOCABLE_ADMIN",
-      "scope": "prod_scan"
-    },
-    {
-      "repo": "spiko-tech/starknet-contracts",
-      "ref": "487823179d75dfd7a9702f7f8adf3d1e24d52423",
       "file": "src/redemption.cairo",
       "class_id": "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK",
       "scope": "prod_scan"
@@ -292,7 +257,7 @@
       "repo": "spiko-tech/starknet-contracts",
       "ref": "487823179d75dfd7a9702f7f8adf3d1e24d52423",
       "file": "src/redemption.cairo",
-      "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
+      "class_id": "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD",
       "scope": "prod_scan"
     },
     {

@@ -5,6 +5,7 @@ Generated: 2026-03-09T01:00:55+00:00
 Machine-readable artifact:
 
 - `evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v4.json`
+- `evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v4.unlabeled.jsonl` (rows with `status=needs_review`: 0)
 
 ## Scope
 
@@ -31,6 +32,7 @@ Machine-readable artifact:
 ## Results
 
 - Total findings: **39**
+- Unresolved triage backlog (`status=needs_review`): **0**
 
 By class:
 
@@ -96,4 +98,3 @@ By repo:
 | `salazarsebas/Zylith` | `src/verifier/coordinator.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
 | `salazarsebas/Zylith` | `src/verifier/coordinator.cairo` | `IRREVOCABLE_ADMIN` |
 | `salazarsebas/Zylith` | `src/verifier/coordinator.cairo` | `NO_ACCESS_CONTROL_MUTATION` |
-

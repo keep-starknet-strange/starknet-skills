@@ -2,8 +2,8 @@
   "baseline": "evals/reports/data/external-repo-scan-wave2-2026-03-09-v2.json",
   "rerun": "evals/reports/data/external-repo-scan-wave2-2026-03-09-v3.json",
   "baseline_findings": 31,
-  "rerun_findings": 29,
-  "delta_findings": -2,
+  "rerun_findings": 24,
+  "delta_findings": -7,
   "baseline_by_class": {
     "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": 10,
     "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": 17,
@@ -11,12 +11,11 @@
     "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": 1
   },
   "rerun_by_class": {
-    "CEI_VIOLATION_ERC1155": 2,
-    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": 7,
-    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": 12,
-    "IRREVOCABLE_ADMIN": 6,
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": 3,
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": 10,
+    "IRREVOCABLE_ADMIN": 5,
     "NO_ACCESS_CONTROL_MUTATION": 1,
-    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": 1
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": 5
   },
   "removed": [
     {
@@ -60,6 +59,16 @@
       "class_id": "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK"
     },
     {
+      "repo": "OpenZeppelin/cairo-contracts",
+      "file": "packages/upgrades/src/upgradeable.cairo",
+      "class_id": "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK"
+    },
+    {
+      "repo": "dojoengine/dojo",
+      "file": "crates/dojo/core/src/contract/components/upgradeable.cairo",
+      "class_id": "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK"
+    },
+    {
       "repo": "karnotxyz/starknet_bridge",
       "file": "starknet_bridge/src/bridge/token_bridge.cairo",
       "class_id": "NO_ACCESS_CONTROL_MUTATION"
@@ -68,23 +77,43 @@
       "repo": "karnotxyz/starknet_bridge",
       "file": "starknet_bridge/src/erc20/erc20.cairo",
       "class_id": "NO_ACCESS_CONTROL_MUTATION"
+    },
+    {
+      "repo": "karnotxyz/starknet_bridge",
+      "file": "starknet_bridge/src/fee_token/fee_token.cairo",
+      "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD"
+    },
+    {
+      "repo": "keep-starknet-strange/piltover",
+      "file": "src/appchain.cairo",
+      "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD"
+    },
+    {
+      "repo": "spiko-tech/starknet-contracts",
+      "file": "src/lib.cairo",
+      "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD"
+    },
+    {
+      "repo": "spiko-tech/starknet-contracts",
+      "file": "src/redemption.cairo",
+      "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD"
     }
   ],
   "added": [
     {
-      "repo": "OpenZeppelin/cairo-contracts",
-      "file": "packages/token/src/erc1155/erc1155.cairo",
-      "class_id": "CEI_VIOLATION_ERC1155"
-    },
-    {
-      "repo": "OpenZeppelin/cairo-contracts",
-      "file": "packages/token/src/erc721/erc721.cairo",
-      "class_id": "CEI_VIOLATION_ERC1155"
+      "repo": "karnotxyz/starknet_bridge",
+      "file": "starknet_bridge/src/bridge/token_bridge.cairo",
+      "class_id": "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD"
     },
     {
       "repo": "keep-starknet-strange/piltover",
       "file": "src/appchain.cairo",
       "class_id": "IRREVOCABLE_ADMIN"
+    },
+    {
+      "repo": "keep-starknet-strange/piltover",
+      "file": "src/appchain.cairo",
+      "class_id": "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD"
     },
     {
       "repo": "spiko-tech/starknet-contracts",
@@ -93,13 +122,18 @@
     },
     {
       "repo": "spiko-tech/starknet-contracts",
-      "file": "src/permission_manager.cairo",
-      "class_id": "IRREVOCABLE_ADMIN"
+      "file": "src/lib.cairo",
+      "class_id": "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD"
     },
     {
       "repo": "spiko-tech/starknet-contracts",
       "file": "src/redemption.cairo",
       "class_id": "IRREVOCABLE_ADMIN"
+    },
+    {
+      "repo": "spiko-tech/starknet-contracts",
+      "file": "src/redemption.cairo",
+      "class_id": "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD"
     },
     {
       "repo": "typhoonmixer/typhoon-contracts",

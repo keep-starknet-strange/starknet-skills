@@ -133,10 +133,14 @@ def detect_selector_fallback_assumption(code: str) -> bool:
 
 
 def _upgrade_snippets(lower: str) -> list[str]:
+    if not _is_publicly_reachable(lower, "upgrade"):
+        return []
+
     snippets: list[str] = []
     for match in re.finditer(r"fn\s+upgrade\s*\(", lower):
-        start = match.start()
-        snippets.append(lower[start : start + 1800])
+        start = max(0, match.start() - 1200)
+        end = min(len(lower), match.start() + 2200)
+        snippets.append(lower[start:end])
     return snippets
 
 
@@ -239,6 +243,8 @@ def detect_immediate_upgrade_without_timelock(code: str) -> bool:
         )
         if not has_upgrade_call:
             continue
+        if "internalimpl" in snippet and "component!(" in snippet:
+            continue
         if any(marker in snippet for marker in timelock_markers):
             continue
         return True
@@ -309,6 +315,7 @@ def detect_critical_address_init_without_nonzero_guard(code: str) -> bool:
     # Known component initializers that enforce non-zero checks internally.
     safe_initializer_surfaces = {
         "baseaumprovidercomponent",
+        "ownablecomponent",
     }
 
     for param in critical_params:
@@ -587,6 +594,20 @@ def _is_abi_exposed(lower: str, fn_name: str) -> bool:
     return False
 
 
+def _is_publicly_reachable(lower: str, fn_name: str) -> bool:
+    contract_markers = (
+        "#[starknet::contract]",
+        "#[starknet::component]",
+        "#[abi(",
+        "#[external(",
+        "#[constructor]",
+        "#[l1_handler]",
+    )
+    if not any(marker in lower for marker in contract_markers):
+        return True
+    return _is_abi_exposed(lower, fn_name)
+
+
 def _has_interaction_path(
     fn_name: str,
     fn_bodies: dict[str, str],
@@ -704,7 +725,7 @@ def detect_no_access_control_mutation(code: str) -> bool:
                 continue
         if "ref self" not in signature:
             continue
-        if not _is_abi_exposed(lower, fn_name):
+        if not _is_publicly_reachable(lower, fn_name):
             continue
         if not any(marker in body_no_comments for marker in mutation_markers):
             continue
@@ -736,6 +757,8 @@ def detect_cei_violation_erc1155(code: str) -> bool:
     interaction_cache: dict[str, bool] = {}
 
     for fn_name, _signature, body in functions:
+        if not _is_publicly_reachable(lower, fn_name):
+            continue
         interaction_positions = [pos for pos in (body.find("safe_transfer_from"), body.find("_transfer_item(")) if pos != -1]
         for callee, call_pos in _called_functions(body, known):
             if _has_interaction_path(callee, fn_bodies, interaction_cache, set()):
@@ -748,8 +771,6 @@ def detect_cei_violation_erc1155(code: str) -> bool:
         transfer_pos = min(interaction_positions)
         after = body[transfer_pos:]
         state_markers = (
-            ".write(",
-            ".update(",
             "status =",
             "is_fulfilled",
             "is_claimed",

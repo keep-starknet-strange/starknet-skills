@@ -37,6 +37,7 @@ class FindingRow:
     ref: str
     file: str
     class_id: str
+    scope: str
 
     @property
     def finding_key(self) -> tuple[str, str, str, str]:
@@ -122,9 +123,20 @@ def load_findings(path: Path) -> list[FindingRow]:
                 ref=key[1],
                 file=key[2],
                 class_id=key[3],
+                scope=str(raw.get("scope", "prod_scan")),
             )
         )
     return rows
+
+
+def infer_scan_id(findings_path: Path | None) -> str:
+    if findings_path is None:
+        return "unknown-scan"
+    name = findings_path.name
+    suffix = ".findings.jsonl"
+    if name.endswith(suffix):
+        return name[: -len(suffix)]
+    return findings_path.stem
 
 
 def precision(tp: int, fp: int) -> float:
@@ -338,6 +350,7 @@ def main() -> int:
         total_findings = len(finding_keys)
         labeled_coverage = 1.0 if total_findings == 0 else labeled_in_scan / total_findings
     generated_at = datetime.now(UTC).replace(microsecond=0).isoformat()
+    unlabeled_scan_id = infer_scan_id(findings_path)
 
     markdown = render_release_md(
         release=args.release,
@@ -386,12 +399,14 @@ def main() -> int:
                 handle.write(
                     json.dumps(
                         {
-                            "triage_id": f"UNLABELED-{i:03d}",
+                            "triage_id": f"{unlabeled_scan_id}-UNLABELED-{i:03d}",
+                            "scan_id": unlabeled_scan_id,
                             "release": args.release,
                             "repo": row.repo,
                             "ref": row.ref,
                             "file": row.file,
                             "class_id": row.class_id,
+                            "scope": row.scope,
                             "status": "needs_review",
                         },
                         ensure_ascii=True,

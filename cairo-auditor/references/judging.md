@@ -17,7 +17,7 @@ Start at `100`, apply deductions:
 - Privileged caller required (`owner/admin/governance`) -> `-25`
 - Partial path (cannot prove full transition to impact) -> `-20`
 - Impact self-contained to attacker-only funds -> `-15`
-- Requires narrow environmental assumptions (sequencer timing / unusual offchain behavior) -> `-10`
+- Requires narrow environmental assumptions (sequencer timing / unusual off-chain behavior) -> `-10`
 
 Report format uses `[score]` confidence tags.
 
