@@ -5,8 +5,7 @@
   "required": [
     "release",
     "reviewer",
-    "approved",
-    "approved_at"
+    "approved"
   ],
   "properties": {
     "release": {
@@ -29,5 +28,22 @@
       "type": "string"
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "approved": { "const": true }
+        }
+      },
+      "then": {
+        "required": ["approved_at"]
+      },
+      "else": {
+        "not": {
+          "required": ["approved_at"]
+        }
+      }
+    }
+  ],
   "additionalProperties": false
 }
