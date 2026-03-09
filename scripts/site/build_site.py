@@ -686,7 +686,7 @@ def build_index_html(data: dict, domain: str | None) -> str:
             command_block(
                 "starkskills CLI",
                 "Run a local audit with doctor + audit local.",
-                "./starkskills doctor\n./starkskills audit local --repo-root /path/to/repo --scan-id local-audit",
+                "cd starknet-skills\n./starkskills doctor\n./starkskills audit local --repo-root /path/to/repo --scan-id local-audit",
             ),
             command_block("Git clone", "Clone the repo locally.", f"git clone {links['repo']}.git"),
         ]

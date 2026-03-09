@@ -13,7 +13,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import tomllib
+try:
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:  # pragma: no cover - fallback for Python 3.10
+    try:
+        import tomli as tomllib  # type: ignore[no-redef]
+    except ModuleNotFoundError:  # pragma: no cover - handled on first config parse
+        tomllib = None  # type: ignore[assignment]
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -38,6 +44,10 @@ def _load_config(path: str) -> tuple[dict[str, Any], Path | None]:
 
     for candidate in candidates:
         if candidate.exists():
+            if tomllib is None:
+                raise RuntimeError(
+                    "TOML parsing requires Python 3.11+ or the 'tomli' package on Python 3.10."
+                )
             data = tomllib.loads(candidate.read_text(encoding="utf-8"))
             if not isinstance(data, dict):
                 raise ValueError(f"invalid config object in {candidate}")
@@ -418,7 +428,8 @@ def _run_pack_backend(args: argparse.Namespace, *, force_stage2: bool | None) ->
     ]
 
     if args.repos_file:
-        cmd.extend(["--repos-file", args.repos_file])
+        repos_file = _resolve_path(args.repos_file, Path.cwd())
+        cmd.extend(["--repos-file", repos_file.as_posix()])
     elif args.repos:
         cmd.extend(["--repos", *args.repos])
 
