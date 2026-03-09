@@ -121,7 +121,7 @@
       <p class="section-note">Counts are generated from repo data at build time.</p>
     </section>
 
-    <section class="section section-score reveal" id="scorecard"><div class="section-head"><div><p class="section-kicker">Scorecard</p><h2>Latest run</h2></div><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md" target="_blank" rel="noreferrer">open scorecard</a></div><div class="score-grid"><article class="score-metric reveal"><p>cases</p><strong class="count-up" data-value="42">42</strong></article><article class="score-metric reveal"><p>precision</p><strong class="count-up" data-value="1.0">1.0</strong><span class="metric-ok" aria-hidden="true"></span></article><article class="score-metric reveal"><p>recall</p><strong class="count-up" data-value="1.0">1.0</strong><span class="metric-ok" aria-hidden="true"></span></article></div><p class="section-note">Real-world benchmark snapshot from the repo.</p></section>
+    <section class="section section-score reveal" id="scorecard"><div class="section-head"><div><p class="section-kicker">Scorecard</p><h2>Latest run</h2></div><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md" target="_blank" rel="noreferrer">open scorecard</a></div><div class="score-grid"><article class="score-metric reveal"><p>cases</p><strong class="count-up" data-value="42" data-decimals="0">42</strong></article><article class="score-metric reveal"><p>precision</p><strong class="count-up" data-value="1.0" data-decimals="1">1.0</strong></article><article class="score-metric reveal"><p>recall</p><strong class="count-up" data-value="1.0" data-decimals="1">1.0</strong></article></div><p class="section-note">Benchmark snapshot from repo data. Informational only; not a security guarantee.</p></section>
 
     <section class="section reveal" id="verify">
       <div class="section-head">
@@ -216,7 +216,8 @@
         countObserver.unobserve(element);
         return;
       }
-      const decimals = String(target).includes('.') ? 1 : 0;
+      const parsedDecimals = Number(element.getAttribute('data-decimals') ?? 0);
+      const decimals = Number.isFinite(parsedDecimals) && parsedDecimals >= 0 ? parsedDecimals : 0;
       const duration = 450;
       const start = performance.now();
       const tick = (now) => {
