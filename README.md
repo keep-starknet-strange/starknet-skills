@@ -10,7 +10,7 @@
   </a>
   <img alt="modules" src="https://img.shields.io/badge/modules-7-0f172a" />
   <img alt="audits" src="https://img.shields.io/badge/audits-24-0f172a" />
-  <img alt="findings" src="https://img.shields.io/badge/normalized%20findings-217-0f172a" />
+  <img alt="findings snapshot" src="https://img.shields.io/badge/normalized%20findings-snapshot-0f172a" />
   <img alt="smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-2ea043" />
 </p>
 
@@ -97,6 +97,9 @@ ingest -> segment -> normalize -> distill -> skillize
   24        26         217          9          7
 audits   corpora    findings     assets     skills
 ```
+
+> Snapshot counts are maintainer-updated. When normalized findings change, update
+> this table and badge labels together.
 
 - Ingest manifest: [`datasets/manifests/audits.jsonl`](datasets/manifests/audits.jsonl)
 - Normalized findings: [`datasets/normalized/findings/`](datasets/normalized/findings)
