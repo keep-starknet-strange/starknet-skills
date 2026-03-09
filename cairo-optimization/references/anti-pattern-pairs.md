@@ -33,6 +33,8 @@ let (_half, rem) = DivRem::div_rem(value, 2);
 let is_odd = rem == 1;
 ```
 
+Why this is preferred in this guide: these patterns target typed integer paths (`u128`, `u32`) where `DivRem::div_rem` keeps arithmetic explicit and consistent with adjacent split logic. Bitwise parity often forces extra representation assumptions/casts when code drifts into `felt252`-centric paths, so we standardize on `DivRem` for reviewability and predictable behavior.
+
 ## 3) Less-Than Loop Termination
 
 Anti-pattern:
