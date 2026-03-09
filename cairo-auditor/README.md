@@ -22,6 +22,28 @@ Flagship Cairo/Starknet audit skill.
 /cairo-auditor contracts/account.cairo
 ```
 
+Deterministic local repo audit entrypoint:
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-cairo-audit \
+  --output-json /tmp/local-cairo-audit.json \
+  --output-md /tmp/local-cairo-audit.md
+```
+
+With Sierra confirmation (build mode):
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-cairo-audit-sierra \
+  --sierra-confirm \
+  --allow-build \
+  --output-json /tmp/local-cairo-audit-sierra.json \
+  --output-md /tmp/local-cairo-audit-sierra.md
+```
+
 ## Structure
 
 - `SKILL.md`: 4-turn orchestration contract.
@@ -43,7 +65,7 @@ Additional quality signals:
 
 - External triage: [v0.2.0-cairo-auditor-external-triage.md](../evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
 - Manual gold: [v0.2.0-cairo-auditor-manual-19-gold-recall.md](../evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.md)
-- Sierra auxiliary: [sierra-parallel-low-profile-2026-03-09.md](../evals/reports/sierra-parallel-low-profile-2026-03-09.md)
+- Sierra auxiliary: [sierra-parallel-low-profile-2026-03-09-v2.md](../evals/reports/sierra-parallel-low-profile-2026-03-09-v2.md)
 
 ## References
 

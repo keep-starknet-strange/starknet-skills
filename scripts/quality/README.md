@@ -15,6 +15,10 @@
 - `check_manual_gold_recall.py`
   - validates recall against frozen manual gold findings
   - emits markdown/json recall reports
+- `audit_local_repo.py`
+  - single-entry local repo audit command
+  - runs deterministic detectors on local `.cairo` files
+  - optionally runs Sierra confirmation (`--sierra-confirm [--allow-build]`)
 
 ## External Scan Tooling
 
@@ -31,8 +35,34 @@
 - `run_llm_eval.py`
   - held-out LLM evaluation tier via GitHub Models API
 - `sierra_parallel_signal.py`
-  - Sierra-native auxiliary signal pass
-  - intended as non-gating context alongside deterministic findings
+  - Sierra-native auxiliary confirmation pass
+  - resolves workspace/member target directories via `scarb metadata`
+  - parses `.sierra.json`, `.starknet_artifacts.json`, and `*.contract_class.json`
+  - emits function-order signal (`external_call` before `state_write`) for CEI triage
+
+## Quick Start
+
+Run a local deterministic audit:
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit \
+  --output-json /tmp/local-audit.json \
+  --output-md /tmp/local-audit.md
+```
+
+Run local audit + Sierra confirmation (build mode):
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit-sierra \
+  --sierra-confirm \
+  --allow-build \
+  --output-json /tmp/local-audit-sierra.json \
+  --output-md /tmp/local-audit-sierra.md
+```
 
 ## Contract-Skill Benchmarks
 

@@ -4,4 +4,5 @@
 2. Prepare 4 specialist bundles (full code + one attack-vector partition each).
 3. Run 4 vector specialists in parallel.
 4. Apply judging FP gate and merge/dedupe by root cause.
-5. Emit prioritized findings + required regression tests.
+5. Run Sierra confirmation for upgrade/CEI classes when Scarb is available.
+6. Emit prioritized findings + required regression tests.

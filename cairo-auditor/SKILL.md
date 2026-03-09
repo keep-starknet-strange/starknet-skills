@@ -64,8 +64,9 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 
 1. Merge specialist outputs.
 2. Deduplicate by root cause (keep higher-confidence variant).
-3. Sort by confidence/severity.
-4. Emit only actionable findings and required regression tests.
+3. If Scarb/Sierra is available, run Sierra confirmation for upgrade/CEI classes.
+4. Sort by confidence/severity.
+5. Emit only actionable findings and required regression tests.
 
 ## Reporting Contract
 
