@@ -127,28 +127,22 @@ def main() -> int:
                 f"version mismatch: plugin.json={plugin_version} vs marketplace.plugins[{plugin_name}].version={matched.get('version')}"
             )
         matched_description = matched.get("description")
-        if (
-            isinstance(plugin_description, str)
-            and plugin_description
-            and isinstance(matched_description, str)
-            and matched_description
-            and matched_description != plugin_description
-        ):
-            errors.append(
-                "description mismatch: plugin.json.description vs marketplace.plugins[].description"
-            )
+        if isinstance(plugin_description, str) and plugin_description:
+            if not isinstance(matched_description, str) or not matched_description:
+                errors.append("marketplace.plugins[].description missing/non-string")
+            elif matched_description != plugin_description:
+                errors.append(
+                    "description mismatch: plugin.json.description vs marketplace.plugins[].description"
+                )
         matched_author = matched.get("author")
         matched_author_name = matched_author.get("name") if isinstance(matched_author, dict) else None
-        if (
-            isinstance(plugin_author_name, str)
-            and plugin_author_name
-            and isinstance(matched_author_name, str)
-            and matched_author_name
-            and matched_author_name != plugin_author_name
-        ):
-            errors.append(
-                "author.name mismatch: plugin.json.author.name vs marketplace.plugins[].author.name"
-            )
+        if isinstance(plugin_author_name, str) and plugin_author_name:
+            if not isinstance(matched_author_name, str) or not matched_author_name:
+                errors.append("marketplace.plugins[].author.name missing/non-string")
+            elif matched_author_name != plugin_author_name:
+                errors.append(
+                    "author.name mismatch: plugin.json.author.name vs marketplace.plugins[].author.name"
+                )
 
     if plugin_version and market_version and plugin_version != market_version:
         errors.append(
@@ -157,16 +151,13 @@ def main() -> int:
 
     if market_name and plugin_name and market_name != plugin_name:
         errors.append(f"name mismatch: marketplace.name={market_name} vs plugin.name={plugin_name}")
-    if (
-        isinstance(plugin_description, str)
-        and plugin_description
-        and isinstance(market_description, str)
-        and market_description
-        and market_description != plugin_description
-    ):
-        errors.append(
-            "description mismatch: marketplace.metadata.description vs plugin.json.description"
-        )
+    if isinstance(plugin_description, str) and plugin_description:
+        if not isinstance(market_description, str) or not market_description:
+            errors.append("marketplace.metadata.description missing/non-string")
+        elif market_description != plugin_description:
+            errors.append(
+                "description mismatch: marketplace.metadata.description vs plugin.json.description"
+            )
 
     if errors:
         print("Marketplace validation failed:")

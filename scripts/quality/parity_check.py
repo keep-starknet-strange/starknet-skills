@@ -122,9 +122,6 @@ def main() -> int:
         command_markers = [
             "/plugin marketplace add",
             "/plugin menu",
-            "pip install",
-            "npm install",
-            "brew install",
         ]
         has_command_marker = any(marker in install_section for marker in command_markers)
         has_plugin_identifier = expected_plugin_identifier in install_section
