@@ -1,6 +1,7 @@
 # Quality Scripts
 
 - `validate_skills.py`: skill contract/lint checks for SKILL.md structure and links.
+- `validate_marketplace.py`: enforces `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` parity (name/version/source/description/author and skill path validity).
 - `parity_check.py`: required repository parity and local tool checks.
 
 ## Cairo Auditor Benchmarks

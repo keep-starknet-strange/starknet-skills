@@ -1,0 +1,21 @@
+{
+  "name": "starknet-skills",
+  "owner": {
+    "name": "keep-starknet-strange"
+  },
+  "metadata": {
+    "version": "0.2.0",
+    "description": "Cairo/Starknet reasoning and audit-quality skills for secure contract authoring, testing, and review."
+  },
+  "plugins": [
+    {
+      "name": "starknet-skills",
+      "source": "./",
+      "version": "0.2.0",
+      "description": "Cairo/Starknet reasoning and audit-quality skills for secure contract authoring, testing, and review.",
+      "author": {
+        "name": "keep-starknet-strange"
+      }
+    }
+  ]
+}

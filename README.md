@@ -101,6 +101,11 @@ Evaluation policy: [evals/README.md](evals/README.md)
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and [THIRD_PARTY.md](THIRD_PARTY.md).
 
+Core local gates:
+- `python3 scripts/quality/validate_skills.py`
+- `python3 scripts/quality/validate_marketplace.py`
+- `python3 scripts/quality/parity_check.py`
+
 ## License
 
 MIT
