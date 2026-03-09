@@ -5,6 +5,7 @@
 - Validate account config and RPC target.
 
 2. Audit gate
+- Manual pre-deploy gate (not auto-enforced by `quality.yml`).
 - Run `python scripts/quality/audit_local_repo.py --repo-root /path/to/repo --scan-id release-gate --fail-on-findings`.
 - If findings exist, fix and add regression tests before deployment.
 

@@ -4,9 +4,9 @@ Use this handoff after implementing or modifying Cairo contracts.
 
 ## 1. Pre-Handoff Contract Checks
 
-- Confirm every state-mutating `#[external(v0)]` entrypoint has explicit access posture (guarded or intentionally public).
-- Confirm time-based logic reads from `get_block_timestamp`, not calldata.
-- Confirm upgrade paths check non-zero class hash and enforce delay/policy where required.
+- Verify every state-mutating `#[external(v0)]` entrypoint has explicit access posture (guarded or intentionally public).
+- Ensure time-based logic reads from `get_block_timestamp`, not calldata.
+- Confirm upgrade paths validate non-zero class hash and enforce required delay/policy.
 
 ## 2. Test Gate Before Audit
 

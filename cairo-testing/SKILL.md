@@ -30,7 +30,7 @@ Use this entrypoint to choose test scope and sequence, then load specific patter
 2. Add negative tests for auth/input failures.
 3. Add at least one fuzz/property test for core invariants.
 4. Convert fixed findings into permanent regression tests.
-5. Run `cairo-auditor` and ensure new findings are covered by tests before merge.
+5. Run `cairo-auditor`; fix or explicitly triage/document new findings first, then add regression tests before merge.
 
 ## Workflow
 
