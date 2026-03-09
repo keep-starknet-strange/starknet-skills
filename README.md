@@ -10,26 +10,19 @@
   </a>
   <img alt="modules" src="https://img.shields.io/badge/modules-7-0f172a" />
   <img alt="audits" src="https://img.shields.io/badge/audits-24-0f172a" />
+  <img alt="findings snapshot" src="https://img.shields.io/badge/normalized%20findings-snapshot-0f172a" />
   <img alt="smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-2ea043" />
 </p>
 
-Cairo/Starknet skill modules for agent reliability: security review, authoring, testing, optimization, toolchain, account abstraction, and network facts.
+<p align="center"><strong>Audit-grade Cairo/Starknet skills for agents</strong></p>
 
-> Reasoning + security knowledge layer. For operational tooling see [starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic) and [starkzap](https://github.com/keep-starknet-strange/starkzap).
+Cairo/Starknet skill modules for agent reliability: security review, contract authoring, testing, optimization, toolchain, account abstraction, and network facts.
 
-## How It Works
-
-Each skill is plain markdown. Point an agent at the URL and it gets domain-specific context.
-
-```text
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
-```
+> Reasoning + security knowledge layer. For operational tooling, see [starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic) and [starkzap](https://github.com/keep-starknet-strange/starkzap).
 
 ## Install & Use
 
-### Router URL
+### Router URL (fastest)
 
 ```text
 https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
@@ -39,6 +32,7 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKI
 
 ```bash
 /plugin marketplace add keep-starknet-strange/starknet-skills
+/plugin menu
 /plugin install starknet-skills
 ```
 
@@ -73,16 +67,26 @@ Reports are written under `<repo-root>/evals/reports/local/` by default (`.md`, 
 Add `--write-findings-jsonl` to emit `.findings.jsonl`.
 If a target filename already exists, the script appends `-N` to avoid overwrite.
 
-## Skills
+## How It Works
 
-| Module | What LLMs Get Wrong |
+Each skill is plain markdown. Point an agent at a `SKILL.md` URL and it loads focused Cairo/Starknet context.
+
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md
+```
+
+## Skill Modules
+
+| Module | What LLMs Commonly Miss |
 | --- | --- |
-| [cairo-auditor](cairo-auditor/SKILL.md) | Miss Starknet upgrade/account edge cases and weak FP gates |
+| [cairo-auditor](cairo-auditor/SKILL.md) | Misses Starknet upgrade/account edge cases and weak FP gates |
 | [cairo-contract-authoring](cairo-contract-authoring/SKILL.md) | Applies Solidity structure directly to Cairo components |
-| [cairo-testing](cairo-testing/SKILL.md) | Stops at unit tests, skips invariants and adversarial checks |
+| [cairo-testing](cairo-testing/SKILL.md) | Stops at unit tests and skips invariants/adversarial regression coverage |
 | [cairo-optimization](cairo-optimization/SKILL.md) | Optimizes wrong paths without trace/Sierra context |
-| [cairo-toolchain](cairo-toolchain/SKILL.md) | Uses stale Scarb/sncast/snforge workflows |
-| [account-abstraction](account-abstraction/SKILL.md) | Misses session/self-call and validation pitfalls |
+| [cairo-toolchain](cairo-toolchain/SKILL.md) | Uses stale Scarb/snforge/sncast workflows |
+| [account-abstraction](account-abstraction/SKILL.md) | Misses session-key/self-call and validation-flow pitfalls |
 | [starknet-network-facts](starknet-network-facts/SKILL.md) | Hallucinates network semantics and fee/timing assumptions |
 
 Recommended sequence for new contracts: `cairo-contract-authoring` -> `cairo-testing` -> `cairo-auditor`.
@@ -95,14 +99,17 @@ ingest -> segment -> normalize -> distill -> skillize
 audits   corpora    findings     assets     skills
 ```
 
-- Ingest: [`datasets/manifests/audits.jsonl`](datasets/manifests/audits.jsonl)
-- Normalize: [`datasets/normalized/findings/`](datasets/normalized/findings)
-- Distill: vuln cards + fix patterns + test recipes in [`datasets/distilled/`](datasets/distilled)
-- Skillize: module skills + router [`SKILL.md`](SKILL.md)
+> Snapshot counts are maintainer-updated. When normalized findings change, update
+> this table and badge labels together.
 
-## Benchmarks
+- Ingest manifest: [`datasets/manifests/audits.jsonl`](datasets/manifests/audits.jsonl)
+- Normalized findings: [`datasets/normalized/findings/`](datasets/normalized/findings)
+- Distilled assets: [`datasets/distilled/`](datasets/distilled)
+- Router skill index: [`SKILL.md`](SKILL.md)
 
-Deterministic benchmark scorecards are **smoke/regression gates**, not final proof of auditor quality.
+## Quality Signals
+
+Deterministic benchmarks are **smoke/regression gates**, not final proof of auditor quality.
 
 - Deterministic smoke:
   - [v0.2.0-cairo-auditor-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-benchmark.md)
@@ -121,13 +128,13 @@ Deterministic benchmark scorecards are **smoke/regression gates**, not final pro
 
 ## Methodology
 
-Skills are authored from audit-backed source material, then checked against deterministic benchmarks and held-out evaluation rules before landing. The goal is narrow, reusable corrections for common Cairo and Starknet failure modes, not general prose documentation.
+Skills are authored from audit-backed source material, then checked with deterministic gates and held-out evaluation policy before landing. The goal is reusable, high-signal corrections for common Cairo/Starknet failure modes, not generic documentation.
 
-Current workflow status:
-- `quality.yml` is the required per-PR gate
-- `full-evals.yml` runs on schedule/workflow dispatch and auto-triggers for PRs touching `SKILL.md`, `references/**`, `evals/**`, `scripts/quality/**`, or `.github/workflows/**`
-- build-side generation eval tracks contract authoring quality (prompt -> generated code -> build/test/static checks) as informational telemetry in `full-evals.yml`
-- external triage trends live under [`evals/scorecards/`](evals/scorecards)
+Current workflow:
+- `quality.yml` is the required per-PR gate.
+- `full-evals.yml` runs on schedule/workflow dispatch and auto-triggers on `pull_request` events (`opened`, `synchronize`, `reopened`, `ready_for_review`) when touched paths match `SKILL.md`, `**/SKILL.md`, `**/references/**`, `evals/**`, `scripts/quality/**`, or `.github/workflows/**`.
+- Build-side generation eval tracks contract authoring quality (`prompt -> generated code -> build/test/static checks`) as informational telemetry in `full-evals.yml`.
+- External triage trends live under [`evals/scorecards/`](evals/scorecards).
 Evaluation policy: [evals/README.md](evals/README.md)
 
 ## Website
