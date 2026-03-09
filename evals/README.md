@@ -155,7 +155,7 @@ Run one-shot external pack benchmark (first-time friendly):
 ./starkskills audit external --pack issue32 --scan-id issue32-cairo1
 ```
 
-This command produces:
+`audit external` produces:
 
 - `<scan-id>.json`
 - `<scan-id>.md`
@@ -163,6 +163,9 @@ This command produces:
 - `<scan-id>.repo-summary.csv`
 - `<scan-id>.findings.csv`
 - `<scan-id>.manual-triage.csv`
+
+`audit deep` produces the same base artifacts plus:
+
 - `<scan-id>.stage2-manifest.json`
 - `<scan-id>.stage2-runbook.md`
 

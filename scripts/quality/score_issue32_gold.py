@@ -41,11 +41,11 @@ class FindingRow:
 
 
 def _precision(tp: int, fp: int) -> float:
-    return 1.0 if (tp + fp) == 0 else tp / (tp + fp)
+    return 0.0 if (tp + fp) == 0 else tp / (tp + fp)
 
 
 def _recall(tp: int, fn: int) -> float:
-    return 1.0 if (tp + fn) == 0 else tp / (tp + fn)
+    return 0.0 if (tp + fn) == 0 else tp / (tp + fn)
 
 
 def load_gold(path: Path) -> list[GoldRow]:
@@ -272,6 +272,8 @@ def _write_trend(
         "",
         "Release-over-release metrics against frozen issue #32 external gold benchmark.",
         "",
+        "Precision is computed as `TP / (TP + FP + NEW)`.",
+        "",
         "| Release | TP | FP | NEW | FN | Precision | Recall | Date |",
         "| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
@@ -322,13 +324,12 @@ def main() -> int:
     gold_lookup = {row.key: row for row in gold_rows}
     positive_keys = {row.key for row in positive_rows}
     negative_keys = {row.key for row in negative_rows}
-    scoped_repo_refs = {(row.repo, row.ref) for row in gold_rows}
     scoped_files = {(row.repo, row.ref, row.file) for row in gold_rows}
 
     scoped_predictions = [
         row
         for row in finding_rows
-        if (row.repo, row.ref) in scoped_repo_refs and (row.repo, row.ref, row.file) in scoped_files
+        if (row.repo, row.ref, row.file) in scoped_files
     ]
     scoped_pred_keys = {row.key for row in scoped_predictions}
 

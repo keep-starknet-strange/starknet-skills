@@ -810,8 +810,17 @@ def detect_unsafe_admin_transfer(code: str) -> bool:
             body,
         )
     )
-    has_two_step = any(marker in lower for marker in ("pending_admin", "accept_admin", "claim_admin"))
-    return not has_nonzero_guard and not has_two_step
+    # Only treat as two-step if transfer_admin itself stages a pending admin and
+    # the contract exposes an explicit acceptance path.
+    stages_pending_admin = bool(
+        re.search(r"\bself\.\w*pending_admin\w*\.write\(\s*new_admin\b", body)
+        or re.search(r"\bpending_admin\b", body)
+    )
+    has_acceptance_path = bool(
+        re.search(r"\bfn\s+accept_admin\b", lower) or re.search(r"\bfn\s+claim_admin\b", lower)
+    )
+    has_two_step_local = stages_pending_admin and has_acceptance_path
+    return not has_nonzero_guard and not has_two_step_local
 
 
 def detect_stale_state_write(code: str) -> bool:
@@ -849,8 +858,10 @@ def detect_missing_fee_bounds(code: str) -> bool:
     if not has_direct_write:
         return False
     has_bound_guard = bool(
-        re.search(r"(assert|if)[^\n]{0,220}new_protocol_fee[^\n]{0,220}(<=|<)", body)
-        and ("max_fee" in body or "max_fee" in lower)
+        re.search(
+            r"(assert!?|if)[^\n;]{0,260}(new_protocol_fee\s*(<=|<)\s*[_a-z0-9\.]*max[_a-z0-9\.]*|[_a-z0-9\.]*max[_a-z0-9\.]*\s*(>=|>)\s*new_protocol_fee)",
+            body,
+        )
     )
     return not has_bound_guard
 

@@ -59,6 +59,8 @@ def _load_findings_from_jsonl(path: Path) -> list[Finding]:
             raw = json.loads(line)
         except json.JSONDecodeError as exc:
             raise ValueError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
+        if not isinstance(raw, dict):
+            raise ValueError(f"{path}:{line_no}: expected JSON object")
         findings.append(_coerce_finding(raw, source=f"{path}:{line_no}"))
     return findings
 
@@ -68,6 +70,8 @@ def _load_findings_from_scan_json(path: Path) -> list[Finding]:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"{path}: invalid JSON: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise ValueError(f"{path}: expected top-level JSON object")
     rows = raw.get("findings", [])
     if not isinstance(rows, list):
         raise ValueError(f"{path}: expected findings list")
@@ -80,6 +84,8 @@ def _load_findings_from_scan_json(path: Path) -> list[Finding]:
 
 
 def _coerce_finding(raw: dict, *, source: str) -> Finding:
+    if not isinstance(raw, dict):
+        raise ValueError(f"{source}: expected object")
     required = ["repo", "ref", "file", "class_id"]
     missing = [key for key in required if key not in raw]
     if missing:
@@ -119,7 +125,7 @@ def _tool_version() -> str:
     return "dev"
 
 
-def _build_sarif(*, findings: list[Finding], root_uri: str, run_name: str) -> dict:
+def _build_sarif(*, findings: list[Finding], root_uri: str, run_name: str, information_uri: str) -> dict:
     rules_by_id: dict[str, dict] = {}
     results: list[dict] = []
 
@@ -195,7 +201,7 @@ def _build_sarif(*, findings: list[Finding], root_uri: str, run_name: str) -> di
                 "tool": {
                     "driver": {
                         "name": "starkskills-cairo-auditor",
-                        "informationUri": "https://github.com/keep-starknet-strange/starknet-skills",
+                        "informationUri": information_uri,
                         "version": _tool_version(),
                         "rules": [rules_by_id[key] for key in sorted(rules_by_id.keys())],
                     }
@@ -224,8 +230,13 @@ def main() -> int:
     parser.add_argument("--findings-jsonl", default="", help="Input findings JSONL.")
     parser.add_argument("--scan-json", default="", help="Input scan JSON containing findings list.")
     parser.add_argument("--output", required=True, help="Output SARIF path.")
-    parser.add_argument("--root", default=".", help="Source root path for SARIF %SRCROOT% URI.")
+    parser.add_argument("--root", default=".", help="Source root path for SARIF %%SRCROOT%% URI.")
     parser.add_argument("--run-name", default="starkskills-deterministic", help="SARIF run automation id.")
+    parser.add_argument(
+        "--information-uri",
+        default="https://github.com/keep-starknet-strange/starknet-skills",
+        help="Tool information URL embedded in SARIF.",
+    )
     args = parser.parse_args()
 
     if bool(args.findings_jsonl) == bool(args.scan_json):
@@ -242,6 +253,7 @@ def main() -> int:
         findings=findings,
         root_uri=_to_file_uri(Path(args.root)),
         run_name=args.run_name,
+        information_uri=args.information_uri,
     )
     output.write_text(json.dumps(sarif, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
 
