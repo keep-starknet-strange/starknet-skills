@@ -13,6 +13,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 MIN_REPORTABLE_CASES = 60
+ALLOWED_SECURITY_CLASSES: set[str] = {
+    "auth",
+    "input_validation",
+    "optimization_arithmetic",
+    "optimization_loops",
+    "timelock",
+    "upgrade_safety",
+}
 
 
 @dataclass
@@ -100,9 +108,15 @@ def load_cases(path: Path) -> list[Case]:
         if test_filter is not None and not isinstance(test_filter, str):
             raise ValueError(f"line {line_no}: test_filter must be string when present")
 
-        security_class = raw.get("security_class", "uncategorized")
-        if not isinstance(security_class, str) or not security_class.strip():
-            raise ValueError(f"line {line_no}: security_class must be non-empty string when present")
+        security_class = raw.get("security_class")
+        if not isinstance(security_class, str):
+            raise ValueError(f"line {line_no}: security_class must be string")
+        security_class = security_class.strip()
+        if security_class not in ALLOWED_SECURITY_CLASSES:
+            allowed = ", ".join(sorted(ALLOWED_SECURITY_CLASSES))
+            raise ValueError(
+                f"line {line_no}: security_class must be one of {{{allowed}}}"
+            )
 
         must_match = parse_rules(raw["must_match"], line_no, "must_match")
         must_not_match = parse_rules(raw["must_not_match"], line_no, "must_not_match")
