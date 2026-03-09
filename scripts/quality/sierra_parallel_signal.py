@@ -3,9 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import json
+import os
+import re
+import shutil
 import subprocess
+import tempfile
+import time
 from collections import Counter, defaultdict
+from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -29,6 +36,7 @@ class RepoSignal:
     analysis_status: str
     confirmation: dict[str, object]
     errors: list[str]
+    build_attempts: list[dict[str, str]]
 
 
 MARKERS: dict[str, tuple[str, ...]] = {
@@ -47,8 +55,76 @@ CEI_CLASSES = {
     "CEI_VIOLATION_ERC1155",
 }
 
+STARKNET_DEP_LINE_RE = re.compile(r'^starknet\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)"\s*$')
+SEMVER_RE = re.compile(r"^([0-9]+)\.([0-9]+)\.([0-9]+)$")
+SAFE_ENV_KEYS = (
+    "PATH",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TERM",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    "SYSTEMROOT",
+    "WINDIR",
+    "ASDF_DIR",
+    "ASDF_DATA_DIR",
+    "ASDF_CONCURRENCY",
+    "SCARB_CACHE",
+)
 
-def run_unchecked(cmd: list[str], cwd: Path, timeout_s: float = 300) -> subprocess.CompletedProcess[str]:
+
+def _safe_repo_rel(path: Path, repo_dir: Path) -> str:
+    try:
+        return path.resolve().relative_to(repo_dir.resolve()).as_posix()
+    except Exception:
+        try:
+            rel = os.path.relpath(path.resolve(), repo_dir.resolve())
+            if rel.startswith(".."):
+                return path.name
+            return Path(rel).as_posix()
+        except Exception:
+            return path.name
+
+
+@functools.cache
+def _sandbox_home() -> Path:
+    sandbox = Path(tempfile.mkdtemp(prefix=f"starknet-skills-sierra-home-{os.getpid()}-")).resolve()
+    (sandbox / ".cache").mkdir(parents=True, exist_ok=True)
+    (sandbox / ".config").mkdir(parents=True, exist_ok=True)
+    (sandbox / ".local" / "share").mkdir(parents=True, exist_ok=True)
+    return sandbox
+
+
+def _build_command_env(cwd: Path, extra_env: dict[str, str] | None) -> dict[str, str]:
+    env: dict[str, str] = {}
+    for key in SAFE_ENV_KEYS:
+        value = os.environ.get(key)
+        if value:
+            env[key] = value
+    # Isolate build-home from host credentials and avoid polluting cloned repos.
+    sandbox_home = _sandbox_home()
+    env["HOME"] = sandbox_home.as_posix()
+    env.setdefault("XDG_CACHE_HOME", (sandbox_home / ".cache").as_posix())
+    env.setdefault("XDG_CONFIG_HOME", (sandbox_home / ".config").as_posix())
+    env.setdefault("XDG_DATA_HOME", (sandbox_home / ".local" / "share").as_posix())
+    host_home = os.environ.get("HOME")
+    if "ASDF_DATA_DIR" not in env and host_home:
+        env["ASDF_DATA_DIR"] = str((Path(host_home) / ".asdf").resolve())
+    if extra_env:
+        env.update(extra_env)
+    return env
+
+
+def run_unchecked(
+    cmd: list[str],
+    cwd: Path,
+    timeout_s: float = 300,
+    *,
+    extra_env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    env = _build_command_env(cwd, extra_env)
     try:
         return subprocess.run(
             cmd,
@@ -57,6 +133,7 @@ def run_unchecked(cmd: list[str], cwd: Path, timeout_s: float = 300) -> subproce
             capture_output=True,
             check=False,
             timeout=timeout_s,
+            env=env,
         )
     except subprocess.TimeoutExpired:
         return subprocess.CompletedProcess(
@@ -65,18 +142,181 @@ def run_unchecked(cmd: list[str], cwd: Path, timeout_s: float = 300) -> subproce
             stdout="",
             stderr=f"command timed out after {timeout_s:.0f}s: {' '.join(cmd)}",
         )
+    except FileNotFoundError as exc:
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=127,
+            stdout="",
+            stderr=f"command not found: {cmd[0]} ({exc})",
+        )
+    except OSError as exc:
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=126,
+            stdout="",
+            stderr=f"os error while running {' '.join(cmd)}: {exc}",
+        )
+
+
+def _iter_tool_versions_paths(project_root: Path, repo_dir: Path) -> list[Path]:
+    paths: list[Path] = []
+    current = project_root.resolve()
+    repo_resolved = repo_dir.resolve()
+    try:
+        current.relative_to(repo_resolved)
+    except ValueError:
+        return paths
+    while True:
+        candidate = current / ".tool-versions"
+        if candidate.is_file():
+            paths.append(candidate)
+        if current == repo_resolved or current.parent == current:
+            break
+        current = current.parent
+    return paths
+
+
+def _extract_scarb_version_candidates(project_root: Path, repo_dir: Path) -> list[str]:
+    versions: list[str] = []
+    seen: set[str] = set()
+
+    for tv in _iter_tool_versions_paths(project_root, repo_dir):
+        for line in tv.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split()
+            if len(parts) >= 2 and parts[0] == "scarb":
+                for raw_version in parts[1:]:
+                    version = raw_version.strip()
+                    if version and version not in seen:
+                        seen.add(version)
+                        versions.append(version)
+
+    manifest = project_root / "Scarb.toml"
+    if manifest.is_file():
+        manifest_text = manifest.read_text(encoding="utf-8", errors="ignore")
+        in_dependencies = False
+        for raw_line in manifest_text.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("[") and line.endswith("]"):
+                section = line[1:-1].strip().lower()
+                in_dependencies = section == "dependencies"
+                continue
+            if not in_dependencies:
+                continue
+            match = STARKNET_DEP_LINE_RE.match(line)
+            if not match:
+                continue
+            # `starknet = "X.Y.Z"` is only an approximate hint for Scarb toolchains.
+            # We keep it as best-effort fallback behind explicit `.tool-versions`.
+            version = match.group(1).strip()
+            if version and version not in seen:
+                seen.add(version)
+                versions.append(version)
+            break
+
+    return versions
+
+
+def _semver_tuple(raw: str) -> tuple[int, int, int] | None:
+    match = SEMVER_RE.match(raw.strip())
+    if not match:
+        return None
+    return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+
+
+def _compatible_installed_versions(requested: str, installed: Collection[str]) -> list[str]:
+    parsed = _semver_tuple(requested)
+    if parsed is None:
+        return []
+    major_minor = parsed[:2]
+    compatible: list[tuple[tuple[int, int, int], str]] = []
+    for candidate in installed:
+        c_parsed = _semver_tuple(candidate)
+        if c_parsed is None:
+            continue
+        if c_parsed[:2] == major_minor:
+            compatible.append((c_parsed, candidate))
+    compatible.sort(reverse=True)
+    return [raw for _, raw in compatible]
+
+
+@functools.cache
+def _asdf_installed_scarb_versions() -> frozenset[str]:
+    asdf_bin = shutil.which("asdf")
+    if not asdf_bin:
+        return frozenset()
+    proc = run_unchecked([asdf_bin, "list", "scarb"], cwd=Path("."), timeout_s=30)
+    if proc.returncode != 0:
+        return frozenset()
+    versions: set[str] = set()
+    for line in proc.stdout.splitlines():
+        cleaned = line.strip().replace("*", "").strip()
+        if cleaned:
+            versions.add(cleaned)
+    return frozenset(versions)
+
+
+def _candidate_scarb_invocations(project_root: Path, repo_dir: Path) -> list[tuple[str, list[str], dict[str, str]]]:
+    candidates: list[tuple[str, list[str], dict[str, str]]] = [("scarb", ["scarb"], {})]
+    asdf_bin = shutil.which("asdf")
+    if not asdf_bin:
+        return candidates
+
+    installed = _asdf_installed_scarb_versions()
+    if not installed:
+        return candidates
+
+    appended_versions: set[str] = set()
+    for requested in _extract_scarb_version_candidates(project_root, repo_dir):
+        matched_versions = [requested] if requested in installed else _compatible_installed_versions(
+            requested, installed
+        )
+        for version in matched_versions:
+            if version in appended_versions:
+                continue
+            appended_versions.add(version)
+            label = f"asdf-scarb-{version}"
+            candidates.append((label, [asdf_bin, "exec", "scarb"], {"ASDF_SCARB_VERSION": version}))
+
+    deduped: list[tuple[str, list[str], dict[str, str]]] = []
+    seen: set[tuple[tuple[str, ...], tuple[tuple[str, str], ...]]] = set()
+    for label, prefix, extra_env in candidates:
+        key = (tuple(prefix), tuple(sorted(extra_env.items())))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append((label, prefix, extra_env))
+    return deduped
+
+
+def _extract_build_error(proc: subprocess.CompletedProcess[str]) -> str:
+    combined = "\n".join([proc.stderr or "", proc.stdout or ""]).splitlines()
+    tail = [line.strip() for line in combined if line.strip()]
+    if not tail:
+        return f"exit_code={proc.returncode}"
+    for line in reversed(tail):
+        if "error" in line.lower():
+            return line[:280]
+    return tail[-1][:280]
 
 
 def find_scarb_projects(repo_dir: Path) -> list[Path]:
     roots: list[Path] = []
     top = repo_dir / "Scarb.toml"
-    if top.exists():
+    if top.is_file():
         roots.append(repo_dir)
     for path in repo_dir.rglob("Scarb.toml"):
+        if not path.is_file():
+            continue
         parent = path.parent
         if parent == repo_dir:
             continue
-        rel_parts = parent.relative_to(repo_dir).parts
+        rel = _safe_repo_rel(parent, repo_dir)
+        rel_parts = Path(rel).parts
         if ".git" in rel_parts or "target" in rel_parts:
             continue
         if len(rel_parts) > 4:
@@ -255,6 +495,9 @@ def _resolve_target_dirs(
     errors: list[str],
     *,
     allow_metadata: bool,
+    scarb_prefix: list[str],
+    scarb_env: dict[str, str] | None = None,
+    metadata_ignore_cairo_version: bool = False,
 ) -> set[Path]:
     target_dirs: set[Path] = set()
     fallback = (project_root / "target").resolve()
@@ -263,16 +506,33 @@ def _resolve_target_dirs(
     if not allow_metadata:
         return target_dirs
 
-    proc = run_unchecked(["scarb", "metadata", "--format-version", "1", "--no-deps"], cwd=project_root, timeout_s=timeout_s)
+    metadata_cmd = [*scarb_prefix, "metadata", "--format-version", "1", "--no-deps"]
+    if metadata_ignore_cairo_version:
+        metadata_cmd.append("--ignore-cairo-version")
+    proc = run_unchecked(
+        metadata_cmd,
+        cwd=project_root,
+        timeout_s=timeout_s,
+        extra_env=scarb_env,
+    )
+    if proc.returncode != 0 and metadata_ignore_cairo_version:
+        fallback_proc = run_unchecked(
+            [*scarb_prefix, "metadata", "--format-version", "1", "--no-deps"],
+            cwd=project_root,
+            timeout_s=timeout_s,
+            extra_env=scarb_env,
+        )
+        if fallback_proc.returncode == 0:
+            proc = fallback_proc
     if proc.returncode != 0:
         msg = proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else "scarb metadata failed"
-        errors.append(f"{project_root.relative_to(repo_dir).as_posix()}: {msg[:280]}")
+        errors.append(f"{_safe_repo_rel(project_root, repo_dir)}: {msg[:280]}")
         return target_dirs
 
     try:
         payload = json.loads(proc.stdout)
     except Exception as exc:
-        errors.append(f"{project_root.relative_to(repo_dir).as_posix()}: metadata parse failed ({str(exc)[:120]})")
+        errors.append(f"{_safe_repo_rel(project_root, repo_dir)}: metadata parse failed ({str(exc)[:120]})")
         return target_dirs
 
     if isinstance(payload, dict):
@@ -386,24 +646,107 @@ def analyze_repo(
     artifact_count = 0
     seen_artifacts: set[Path] = set()
     cei_examples: list[str] = []
+    build_attempts: list[dict[str, str]] = []
 
     for project in scarb_projects:
-        target_dirs = _resolve_target_dirs(
-            project,
-            repo_dir,
-            scarb_timeout_s,
-            errors,
-            allow_metadata=allow_build,
-        )
-
+        target_dirs: set[Path]
         if allow_build:
-            proc = run_unchecked(["scarb", "build"], cwd=project, timeout_s=scarb_timeout_s)
-            if proc.returncode != 0:
+            build_ok = False
+            deadline_exceeded = False
+            proc: subprocess.CompletedProcess[str] | None = None
+            chosen_prefix: list[str] = ["scarb"]
+            chosen_env: dict[str, str] = {}
+            chosen_ignore_cairo = False
+            project_deadline_s = max(300.0, scarb_timeout_s * 2.0)
+            deadline_at = time.monotonic() + project_deadline_s
+            for label, scarb_prefix, scarb_env in _candidate_scarb_invocations(project, repo_dir):
+                for ignore_cairo in (False, True):
+                    remaining = deadline_at - time.monotonic()
+                    if remaining <= 0:
+                        deadline_exceeded = True
+                        build_attempts.append(
+                            {
+                                "repo": spec.slug,
+                                "project": _safe_repo_rel(project, repo_dir),
+                                "toolchain": label,
+                                "ignore_cairo_version": str(ignore_cairo).lower(),
+                                "status": "deadline_exceeded",
+                                "error": f"per-project build deadline exceeded ({project_deadline_s:.0f}s)",
+                            }
+                        )
+                        break
+                    build_cmd = [*scarb_prefix, "build"]
+                    if ignore_cairo:
+                        build_cmd.append("--ignore-cairo-version")
+                    proc = run_unchecked(
+                        build_cmd,
+                        cwd=project,
+                        timeout_s=min(scarb_timeout_s, remaining),
+                        extra_env=scarb_env,
+                    )
+                    build_attempts.append(
+                        {
+                            "repo": spec.slug,
+                            "project": _safe_repo_rel(project, repo_dir),
+                            "toolchain": label,
+                            "ignore_cairo_version": str(ignore_cairo).lower(),
+                            "status": "ok" if proc.returncode == 0 else "failed",
+                            "error": "" if proc.returncode == 0 else _extract_build_error(proc),
+                        }
+                    )
+                    if proc.returncode == 0:
+                        build_ok = True
+                        chosen_prefix = scarb_prefix
+                        chosen_env = scarb_env
+                        chosen_ignore_cairo = ignore_cairo
+                        break
+                if build_ok or deadline_exceeded:
+                    break
+
+            if deadline_exceeded and not build_ok:
                 projects_failed += 1
-                msg = proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else "scarb build failed"
-                errors.append(f"{project.relative_to(repo_dir).as_posix()}: {msg[:280]}")
+                errors.append(
+                    f"{_safe_repo_rel(project, repo_dir)}: per-project build deadline exceeded ({project_deadline_s:.0f}s)"
+                )
                 continue
+
+            if not build_ok:
+                projects_failed += 1
+                msg = _extract_build_error(proc) if proc is not None else "no build attempted"
+                errors.append(f"{_safe_repo_rel(project, repo_dir)}: {msg}")
+                continue
+
             projects_built += 1
+            metadata_remaining = deadline_at - time.monotonic()
+            if metadata_remaining <= 0:
+                projects_failed += 1
+                errors.append(
+                    f"{_safe_repo_rel(project, repo_dir)}: per-project metadata deadline exceeded ({project_deadline_s:.0f}s)"
+                )
+                continue
+            metadata_calls = 2 if chosen_ignore_cairo else 1
+            metadata_timeout = min(scarb_timeout_s, max(10.0, metadata_remaining / metadata_calls))
+            target_dirs = _resolve_target_dirs(
+                project,
+                repo_dir,
+                metadata_timeout,
+                errors,
+                allow_metadata=True,
+                scarb_prefix=chosen_prefix,
+                scarb_env=chosen_env,
+                metadata_ignore_cairo_version=chosen_ignore_cairo,
+            )
+        else:
+            target_dirs = _resolve_target_dirs(
+                project,
+                repo_dir,
+                scarb_timeout_s,
+                errors,
+                allow_metadata=False,
+                scarb_prefix=["scarb"],
+                scarb_env=None,
+                metadata_ignore_cairo_version=False,
+            )
 
         artifacts = collect_sierra_artifacts(target_dirs)
         for artifact in artifacts:
@@ -462,6 +805,7 @@ def analyze_repo(
         analysis_status=analysis_status,
         confirmation=confirmation,
         errors=errors,
+        build_attempts=build_attempts,
     )
 
 
@@ -575,6 +919,24 @@ def render_markdown(
         for repo, err in errors:
             lines.append(f"- `{repo}`: {err}")
         lines.append("")
+
+    attempts = [row for row in rows if row.build_attempts]
+    if attempts:
+        lines.append("## Build Attempts")
+        lines.append("")
+        for row in attempts:
+            lines.append(f"- `{row.repo}`:")
+            for attempt in row.build_attempts:
+                error = str(attempt.get("error", "")).strip()
+                lines.append(
+                    "  - "
+                    + f"{attempt.get('project', '.')}: "
+                    + f"{attempt.get('toolchain', 'scarb')} "
+                    + f"(ignore_cairo_version={attempt.get('ignore_cairo_version', 'false')}) -> "
+                    + f"{attempt.get('status', 'unknown')}"
+                    + (f" | error: {error}" if error else "")
+                )
+        lines.append("")
     return "\n".join(lines) + "\n"
 
 
@@ -665,6 +1027,7 @@ def main() -> int:
                         "cei_example_functions": [],
                     },
                     errors=[f"clone_or_analysis_failed: {str(exc)[:300]}"],
+                    build_attempts=[],
                 )
             )
 
@@ -691,6 +1054,7 @@ def main() -> int:
                 "analysis_status": row.analysis_status,
                 "confirmation": row.confirmation,
                 "errors": row.errors,
+                "build_attempts": row.build_attempts,
                 "detector_hits": detector_hits.get(row.repo, 0),
             }
             for row in rows

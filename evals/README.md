@@ -181,3 +181,7 @@ python scripts/quality/sierra_parallel_signal.py \
   --output-json /path/to/output/sierra-parallel.json \
   --output-md /path/to/output/sierra-parallel.md
 ```
+
+Notes:
+- Build mode retries with `--ignore-cairo-version` automatically.
+- If `asdf` is available and matching `scarb` versions are installed, the runner tries those toolchains per project before reporting build failure.
