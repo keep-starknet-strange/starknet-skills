@@ -71,6 +71,7 @@ Use build mode only on trusted code, or run in an isolated environment.
 
 Reports are written under `<repo-root>/evals/reports/local/` by default (`.md`, `.json`).
 Add `--write-findings-jsonl` to emit `.findings.jsonl`.
+If a target filename already exists, the script appends `-N` to avoid overwrite.
 
 ## Skills
 

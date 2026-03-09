@@ -117,6 +117,7 @@ By default, the script writes:
 
 - `evals/reports/local/<scan-id>-<timestamp>.json`
 - `evals/reports/local/<scan-id>-<timestamp>.md`
+- If a filename already exists, the script appends `-N` before extension to avoid overwrite.
 
 JSONL behavior:
 

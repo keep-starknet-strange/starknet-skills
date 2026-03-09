@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import subprocess
 import sys
@@ -37,17 +36,14 @@ def _git_head(repo_root: Path) -> str:
 
 
 def _slug(value: str) -> str:
-    raw = value.strip()
-    lowered = raw.lower()
+    lowered = value.strip().lower()
     safe = []
     for ch in lowered:
         if ch.isalnum() or ch in ("-", "_"):
             safe.append(ch)
         else:
             safe.append("-")
-    slug = "".join(safe).strip("-") or "local-cairo-audit"
-    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:8]
-    return f"{slug}-{digest}"
+    return "".join(safe).strip("-") or "local-cairo-audit"
 
 
 def _resolve_path(raw: str, base: Path) -> Path:
@@ -55,6 +51,15 @@ def _resolve_path(raw: str, base: Path) -> Path:
     if candidate.is_absolute():
         return candidate.resolve()
     return (base / candidate).resolve()
+
+
+def _next_available_stem(output_dir: Path, base_stem: str, fallback_suffixes: list[str]) -> str:
+    idx = 0
+    while True:
+        candidate = base_stem if idx == 0 else f"{base_stem}-{idx}"
+        if all(not (output_dir / f"{candidate}{suffix}").exists() for suffix in fallback_suffixes):
+            return candidate
+        idx += 1
 
 
 def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tuple[str, ...]) -> tuple[dict[str, object], list[dict[str, object]]]:
@@ -210,26 +215,36 @@ def main() -> int:
     repo_slug = repo_root.name
     ref = _git_head(repo_root)
     excluded_markers = tuple(s.strip().lower() for s in args.exclude.split(",") if s.strip())
-    generated_at = datetime.now(UTC)
-    stamp = generated_at.strftime("%Y%m%dT%H%M%S%fZ")
+    generated_at = datetime.now(UTC).replace(microsecond=0)
+    stamp = generated_at.strftime("%Y%m%dT%H%M%SZ")
     safe_scan_id = _slug(args.scan_id)
+    default_stem = f"{safe_scan_id}-{stamp}"
 
     output_dir = _resolve_path(args.output_dir, repo_root)
-    out_json = _resolve_path(args.output_json, repo_root) if args.output_json else (output_dir / f"{safe_scan_id}-{stamp}.json")
-    out_md = _resolve_path(args.output_md, repo_root) if args.output_md else (output_dir / f"{safe_scan_id}-{stamp}.md")
     write_findings_jsonl = bool(args.output_findings_jsonl) or args.write_findings_jsonl
+    # Only create output_dir when at least one output path falls back to it.
+    uses_output_dir = (not args.output_json) or (not args.output_md) or (write_findings_jsonl and not args.output_findings_jsonl)
+    if uses_output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    fallback_suffixes: list[str] = []
+    if not args.output_json:
+        fallback_suffixes.append(".json")
+    if not args.output_md:
+        fallback_suffixes.append(".md")
+    if write_findings_jsonl and not args.output_findings_jsonl:
+        fallback_suffixes.append(".findings.jsonl")
+    stem = _next_available_stem(output_dir, default_stem, fallback_suffixes) if fallback_suffixes else default_stem
+
+    out_json = _resolve_path(args.output_json, repo_root) if args.output_json else (output_dir / f"{stem}.json")
+    out_md = _resolve_path(args.output_md, repo_root) if args.output_md else (output_dir / f"{stem}.md")
     out_jsonl: Path | None = None
     if write_findings_jsonl:
         out_jsonl = (
             _resolve_path(args.output_findings_jsonl, repo_root)
             if args.output_findings_jsonl
-            else (output_dir / f"{safe_scan_id}-{stamp}.findings.jsonl")
+            else (output_dir / f"{stem}.findings.jsonl")
         )
-
-    # Only create output_dir when at least one output path falls back to it.
-    uses_output_dir = (not args.output_json) or (not args.output_md) or (write_findings_jsonl and not args.output_findings_jsonl)
-    if uses_output_dir:
-        output_dir.mkdir(parents=True, exist_ok=True)
 
     summary, findings = _scan_local(repo_root, repo_slug, ref, excluded_markers)
     class_counts = Counter(str(row["class_id"]) for row in findings)
@@ -305,6 +320,10 @@ def main() -> int:
     )
 
     if args.fail_on_findings and findings:
+        print(
+            f"audit gate: {len(findings)} finding(s) detected - exit 2 (see {out_json.as_posix()})",
+            file=sys.stderr,
+        )
         return 2
     return 0
 
