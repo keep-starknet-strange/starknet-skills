@@ -10,7 +10,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from contract_benchmark_policy import MIN_CONSECUTIVE_REPORTABLE_RELEASES
+try:
+    from contract_benchmark_policy import MIN_CONSECUTIVE_REPORTABLE_RELEASES
+except ModuleNotFoundError:
+    from scripts.quality.contract_benchmark_policy import MIN_CONSECUTIVE_REPORTABLE_RELEASES
 
 LATEST_RELEASE_RE = re.compile(r"- Latest release:\s+`([^`]+)`")
 STREAK_RE = re.compile(r"- Consecutive reportable releases \(latest-first\):\s+`(\d+)`")

@@ -12,7 +12,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from contract_benchmark_policy import ALLOWED_SECURITY_CLASSES, MIN_REPORTABLE_CASES
+from contract_benchmark_policy import (
+    ALLOWED_SECURITY_CLASSES,
+    BENCHMARK_GATE_FAILURE_EXIT_CODE,
+    BENCHMARK_RUNTIME_ERROR_EXIT_CODE,
+    MIN_REPORTABLE_CASES,
+)
 
 
 @dataclass
@@ -418,13 +423,13 @@ def compute_metrics(results: list[CaseResult]) -> tuple[dict[str, int], int, int
 def compute_security_class_metrics(results: list[CaseResult]) -> dict[str, dict[str, int]]:
     class_totals: dict[str, dict[str, int]] = {}
     for result in results:
-        if result.outcome == "skip":
-            continue
         bucket = class_totals.setdefault(
             result.security_class,
             {"tp": 0, "tn": 0, "fp": 0, "fn": 0, "cases": 0},
         )
         bucket["cases"] += 1
+        if result.outcome == "skip":
+            continue
         bucket[result.outcome] += 1
     return class_totals
 
@@ -629,7 +634,7 @@ def main() -> int:
             print("WARNING: no evaluated cases (all skipped); allowed by --allow-empty-evaluated")
             return 0
         print("FAIL: no evaluated cases (all skipped)")
-        return 1
+        return BENCHMARK_GATE_FAILURE_EXIT_CODE
 
     if prec < args.min_precision or rec < args.min_recall:
         print(
@@ -637,14 +642,14 @@ def main() -> int:
             f"(precision={prec:.4f}, recall={rec:.4f}, "
             f"min_precision={args.min_precision:.4f}, min_recall={args.min_recall:.4f})"
         )
-        return 1
+        return BENCHMARK_GATE_FAILURE_EXIT_CODE
 
     if args.enforce_min_evaluated and evaluated < args.min_evaluated:
         print(
             "FAIL: reportable threshold not met "
             f"(evaluated={evaluated}, min_evaluated={args.min_evaluated})"
         )
-        return 1
+        return BENCHMARK_GATE_FAILURE_EXIT_CODE
 
     if evaluated < args.min_evaluated:
         print(
@@ -668,4 +673,4 @@ if __name__ == "__main__":
         sys.exit(main())
     except Exception as exc:
         print(f"FAIL: {exc}")
-        sys.exit(2)
+        sys.exit(BENCHMARK_RUNTIME_ERROR_EXIT_CODE)
