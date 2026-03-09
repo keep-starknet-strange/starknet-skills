@@ -131,7 +131,7 @@ Skills are authored from audit-backed source material, then checked with determi
 
 Current workflow:
 - `quality.yml` is the required per-PR gate.
-- `full-evals.yml` runs on schedule/workflow dispatch and auto-triggers for PRs touching `SKILL.md`, `references/**`, `evals/**`, `scripts/quality/**`, or `.github/workflows/**`.
+- `full-evals.yml` runs on schedule/workflow dispatch and auto-triggers on `pull_request` events (`opened`, `synchronize`, `reopened`, `ready_for_review`) when touched paths match `SKILL.md`, `**/SKILL.md`, `**/references/**`, `evals/**`, `scripts/quality/**`, or `.github/workflows/**`.
 - Build-side generation eval tracks contract authoring quality (`prompt -> generated code -> build/test/static checks`) as informational telemetry in `full-evals.yml`.
 - External triage trends live under [`evals/scorecards/`](evals/scorecards).
 Evaluation policy: [evals/README.md](evals/README.md)
