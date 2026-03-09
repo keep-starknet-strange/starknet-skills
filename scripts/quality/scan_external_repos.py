@@ -168,6 +168,13 @@ def repo_git_url(spec: RepoSpec, git_host: str) -> str:
     return f"{host}/{spec.slug}.git"
 
 
+GIT_COMMAND_EXCEPTIONS = (subprocess.CalledProcessError, RuntimeError, OSError)
+
+
+def _format_exception(exc: Exception) -> str:
+    return f"{type(exc).__name__}: {exc}"
+
+
 def clone_repo(spec: RepoSpec, workdir: Path, git_host: str) -> tuple[Path, str]:
     repo_dir = workdir / spec.slug.replace("/", "__")
     if repo_dir.exists():
@@ -177,11 +184,13 @@ def clone_repo(spec: RepoSpec, workdir: Path, git_host: str) -> tuple[Path, str]
     run(clone_cmd)
     if spec.ref:
         checked_out = False
+        last_error_detail = ""
         try:
             run(["git", "checkout", spec.ref], cwd=repo_dir)
             checked_out = True
-        except Exception:
+        except GIT_COMMAND_EXCEPTIONS as exc:
             checked_out = False
+            last_error_detail = _format_exception(exc)
 
         if not checked_out:
             fetch_attempts = [
@@ -190,22 +199,21 @@ def clone_repo(spec: RepoSpec, workdir: Path, git_host: str) -> tuple[Path, str]
                 ["git", "fetch", "--unshallow", "origin"],
                 ["git", "fetch", "origin", "--tags", "--prune"],
             ]
-            last_error: Exception | None = None
             for fetch_cmd in fetch_attempts:
                 try:
                     run(fetch_cmd, cwd=repo_dir)
-                except Exception as exc:
-                    last_error = exc
+                except GIT_COMMAND_EXCEPTIONS as exc:
+                    last_error_detail = _format_exception(exc)
                     continue
                 try:
                     run(["git", "checkout", spec.ref], cwd=repo_dir)
                     checked_out = True
                     break
-                except Exception as exc:
-                    last_error = exc
+                except GIT_COMMAND_EXCEPTIONS as exc:
+                    last_error_detail = _format_exception(exc)
                     continue
             if not checked_out:
-                detail = str(last_error) if last_error else "unknown checkout failure"
+                detail = last_error_detail or "unknown checkout failure"
                 raise RuntimeError(
                     f"failed to resolve ref {spec.ref!r} for {spec.slug}: {detail}"
                 )
