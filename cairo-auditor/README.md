@@ -22,6 +22,13 @@ Flagship Cairo/Starknet audit skill.
 /cairo-auditor contracts/account.cairo
 ```
 
+Install only this module from the plugin marketplace:
+
+```bash
+/plugin marketplace add keep-starknet-strange/starknet-skills
+/plugin install cairo-auditor@starknet-skills
+```
+
 Deterministic local repo audit entrypoint:
 
 ```bash

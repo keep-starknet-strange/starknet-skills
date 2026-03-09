@@ -23,6 +23,45 @@ def load_json(path: Path) -> dict:
     return obj
 
 
+def validate_skill_paths(
+    *,
+    skills: object,
+    plugin_root: Path,
+    root_resolved: Path,
+    errors: list[str],
+    label: str,
+) -> None:
+    if not isinstance(skills, list) or not skills:
+        errors.append(f"{label} missing non-empty 'skills' array")
+        return
+
+    for idx, entry in enumerate(skills):
+        if not isinstance(entry, str) or not entry:
+            errors.append(f"{label} skills[{idx}] must be a non-empty string path")
+            continue
+
+        entry_path = Path(entry)
+        if entry_path.is_absolute() or ".." in entry_path.parts:
+            errors.append(f"{label} skills[{idx}] path must stay within repository: {entry}")
+            continue
+
+        skill_path = (plugin_root / entry_path).resolve()
+        try:
+            skill_path.relative_to(root_resolved)
+        except ValueError:
+            errors.append(f"{label} skills[{idx}] resolves outside repository root: {entry}")
+            continue
+
+        if not skill_path.exists():
+            errors.append(f"{label} skills[{idx}] path does not exist: {entry}")
+            continue
+        if not skill_path.is_dir():
+            errors.append(f"{label} skills[{idx}] path is not a directory: {entry}")
+            continue
+        if not (skill_path / "SKILL.md").exists():
+            errors.append(f"{label} skills[{idx}] missing SKILL.md: {entry}")
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -82,33 +121,14 @@ def main() -> int:
         errors.append("marketplace.json metadata.version missing/non-string")
     if not isinstance(plugins, list) or not plugins:
         errors.append("marketplace.json plugins must be a non-empty array")
-    if not isinstance(plugin_skills, list) or not plugin_skills:
-        errors.append("plugin.json missing non-empty 'skills' array")
-    else:
-        for idx, entry in enumerate(plugin_skills):
-            if not isinstance(entry, str) or not entry:
-                errors.append(f"plugin.json skills[{idx}] must be a non-empty string path")
-                continue
-            entry_path = Path(entry)
-            if entry_path.is_absolute() or ".." in entry_path.parts:
-                errors.append(f"plugin.json skills[{idx}] path must stay within repository: {entry}")
-                continue
-            skill_path = (ROOT / entry_path).resolve()
-            try:
-                skill_path.relative_to(ROOT_RESOLVED)
-            except ValueError:
-                errors.append(
-                    f"plugin.json skills[{idx}] resolves outside repository root: {entry}"
-                )
-                continue
-            if not skill_path.exists():
-                errors.append(f"plugin.json skills[{idx}] path does not exist: {entry}")
-                continue
-            if not skill_path.is_dir():
-                errors.append(f"plugin.json skills[{idx}] path is not a directory: {entry}")
-                continue
-            if not (skill_path / "SKILL.md").exists():
-                errors.append(f"plugin.json skills[{idx}] missing SKILL.md: {entry}")
+
+    validate_skill_paths(
+        skills=plugin_skills,
+        plugin_root=ROOT,
+        root_resolved=ROOT_RESOLVED,
+        errors=errors,
+        label="plugin.json",
+    )
 
     matched = None
     if isinstance(plugins, list) and isinstance(plugin_name, str) and plugin_name:
@@ -143,6 +163,88 @@ def main() -> int:
                 errors.append(
                     "author.name mismatch: plugin.json.author.name vs marketplace.plugins[].author.name"
                 )
+
+    if isinstance(plugins, list):
+        for idx, entry in enumerate(plugins):
+            if not isinstance(entry, dict):
+                errors.append(f"marketplace.json plugins[{idx}] must be an object")
+                continue
+
+            entry_name = entry.get("name")
+            entry_source = entry.get("source")
+            entry_version = entry.get("version")
+            if not isinstance(entry_name, str) or not entry_name:
+                errors.append(f"marketplace.json plugins[{idx}] missing non-empty 'name'")
+                continue
+            if not isinstance(entry_source, str) or not entry_source:
+                errors.append(f"marketplace.json plugins[{idx}] missing non-empty 'source'")
+                continue
+            if not isinstance(entry_version, str) or not entry_version:
+                errors.append(f"marketplace.json plugins[{idx}] missing non-empty 'version'")
+                continue
+
+            source_path = Path(entry_source)
+            if source_path.is_absolute() or ".." in source_path.parts:
+                errors.append(
+                    f"marketplace.json plugins[{idx}] source must stay within repository: {entry_source}"
+                )
+                continue
+
+            plugin_dir = (ROOT / source_path).resolve()
+            try:
+                plugin_dir.relative_to(ROOT_RESOLVED)
+            except ValueError:
+                errors.append(
+                    f"marketplace.json plugins[{idx}] source resolves outside repository: {entry_source}"
+                )
+                continue
+
+            if entry_source == "./":
+                continue
+
+            manifest_path = plugin_dir / ".claude-plugin" / "plugin.json"
+            if not manifest_path.exists():
+                errors.append(f"{manifest_path} missing for marketplace plugin '{entry_name}'")
+                continue
+
+            try:
+                plugin_manifest = load_json(manifest_path)
+            except (OSError, ValueError) as exc:
+                errors.append(f"invalid {manifest_path}: {exc}")
+                continue
+
+            manifest_name = plugin_manifest.get("name")
+            manifest_version = plugin_manifest.get("version")
+            if manifest_name != entry_name:
+                errors.append(
+                    f"name mismatch for source {entry_source}: marketplace='{entry_name}' vs plugin.json='{manifest_name}'"
+                )
+            if manifest_version != entry_version:
+                errors.append(
+                    f"version mismatch for source {entry_source}: marketplace='{entry_version}' vs plugin.json='{manifest_version}'"
+                )
+
+            version_file = plugin_dir / "VERSION"
+            if not version_file.exists():
+                errors.append(f"{version_file} missing for marketplace plugin '{entry_name}'")
+            else:
+                try:
+                    module_version = version_file.read_text(encoding="utf-8").strip()
+                except OSError as exc:
+                    errors.append(f"cannot read {version_file}: {exc}")
+                    module_version = ""
+                if module_version and manifest_version != module_version:
+                    errors.append(
+                        f"version mismatch for source {entry_source}: plugin.json='{manifest_version}' vs VERSION='{module_version}'"
+                    )
+
+            validate_skill_paths(
+                skills=plugin_manifest.get("skills"),
+                plugin_root=plugin_dir,
+                root_resolved=ROOT_RESOLVED,
+                errors=errors,
+                label=f"{manifest_path}",
+            )
 
     if plugin_version and market_version and plugin_version != market_version:
         errors.append(
