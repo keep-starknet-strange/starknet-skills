@@ -6,6 +6,7 @@ import argparse
 import json
 import subprocess
 import sys
+import tempfile
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import date
@@ -128,14 +129,21 @@ def _run_scan(
     if detectors.strip():
         cmd.extend(["--detectors", detectors.strip()])
 
-    proc = subprocess.run(
-        cmd,
-        check=True,
-        cwd=repo_root,
-        text=True,
-        capture_output=True,
-        timeout=timeout_seconds,
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            check=True,
+            cwd=repo_root,
+            text=True,
+            capture_output=True,
+            timeout=timeout_seconds,
+        )
+    except subprocess.TimeoutExpired as exc:
+        cmd_str = " ".join(cmd)
+        raise RuntimeError(
+            f"Stage-1 scan timed out after {timeout_seconds}s while running: {cmd_str}. "
+            f"Original error: {exc}"
+        ) from exc
     if proc.stdout.strip():
         print(proc.stdout.strip())
     if proc.stderr.strip():
@@ -145,7 +153,7 @@ def _run_scan(
 
 def _load_reference(repo_root: Path, rel: str) -> str:
     path = (repo_root / rel).resolve()
-    if not path.exists():
+    if not path.is_file():
         raise FileNotFoundError(f"required stage-2 reference missing: {path}")
     return path.read_text(encoding="utf-8")
 
@@ -312,7 +320,9 @@ def _prepare_stage2(
             continue
 
         prod_files = [
-            path for path in iter_cairo_files(repo_clone_dir) if not is_excluded(path, excluded_markers)
+            path
+            for path in iter_cairo_files(repo_clone_dir)
+            if not is_excluded(path.relative_to(repo_clone_dir), excluded_markers)
         ]
         selected_files: list[Path] = []
         total_bytes = 0
@@ -326,7 +336,7 @@ def _prepare_stage2(
                 file_size = path.stat().st_size
             except OSError:
                 file_size = 0
-            if selected_files and (total_bytes + file_size) > bundle_max_bytes:
+            if (total_bytes + file_size) > bundle_max_bytes:
                 truncated_by_bytes = True
                 break
             selected_files.append(path)
@@ -437,7 +447,10 @@ def main() -> int:
     parser.add_argument("--repos", nargs="*", default=[])
     parser.add_argument("--scan-id", default="")
     parser.add_argument("--output-dir", default="evals/reports/data")
-    parser.add_argument("--workdir", default="/tmp/starknet-skills-external-scan")
+    parser.add_argument(
+        "--workdir",
+        default=str(Path(tempfile.gettempdir()) / "starknet-skills-external-scan"),
+    )
     parser.add_argument(
         "--exclude",
         default="test,tests,mock,mocks,example,examples,preset,presets,fixture,fixtures,vendor,vendors",

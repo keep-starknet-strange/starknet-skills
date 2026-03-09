@@ -69,7 +69,6 @@ SELF_CONTAINED_IMPACT_CLASSES = {
 
 PARTIAL_PATH_CLASSES = {
     "CONSTRUCTOR_DEAD_PARAM",
-    "ONE_SHOT_REGISTRATION",
 }
 
 FRAMEWORK_HINT_CLASSES = {
@@ -173,6 +172,7 @@ def iter_cairo_files(repo_dir: Path) -> list[Path]:
 
 
 def is_excluded(path: Path, excluded_markers: tuple[str, ...]) -> bool:
+    """Return True when a repo-relative path should be excluded from prod scope."""
     parts = [p.lower() for p in path.as_posix().split("/")]
     for marker in excluded_markers:
         if any(
@@ -256,7 +256,9 @@ def scan_repo(
     excluded_markers: tuple[str, ...],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
     all_files = iter_cairo_files(repo_dir)
-    prod_files = [p for p in all_files if not is_excluded(p, excluded_markers)]
+    prod_files = [
+        p for p in all_files if not is_excluded(p.relative_to(repo_dir), excluded_markers)
+    ]
 
     findings: list[dict[str, object]] = []
     for file_path in prod_files:

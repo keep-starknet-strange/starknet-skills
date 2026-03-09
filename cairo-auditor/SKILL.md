@@ -60,20 +60,55 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
    - [agents/vector-scan.md](agents/vector-scan.md)
    - [references/judging.md](references/judging.md)
    - [references/report-formatting.md](references/report-formatting.md)
-2. Build four specialist bundles. Each bundle includes:
-   - full in-scope Cairo code,
-   - one vector partition:
-     - `references/attack-vectors/attack-vectors-1.md`
-     - `references/attack-vectors/attack-vectors-2.md`
-     - `references/attack-vectors/attack-vectors-3.md`
-     - `references/attack-vectors/attack-vectors-4.md`
-3. Record line counts per bundle for parallel chunk-reading instructions.
+2. Build a deterministic bundle workspace and in-scope file list:
+
+   ```bash
+   export SCAN_ID="${SCAN_ID:-cairo-audit-$(date +%Y%m%d)}"
+   export REPO_ROOT="/path/to/repo"
+   export BUNDLE_ROOT="/tmp/cairo-auditor/${SCAN_ID}"
+   mkdir -p "$BUNDLE_ROOT"
+
+   rg --files "$REPO_ROOT" -g '*.cairo' \
+     -g '!**/test/**' -g '!**/tests/**' \
+     -g '!**/mock/**' -g '!**/mocks/**' \
+     -g '!**/example/**' -g '!**/examples/**' \
+     -g '!**/vendor/**' \
+     > "$BUNDLE_ROOT/in-scope-files.txt"
+   ```
+
+3. Build one shared source bundle and four specialist bundles:
+
+   ```bash
+   : > "$BUNDLE_ROOT/source-bundle.md"
+   while IFS= read -r f; do
+     rel="${f#${REPO_ROOT}/}"
+     printf "### %s\n```cairo\n" "$rel" >> "$BUNDLE_ROOT/source-bundle.md"
+     cat "$f" >> "$BUNDLE_ROOT/source-bundle.md"
+     printf "\n```\n\n" >> "$BUNDLE_ROOT/source-bundle.md"
+   done < "$BUNDLE_ROOT/in-scope-files.txt"
+
+   for i in 1 2 3 4; do
+     cat \
+       cairo-auditor/references/judging.md \
+       cairo-auditor/references/report-formatting.md \
+       "cairo-auditor/references/attack-vectors/attack-vectors-${i}.md" \
+       "$BUNDLE_ROOT/source-bundle.md" \
+       > "$BUNDLE_ROOT/audit-agent-${i}-bundle.md"
+   done
+   ```
+
+4. Record bundle size before spawn:
+
+   ```bash
+   wc -l "$BUNDLE_ROOT"/audit-agent-*-bundle.md
+   ```
 
 ### Turn 3: Spawn
 
-1. Spawn 4 parallel vector specialists (one per bundle) following `agents/vector-scan.md`.
-2. In `deep` mode, spawn [agents/adversarial.md](agents/adversarial.md) in parallel.
-3. Each specialist must:
+1. Spawn 4 parallel vector specialists (one per bundle) following `agents/vector-scan.md`, pinned to Sonnet (`model=sonnet`).
+2. In `deep` mode, spawn [agents/adversarial.md](agents/adversarial.md) pinned to Opus (`model=opus`).
+3. Keep the model split strict: specialists stay on Sonnet; adversarial stays on Opus. If Opus is unavailable, note the fallback explicitly in final output.
+4. Each specialist must:
    - triage vectors (`Skip/Borderline/Survive`),
    - apply FP gate from [references/judging.md](references/judging.md),
    - output only findings formatted by [references/report-formatting.md](references/report-formatting.md).
