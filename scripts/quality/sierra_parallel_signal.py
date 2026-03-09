@@ -248,24 +248,31 @@ def _analyze_artifact(path: Path) -> tuple[Counter[str], Counter[str], list[str]
     return _count_markers_in_text(path.read_text(encoding="utf-8", errors="ignore")), Counter(), []
 
 
-def _resolve_target_dirs(project_root: Path, repo_dir: Path, timeout_s: float, errors: list[str]) -> set[Path]:
+def _resolve_target_dirs(
+    project_root: Path,
+    repo_dir: Path,
+    timeout_s: float,
+    errors: list[str],
+    *,
+    allow_metadata: bool,
+) -> set[Path]:
     target_dirs: set[Path] = set()
+    fallback = (project_root / "target").resolve()
+    target_dirs.add(fallback)
+
+    if not allow_metadata:
+        return target_dirs
+
     proc = run_unchecked(["scarb", "metadata", "--format-version", "1", "--no-deps"], cwd=project_root, timeout_s=timeout_s)
     if proc.returncode != 0:
         msg = proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else "scarb metadata failed"
         errors.append(f"{project_root.relative_to(repo_dir).as_posix()}: {msg[:280]}")
-        fallback = project_root / "target"
-        if fallback.exists():
-            target_dirs.add(fallback.resolve())
         return target_dirs
 
     try:
         payload = json.loads(proc.stdout)
     except Exception as exc:
         errors.append(f"{project_root.relative_to(repo_dir).as_posix()}: metadata parse failed ({str(exc)[:120]})")
-        fallback = project_root / "target"
-        if fallback.exists():
-            target_dirs.add(fallback.resolve())
         return target_dirs
 
     if isinstance(payload, dict):
@@ -283,8 +290,6 @@ def _resolve_target_dirs(project_root: Path, repo_dir: Path, timeout_s: float, e
                 ws_target = Path(ws_root) / "target"
                 target_dirs.add(ws_target.resolve())
 
-    fallback = (project_root / "target").resolve()
-    target_dirs.add(fallback)
     return target_dirs
 
 
@@ -383,7 +388,13 @@ def analyze_repo(
     cei_examples: list[str] = []
 
     for project in scarb_projects:
-        target_dirs = _resolve_target_dirs(project, repo_dir, scarb_timeout_s, errors)
+        target_dirs = _resolve_target_dirs(
+            project,
+            repo_dir,
+            scarb_timeout_s,
+            errors,
+            allow_metadata=allow_build,
+        )
 
         if allow_build:
             proc = run_unchecked(["scarb", "build"], cwd=project, timeout_s=scarb_timeout_s)

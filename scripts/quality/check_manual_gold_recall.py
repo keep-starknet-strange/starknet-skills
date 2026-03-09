@@ -179,9 +179,15 @@ def main() -> int:
     out_json = Path(args.output_json)
 
     gold_rows = load_gold(gold_path)
+    if not gold_rows:
+        raise ValueError(f"{gold_path}: gold set is empty")
     finding_keys = load_findings(findings_path)
     positive_rows = [row for row in gold_rows if row.expected_detect]
     negative_rows = [row for row in gold_rows if not row.expected_detect]
+    if not positive_rows:
+        raise ValueError(f"{gold_path}: no expected_detect=true rows; recall cannot be measured")
+    if args.min_precision > 0 and not negative_rows:
+        raise ValueError("--min-precision requires at least one expected_detect=false gold row")
     matched_rows = [row for row in positive_rows if row.key in finding_keys]
     missing_rows = [row for row in positive_rows if row.key not in finding_keys]
     false_positive_rows = [row for row in negative_rows if row.key in finding_keys]
