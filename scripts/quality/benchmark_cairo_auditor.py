@@ -173,6 +173,10 @@ def _iter_functions(lower: str) -> list[tuple[str, str, str]]:
             body_open += 2
             while body_open < len(lower) and lower[body_open] != "{":
                 body_open += 1
+        elif lower[body_open : body_open + 5] == "where":
+            body_open += 5
+            while body_open < len(lower) and lower[body_open] != "{":
+                body_open += 1
         while body_open < len(lower) and lower[body_open].isspace():
             body_open += 1
         if body_open >= len(lower) or lower[body_open] != "{":
@@ -259,17 +263,6 @@ def detect_upgrade_class_hash_without_nonzero_guard(code: str) -> bool:
             "upgradeablecomponent" in snippet
             or "openzeppelin_upgrades" in snippet
             or "openzeppelin::upgrades" in snippet
-            or (
-                has_component_upgrade
-                and any(
-                    marker in lower
-                    for marker in (
-                        "upgradeablecomponent",
-                        "openzeppelin_upgrades",
-                        "openzeppelin::upgrades",
-                    )
-                )
-            )
         )
 
         if has_direct_syscall and not has_nonzero_guard:
@@ -388,10 +381,11 @@ def detect_irrevocable_admin(code: str) -> bool:
     seeded_admin = False
     seeded_via_role = False
     seeded_via_direct_write = False
+    body_no_comments = _strip_line_comments(body)
     for param in admin_params:
-        direct_seed = bool(re.search(rf"\b\w+\.write\(\s*{param}\b", body))
-        role_seed = bool(re.search(rf"\b_grant_role\([^)]*\b{param}\b", body))
-        init_seed = bool(re.search(rf"\binitializer\([^)]*\b{param}\b", body))
+        direct_seed = bool(re.search(rf"\b\w+\.write\(\s*{param}\b", body_no_comments))
+        role_seed = bool(re.search(rf"\b_grant_role\([^)]*\b{param}\b", body_no_comments))
+        init_seed = bool(re.search(rf"\binitializer\([^)]*\b{param}\b", body_no_comments))
         if direct_seed or role_seed or init_seed:
             seeded_admin = True
         if role_seed:
@@ -401,7 +395,7 @@ def detect_irrevocable_admin(code: str) -> bool:
         if direct_seed or role_seed or init_seed:
             break
         if re.search(
-            rf"\b(initializer|_grant_role)\([^)]*\b{param}\b", body
+            rf"\b(initializer|_grant_role)\([^)]*\b{param}\b", body_no_comments
         ):
             seeded_admin = True
             break
@@ -701,9 +695,10 @@ def detect_no_access_control_mutation(code: str) -> bool:
             continue
         if not fn_name.startswith(risky_prefixes):
             continue
+        body_no_comments = _strip_line_comments(body)
         if fn_name.startswith("register_"):
             contextual_high_risk = any(marker in fn_name for marker in privileged_markers) or any(
-                marker in body for marker in privileged_markers
+                marker in body_no_comments for marker in privileged_markers
             )
             if not contextual_high_risk:
                 continue
@@ -711,16 +706,16 @@ def detect_no_access_control_mutation(code: str) -> bool:
             continue
         if not _is_abi_exposed(lower, fn_name):
             continue
-        if not any(marker in body for marker in mutation_markers):
+        if not any(marker in body_no_comments for marker in mutation_markers):
             continue
-        has_access_guard = any(marker in body for marker in access_markers) or bool(
-            re.search(r"assert!?\([^)]*get_caller_address\(\)\s*(==|!=)", body)
+        has_access_guard = any(marker in body_no_comments for marker in access_markers) or bool(
+            re.search(r"assert!?\([^)]*get_caller_address\(\)\s*(==|!=)", body_no_comments)
             or re.search(
                 r"let\s+[a-z_][a-z0-9_]*\s*=\s*(?:starknet::)?get_caller_address\(\)[\s\S]{0,220}assert!?\([^)]*(==|!=)\s*self\.",
-                body,
+                body_no_comments,
             )
-            or re.search(r"\bself\.(?:_)?assert_(?:admin|owner|role|caller|auth)[a-z0-9_]*\s*\(", body)
-            or re.search(r"\b(?:_)?assert_(?:admin|owner|role|caller|auth)[a-z0-9_]*\s*\(", body)
+            or re.search(r"\bself\.(?:_)?assert_(?:admin|owner|role|caller|auth)[a-z0-9_]*\s*\(", body_no_comments)
+            or re.search(r"\b(?:_)?assert_(?:admin|owner|role|caller|auth)[a-z0-9_]*\s*\(", body_no_comments)
         )
         if has_access_guard:
             continue
