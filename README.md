@@ -66,7 +66,8 @@ python scripts/quality/audit_local_repo.py \
   --allow-build
 ```
 
-Reports are written to `evals/reports/local/` by default (`.md`, `.json`, `.findings.jsonl`).
+Reports are written under `<repo-root>/evals/reports/local/` by default (`.md`, `.json`).
+Add `--write-findings-jsonl` to emit `.findings.jsonl`.
 
 ## Skills
 

@@ -21,7 +21,7 @@
   - single-entry local repo audit command
   - runs deterministic detectors on local `.cairo` files
   - optionally runs Sierra confirmation (`--sierra-confirm [--allow-build]`)
-  - defaults to timestamped outputs under `evals/reports/local/`
+  - defaults to timestamped outputs under `<repo-root>/evals/reports/local/`
   - supports CI-friendly failure mode (`--fail-on-findings`)
 
 ## External Scan Tooling
@@ -104,8 +104,25 @@ python scripts/quality/audit_local_repo.py \
   --fail-on-findings
 ```
 
+Write findings JSONL artifact:
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit-jsonl \
+  --write-findings-jsonl
+```
+
 By default, the script writes:
 
 - `evals/reports/local/<scan-id>-<timestamp>.json`
 - `evals/reports/local/<scan-id>-<timestamp>.md`
+
+`--write-findings-jsonl` (or `--output-findings-jsonl`) additionally writes:
+
 - `evals/reports/local/<scan-id>-<timestamp>.findings.jsonl`
+
+Exit code behavior:
+
+- `0`: success
+- `2`: findings present with `--fail-on-findings`

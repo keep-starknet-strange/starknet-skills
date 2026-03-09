@@ -47,6 +47,13 @@ def _slug(value: str) -> str:
     return slug or "local-cairo-audit"
 
 
+def _resolve_path(raw: str, base: Path) -> Path:
+    candidate = Path(raw)
+    if candidate.is_absolute():
+        return candidate.resolve()
+    return (base / candidate).resolve()
+
+
 def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tuple[str, ...]) -> tuple[dict[str, object], list[dict[str, object]]]:
     all_files = sorted(repo_root.rglob("*.cairo"))
     prod_files = [p for p in all_files if not is_excluded(p, excluded_markers)]
@@ -150,18 +157,32 @@ def _render_markdown(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Scan a local Cairo repo with deterministic detectors and optional Sierra confirmation.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Scan a local Cairo repo with deterministic detectors and optional Sierra confirmation. "
+            "Exit codes: 0 for success, 2 when findings exist and --fail-on-findings is set."
+        )
+    )
     parser.add_argument("--repo-root", type=_existing_dir, default=Path(".").resolve())
     parser.add_argument("--scan-id", default="local-cairo-audit")
     parser.add_argument("--exclude", default="test,tests,mock,mocks,example,examples,preset,presets,fixture,fixtures,vendor,vendors")
     parser.add_argument(
         "--output-dir",
         default="evals/reports/local",
-        help="Directory for generated reports when explicit output files are not provided.",
+        help="Directory for generated reports when explicit output files are not provided (relative paths resolve from --repo-root).",
     )
     parser.add_argument("--output-json", default="")
     parser.add_argument("--output-md", default="")
-    parser.add_argument("--output-findings-jsonl", default="")
+    parser.add_argument(
+        "--output-findings-jsonl",
+        default="",
+        help="Write findings JSONL to this path (relative paths resolve from --repo-root).",
+    )
+    parser.add_argument(
+        "--write-findings-jsonl",
+        action="store_true",
+        help="Write findings JSONL to output-dir when --output-findings-jsonl is not set.",
+    )
     parser.add_argument("--sierra-confirm", action="store_true", help="Run Sierra confirmation layer on this repo.")
     parser.add_argument(
         "--allow-build",
@@ -177,7 +198,7 @@ def main() -> int:
     parser.add_argument(
         "--fail-on-findings",
         action="store_true",
-        help="Exit non-zero when findings are present.",
+        help="Exit with code 2 when findings are present.",
     )
     args = parser.parse_args()
 
@@ -190,15 +211,18 @@ def main() -> int:
     stamp = generated_at.strftime("%Y%m%dT%H%M%SZ")
     safe_scan_id = _slug(args.scan_id)
 
-    output_dir = Path(args.output_dir).resolve()
+    output_dir = _resolve_path(args.output_dir, repo_root)
     output_dir.mkdir(parents=True, exist_ok=True)
-    out_json = Path(args.output_json).resolve() if args.output_json else (output_dir / f"{safe_scan_id}-{stamp}.json")
-    out_md = Path(args.output_md).resolve() if args.output_md else (output_dir / f"{safe_scan_id}-{stamp}.md")
-    out_jsonl = (
-        Path(args.output_findings_jsonl).resolve()
-        if args.output_findings_jsonl
-        else (output_dir / f"{safe_scan_id}-{stamp}.findings.jsonl")
-    )
+    out_json = _resolve_path(args.output_json, repo_root) if args.output_json else (output_dir / f"{safe_scan_id}-{stamp}.json")
+    out_md = _resolve_path(args.output_md, repo_root) if args.output_md else (output_dir / f"{safe_scan_id}-{stamp}.md")
+    write_findings_jsonl = bool(args.output_findings_jsonl) or args.write_findings_jsonl
+    out_jsonl: Path | None = None
+    if write_findings_jsonl:
+        out_jsonl = (
+            _resolve_path(args.output_findings_jsonl, repo_root)
+            if args.output_findings_jsonl
+            else (output_dir / f"{safe_scan_id}-{stamp}.findings.jsonl")
+        )
 
     summary, findings = _scan_local(repo_root, repo_slug, ref, excluded_markers)
     class_counts = Counter(str(row["class_id"]) for row in findings)
@@ -252,10 +276,11 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    out_jsonl.parent.mkdir(parents=True, exist_ok=True)
-    with out_jsonl.open("w", encoding="utf-8") as handle:
-        for row in findings:
-            handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+    if out_jsonl:
+        out_jsonl.parent.mkdir(parents=True, exist_ok=True)
+        with out_jsonl.open("w", encoding="utf-8") as handle:
+            for row in findings:
+                handle.write(json.dumps(row, ensure_ascii=True) + "\n")
 
     print(
         json.dumps(
@@ -266,7 +291,7 @@ def main() -> int:
                 "class_counts": dict(class_counts),
                 "output_json": out_json.as_posix(),
                 "output_md": out_md.as_posix(),
-                "output_findings_jsonl": out_jsonl.as_posix(),
+                "output_findings_jsonl": out_jsonl.as_posix() if out_jsonl else None,
             },
             ensure_ascii=True,
         )

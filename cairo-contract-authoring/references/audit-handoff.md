@@ -34,6 +34,9 @@ python scripts/quality/audit_local_repo.py \
   --allow-build
 ```
 
+Warning: `--allow-build` may execute repository build steps/tooling.
+Use build mode only on trusted code, or run in an isolated environment.
+
 ## 4. Apply Findings
 
 - Prioritize by severity, then confidence.
