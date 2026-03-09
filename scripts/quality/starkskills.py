@@ -252,7 +252,9 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         "detail": cfg_path.as_posix() if cfg_path else "no config file (using built-in defaults)",
     })
 
-    py_ok = sys.version_info >= (3, 11)
+    py_ok = sys.version_info >= (3, 11) or (
+        sys.version_info >= (3, 10) and tomllib is not None
+    )
     rows.append({
         "name": "python",
         "status": "ok" if py_ok else "fail",

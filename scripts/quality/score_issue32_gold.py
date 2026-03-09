@@ -56,6 +56,8 @@ def load_gold(path: Path) -> list[GoldRow]:
         if not line.strip():
             continue
         raw = json.loads(line)
+        if not isinstance(raw, dict):
+            raise ValueError(f"{path}:{line_no}: expected JSON object, got {type(raw).__name__}")
         required = {
             "finding_id",
             "repo",
@@ -97,6 +99,8 @@ def load_findings(path: Path) -> list[FindingRow]:
         if not line.strip():
             continue
         raw = json.loads(line)
+        if not isinstance(raw, dict):
+            raise ValueError(f"{path}:{line_no}: expected JSON object, got {type(raw).__name__}")
         required = {"repo", "ref", "file", "class_id"}
         missing = sorted(required - set(raw.keys()))
         if missing:
@@ -312,6 +316,8 @@ def main() -> int:
     parser.add_argument("--min-recall", type=float, default=0.0)
     parser.add_argument("--min-class-recall", type=float, default=0.0)
     args = parser.parse_args()
+    if any(ch in args.release for ch in "|\r\n"):
+        raise ValueError("--release must not contain '|', CR, or LF")
 
     gold_path = Path(args.gold)
     findings_path = Path(args.findings)

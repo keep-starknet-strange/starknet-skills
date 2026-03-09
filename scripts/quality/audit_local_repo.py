@@ -388,13 +388,13 @@ def main() -> int:
                 "errors": signal.errors,
             }
 
-            confirmation_index_by_id = {
-                str(item.get("finding_id", "")).strip(): item
-                for item in signal.finding_confirmations
-                if str(item.get("finding_id", "")).strip()
-            }
+            confirmation_index_by_id: dict[str, dict[str, object]] = {}
             confirmation_index_by_key: dict[tuple[str, str], list[dict[str, object]]] = {}
             for item in signal.finding_confirmations:
+                finding_id = str(item.get("finding_id", "")).strip()
+                if finding_id:
+                    confirmation_index_by_id[finding_id] = item
+                    continue
                 key = (str(item.get("file", "")), str(item.get("class_id", "")))
                 confirmation_index_by_key.setdefault(key, []).append(item)
 

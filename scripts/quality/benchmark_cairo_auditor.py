@@ -799,7 +799,10 @@ def detect_unsafe_admin_transfer(code: str) -> bool:
     if "new_admin" not in signature or "contractaddress" not in signature:
         return False
     has_direct_write = bool(
-        re.search(r"\bself\.\w*admin\w*\.write\(\s*new_admin\b", body)
+        re.search(
+            r"\bself\.(?!\w*pending_admin\w*\.)\w*admin\w*\.write\(\s*new_admin\b",
+            body,
+        )
     )
     if not has_direct_write:
         return False

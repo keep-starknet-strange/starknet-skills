@@ -71,7 +71,11 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
    ```bash
    export SCAN_ID="${SCAN_ID:-cairo-audit-$(date +%Y%m%d)}"
    export REPO_ROOT="/path/to/repo"
-   export SKILLS_ROOT="${SKILLS_ROOT:-$(pwd)}"
+   export SKILLS_ROOT="${SKILLS_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || true)}"
+   if [ -z "$SKILLS_ROOT" ] || [ ! -f "$SKILLS_ROOT/scripts/quality/scan_external_repos.py" ]; then
+     echo "ERROR: set SKILLS_ROOT to your starknet-skills checkout root (must contain scripts/quality/scan_external_repos.py)." >&2
+     exit 1
+   fi
    export BUNDLE_ROOT="/tmp/cairo-auditor/${SCAN_ID}"
    mkdir -p "$BUNDLE_ROOT"
 
@@ -178,7 +182,7 @@ PY
 3. Run composability pass when multiple findings interact.
 4. If Scarb/Sierra is available, run Sierra confirmation with class-to-signal mapping (first-wave: CEI and upgrade classes).
 5. Use Sierra v3 per-finding evidence (`ir_confirmation`, `signal_quality`, `artifact_source`) and keep `unknown` for unmapped classes.
-6. Sort findings by `actionable` first, then confidence descending.
+6. Sort findings by `actionability` first, then confidence descending.
 7. Emit actionable findings + required regression tests.
 
 ## Reporting Contract
