@@ -48,9 +48,10 @@ python scripts/quality/audit_local_repo.py \
 
 - `SKILL.md`: 4-turn orchestration contract.
 - `agents/`: vector + adversarial specialist instructions.
-- `references/attack-vectors/`: partitioned D:/FP: vectors.
+- `references/attack-vectors/`: partitioned D:/FP: vectors (120 total).
 - `references/judging.md`: strict FP gate and confidence rules.
 - `references/vulnerability-db/`: canonical class docs.
+- `references/semgrep/`: optional Semgrep auxiliary rules.
 
 ## Benchmarks
 
@@ -58,14 +59,15 @@ Deterministic scorecards are smoke/regression gates, not final independent proof
 
 | Suite | Cases | Precision | Recall | Scorecard |
 | --- | ---: | ---: | ---: | --- |
-| Core deterministic | 34 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-benchmark.md) |
-| Real-world corpus | 34 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-realworld-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md) |
+| Core deterministic | 37 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-benchmark.md) |
+| Real-world corpus | 37 | 1.000 | 1.000 | [v0.2.0-cairo-auditor-realworld-benchmark.md](../evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md) |
 
 Additional quality signals:
 
 - External triage: [v0.2.0-cairo-auditor-external-triage.md](../evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
 - Manual gold: [v0.2.0-cairo-auditor-manual-19-gold-recall.md](../evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.md)
 - Sierra auxiliary: [sierra-parallel-low-profile-2026-03-09-v2.md](../evals/reports/sierra-parallel-low-profile-2026-03-09-v2.md)
+- Caracal + Semgrep adapters: see [../scripts/quality/README.md](../scripts/quality/README.md)
 
 ## References
 

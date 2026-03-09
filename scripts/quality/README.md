@@ -3,6 +3,8 @@
 - `validate_skills.py`: skill contract/lint checks for SKILL.md structure and links.
 - `validate_marketplace.py`: enforces `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` parity (name/version/source/description/author and skill path validity).
 - `parity_check.py`: required repository parity and local tool checks.
+- `check_vulndb_parity.py`: enforces benchmark/detector class parity with `cairo-auditor/references/vulnerability-db/`.
+- `check_attack_vector_coverage.py`: enforces minimum attack-vector corpus size and unique vector IDs.
 
 ## Cairo Auditor Benchmarks
 
@@ -72,6 +74,12 @@
   - generates fixture `src/lib.cairo`, then runs build/test/static policy checks
   - emits markdown/json reports with pass/vulnerability rates
   - intended as informative calibration telemetry (`continue-on-error` in workflow)
+- `run_caracal_adapter.py`
+  - optional Caracal adapter for Sierra-level auxiliary analysis
+  - fail-open by default when Caracal is unavailable
+- `run_semgrep_cairo.py`
+  - optional Semgrep adapter using `cairo-auditor/references/semgrep/cairo-auditor-rules.yaml`
+  - fail-open by default when Semgrep is unavailable
 
 ## Quick Start
 
@@ -128,6 +136,21 @@ JSONL behavior:
   `evals/reports/local/<safe-scan-id>-<timestamp>.findings.jsonl`
 - `--output-findings-jsonl /custom/path/file.jsonl` writes to the provided path
   (and overrides the default location).
+
+Run auxiliary adapters (optional, non-blocking):
+
+```bash
+python scripts/quality/run_caracal_adapter.py \
+  --repo-root /path/to/your/cairo-repo \
+  --allow-build \
+  --output-json /tmp/caracal-adapter.json \
+  --output-md /tmp/caracal-adapter.md
+
+python scripts/quality/run_semgrep_cairo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --output-json /tmp/semgrep-adapter.json \
+  --output-md /tmp/semgrep-adapter.md
+```
 
 Exit code behavior:
 

@@ -79,6 +79,14 @@ jobs:
             --schema evals/reports/data/manual-19-gold.schema.json \
             --jsonl evals/reports/data/manual-19-gold.jsonl
 
+      - name: Validate vuln-db parity and attack-vector coverage
+        run: |
+          python scripts/quality/check_vulndb_parity.py \
+            --cases evals/cases/cairo_auditor_benchmark.jsonl \
+            --cases evals/cases/cairo_auditor_realworld_benchmark.jsonl
+          python scripts/quality/check_attack_vector_coverage.py \
+            --min-vectors 120
+
       - name: Manual-19 gold recall smoke
         run: |
           python scripts/quality/check_manual_gold_recall.py \
