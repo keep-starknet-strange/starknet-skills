@@ -133,6 +133,13 @@ def main() -> int:
             )
             payload["build_exit_code"] = build_proc.returncode
             artifacts = _collect_sierra_artifacts(repo_root)
+            if build_proc.returncode != 0 and not artifacts:
+                payload["status"] = "error" if args.strict else "skipped"
+                payload["reason"] = f"scarb_build_exit_{build_proc.returncode}"
+                out_json.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+                out_md.write_text(_render_md(payload), encoding="utf-8")
+                print(json.dumps({"status": payload["status"], "reason": payload["reason"]}, ensure_ascii=True))
+                return 1 if args.strict else 0
         except subprocess.TimeoutExpired:
             payload["status"] = "error" if args.strict else "skipped"
             payload["reason"] = "scarb_build_timeout"
@@ -144,7 +151,8 @@ def main() -> int:
 
     payload["artifact_count"] = len(artifacts)
     if not artifacts:
-        payload["reason"] = "no_sierra_artifacts"
+        if not payload["reason"]:
+            payload["reason"] = "no_sierra_artifacts"
         out_json.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
         out_md.write_text(_render_md(payload), encoding="utf-8")
         print(json.dumps({"status": payload["status"], "reason": payload["reason"]}, ensure_ascii=True))

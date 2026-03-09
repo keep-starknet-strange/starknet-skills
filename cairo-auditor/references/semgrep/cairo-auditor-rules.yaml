@@ -10,8 +10,8 @@ rules:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "(replace_class_syscall\\(|upgradeable\\.upgrade\\()"
-      - pattern-not-regex: "(schedule|scheduled|delay|timelock)"
+      - pattern-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,480}?(replace_class_syscall\\(|upgradeable\\.upgrade\\()"
+      - pattern-not-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,480}?(schedule|scheduled|delay|timelock)"
 
   - id: cairo.upgrade-class-hash-no-nonzero-guard
     message: "Upgrade path uses new_class_hash without explicit non-zero guard."
@@ -24,9 +24,8 @@ rules:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "new_class_hash"
-      - pattern-regex: "(replace_class_syscall\\(|upgradeable\\.upgrade\\()"
-      - pattern-not-regex: "(is_non_zero\\(|!=\\s*0)"
+      - pattern-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?new_class_hash[\\s\\S]{0,320}?(replace_class_syscall\\(|upgradeable\\.upgrade\\()"
+      - pattern-not-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?(is_non_zero\\(|!=\\s*0)"
 
   - id: cairo.critical-address-init-no-guard
     message: "Constructor seeds privileged/dependency ContractAddress without non-zero guard."
@@ -39,9 +38,8 @@ rules:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "constructor\\s*\\([^)]*(owner|admin|governor|upgrade|manager|oracle|vault)[^)]*:\\s*ContractAddress"
-      - pattern-regex: "\\.write\\("
-      - pattern-not-regex: "is_non_zero\\("
+      - pattern-regex: "constructor\\s*\\([^)]*(owner|admin|governor|upgrade|manager|oracle|vault)[^)]*:\\s*ContractAddress[\\s\\S]{0,520}?\\.write\\("
+      - pattern-not-regex: "constructor\\s*\\([^)]*(owner|admin|governor|upgrade|manager|oracle|vault)[^)]*:\\s*ContractAddress[\\s\\S]{0,520}?is_non_zero\\("
 
   - id: cairo.no-access-control-mutation
     message: "External mutation path appears without explicit access gate."
@@ -54,10 +52,8 @@ rules:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "#\\[external\\(v0\\)\\]"
-      - pattern-regex: "fn\\s+(set_|update_|register_|pause|unpause|upgrade)"
-      - pattern-regex: "\\.write\\("
-      - pattern-not-regex: "(assert_only_|assert\\(get_caller_address\\(|has_role\\()"
+      - pattern-regex: "#\\[external\\(v0\\)\\][\\s\\S]{0,480}?fn\\s+(set_|update_|register_|pause|unpause|upgrade)[\\s\\S]{0,480}?\\.write\\("
+      - pattern-not-regex: "#\\[external\\(v0\\)\\][\\s\\S]{0,480}?fn\\s+(set_|update_|register_|pause|unpause|upgrade)[\\s\\S]{0,480}?(assert_only_|assert\\(get_caller_address\\(|has_role\\()"
 
   - id: cairo.fees-recipient-zero-dos
     message: "fees_recipient write appears without non-zero validation."
@@ -70,8 +66,8 @@ rules:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "\\.write\\(\\s*fees_recipient\\s*\\)"
-      - pattern-not-regex: "(fees_recipient\\.is_non_zero\\(|fees_recipient\\s*!=\\s*0)"
+      - pattern-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?\\.write\\(\\s*fees_recipient\\s*\\)"
+      - pattern-not-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?(fees_recipient\\.is_non_zero\\(|fees_recipient\\s*!=\\s*0)"
 
   - id: cairo.unchecked-fee-bound
     message: "Fee/rate parameter appears to be written without explicit max bound."
@@ -84,9 +80,8 @@ rules:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "(fee|bps|rate)\\s*:\\s*(u16|u32|u64|u128|u256|felt252)"
-      - pattern-regex: "\\.write\\([^)]*(fee|bps|rate)"
-      - pattern-not-regex: "(<=\\s*MAX_|is_le\\()"
+      - pattern-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?(fee|bps|rate)\\s*:\\s*(u16|u32|u64|u128|u256|felt252)[\\s\\S]{0,520}?\\.write\\([^)]*(fee|bps|rate)"
+      - pattern-not-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?(<=\\s*MAX_|is_le\\()"
 
   - id: cairo.erc1155-cei-risk
     message: "Potential ERC1155 CEI ordering risk (triage hint, verify ordering manually)."
@@ -114,4 +109,4 @@ rules:
         - "**/*.cairo"
     patterns:
       - pattern-regex: "constructor\\s*\\([^)]*(owner|admin|governor|upgrade)[^)]*:\\s*ContractAddress"
-      - pattern-not-regex: "(transfer_ownership|renounce_ownership|set_admin|change_admin|rotate_admin|grant_role|revoke_role)"
+      - pattern-not-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,520}?(transfer_ownership|renounce_ownership|set_admin|change_admin|rotate_admin|grant_role|revoke_role)"
