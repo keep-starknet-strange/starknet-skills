@@ -118,9 +118,12 @@ By default, the script writes:
 - `evals/reports/local/<scan-id>-<timestamp>.json`
 - `evals/reports/local/<scan-id>-<timestamp>.md`
 
-`--write-findings-jsonl` (or `--output-findings-jsonl`) additionally writes:
+JSONL behavior:
 
-- `evals/reports/local/<scan-id>-<timestamp>.findings.jsonl`
+- `--write-findings-jsonl` writes to:
+  `evals/reports/local/<scan-id>-<timestamp>.findings.jsonl`
+- `--output-findings-jsonl /custom/path/file.jsonl` writes to the provided path
+  (and overrides the default location).
 
 Exit code behavior:
 

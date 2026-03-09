@@ -21,7 +21,8 @@ Deterministic pass:
 ```bash
 python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/repo \
-  --scan-id handoff-audit
+  --scan-id handoff-audit \
+  --write-findings-jsonl
 ```
 
 Deterministic + Sierra confirmation:
@@ -31,7 +32,8 @@ python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/repo \
   --scan-id handoff-audit-sierra \
   --sierra-confirm \
-  --allow-build
+  --allow-build \
+  --write-findings-jsonl
 ```
 
 Warning: `--allow-build` may execute repository build steps/tooling.
