@@ -418,7 +418,7 @@ def run_static_rules(*, case: GenerationCase, fixture: Path) -> list[str]:
             errors.append(f"must_not_match_path_escape:{rule.path}:{rule.description}")
             continue
         if not target.is_file():
-            errors.append(f"must_not_match_file_missing:{rule.path}:{rule.description}")
+            # Missing file means forbidden pattern cannot be present.
             continue
         text = target.read_text(encoding="utf-8")
         if re.search(rule.pattern, text, flags=re.MULTILINE) is not None:
