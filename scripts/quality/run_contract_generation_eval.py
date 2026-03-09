@@ -209,15 +209,22 @@ def resolve_under_root(root: Path, relative_path: str) -> Path | None:
 
 
 def run_command(cmd: list[str], cwd: Path, timeout_seconds: int) -> tuple[bool, str]:
-    proc = subprocess.run(
-        cmd,
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        timeout=timeout_seconds,
-    )
-    output = (proc.stdout or "") + (proc.stderr or "")
-    return proc.returncode == 0, output.strip()
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=timeout_seconds,
+        )
+        output = (proc.stdout or "") + (proc.stderr or "")
+        return proc.returncode == 0, output.strip()
+    except subprocess.TimeoutExpired as exc:
+        output = ((exc.stdout or "") + (exc.stderr or "")).strip()
+        timeout_note = f"timeout_after_{timeout_seconds}s"
+        if output:
+            return False, f"{timeout_note} || {output[:300]}"
+        return False, timeout_note
 
 
 def summarize_log(prefix: str, text: str, max_lines: int = 4) -> str:
@@ -372,8 +379,6 @@ def evaluate_case(
         )
 
     if case.run_build and not have_scarb:
-        if require_tools:
-            raise RuntimeError("required tool missing: scarb")
         return GenerationResult(
             case_id=case.case_id,
             skill_id=case.skill_id,
@@ -390,8 +395,6 @@ def evaluate_case(
         )
 
     if case.run_tests and not have_snforge:
-        if require_tools:
-            raise RuntimeError("required tool missing: snforge")
         return GenerationResult(
             case_id=case.case_id,
             skill_id=case.skill_id,
@@ -433,7 +436,7 @@ def evaluate_case(
         )
 
     with tempfile.TemporaryDirectory(prefix=f"contract-gen-{case.case_id}-") as tmp_dir:
-        tmp_root = Path(tmp_dir)
+        tmp_root = Path(tmp_dir).resolve()
         tmp_fixture = tmp_root / "fixture"
         shutil.copytree(fixture, tmp_fixture)
 
@@ -566,6 +569,16 @@ def main() -> int:
     cases = load_cases(cases_path)
     have_scarb = shutil.which("scarb") is not None
     have_snforge = shutil.which("snforge") is not None
+
+    if args.require_tools:
+        missing: list[str] = []
+        if not have_scarb:
+            missing.append("scarb")
+        if not have_snforge:
+            missing.append("snforge")
+        if missing:
+            print(f"FAILED: required tools missing: {', '.join(missing)}")
+            return 1
 
     results: list[GenerationResult] = []
     for case in cases:
