@@ -29,7 +29,8 @@ Apply only after tests pass and behavior is locked.
 2. Profile target paths with `python3 scripts/profile.py profile`.
 3. Apply one optimization class at a time.
 4. Re-run tests and compare resource deltas.
-5. Encode stable optimization rules in `../evals/cases/contract_skill_benchmark.jsonl` to prevent regressions.
+5. Use anti-pattern/secure-pattern pairs to keep micro-optimizations explicit.
+6. Encode stable optimization rules in `../evals/cases/contract_skill_benchmark.jsonl` to prevent regressions.
 
 ## Workflow
 
@@ -39,4 +40,5 @@ Apply only after tests pass and behavior is locked.
 
 - Detailed optimization rules: [legacy reference](references/legacy-full.md)
 - Profiling workflow and troubleshooting: [profiling reference](references/profiling.md)
+- Optimization anti-pattern pairs: [anti-pattern pairs](references/anti-pattern-pairs.md)
 - Module index: [references index](references/README.md)
