@@ -25,9 +25,6 @@
   - `security_precision` counts only signoff-ready security rows (dual reviewer signoff + `needs_poc=false`, unless explicitly overridden by `security_countable=true`)
   - emits release scorecard + trend table
   - tracks labeled coverage against full findings and emits unlabeled backlog queue
-- `build_external_labels_from_triage_csv.py`
-  - converts reviewer-completed manual triage CSV into schema-valid labels JSONL
-  - maps `manual_verdict -> human_outcome` and carries category/signoff fields
 - `check_manual_gold_recall.py`
   - validates recall against frozen manual gold findings
   - emits markdown/json recall reports
@@ -202,16 +199,6 @@ Manual triage CSV columns now include:
 
 - scanner fields: `category`, `needs_poc`, `confidence_score`, `actionability`, `gate_status`
 - reviewer fields: `triage_category`, `reviewer_1`, `reviewer_2`, `security_countable`, `manual_severity`, `manual_verdict`, `manual_notes`
-
-Convert reviewed CSV to labels JSONL:
-
-```bash
-python3 scripts/quality/build_external_labels_from_triage_csv.py \
-  --triage-csv evals/reports/data/<scan-id>.manual-triage.csv \
-  --release v0.2.0 \
-  --scan-id <scan-id> \
-  --output-jsonl evals/reports/data/<scan-id>.labels.jsonl
-```
 
 By default, the script writes:
 
