@@ -22,3 +22,11 @@ Use this file to choose the smallest relevant module.
 - Prefer one module first.
 - Add a second module only when blocked.
 - Keep context narrow and evidence-based.
+
+## Recommended Build-to-Audit Flow
+
+For new contract work, use this sequence:
+
+1. [cairo-contract-authoring](cairo-contract-authoring/SKILL.md)
+2. [cairo-testing](cairo-testing/SKILL.md)
+3. [cairo-auditor](cairo-auditor/SKILL.md)

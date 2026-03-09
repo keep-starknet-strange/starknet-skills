@@ -35,6 +35,18 @@ def _git_head(repo_root: Path) -> str:
     return "local"
 
 
+def _slug(value: str) -> str:
+    lowered = value.strip().lower()
+    safe = []
+    for ch in lowered:
+        if ch.isalnum() or ch in ("-", "_"):
+            safe.append(ch)
+        else:
+            safe.append("-")
+    slug = "".join(safe).strip("-")
+    return slug or "local-cairo-audit"
+
+
 def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tuple[str, ...]) -> tuple[dict[str, object], list[dict[str, object]]]:
     all_files = sorted(repo_root.rglob("*.cairo"))
     prod_files = [p for p in all_files if not is_excluded(p, excluded_markers)]
@@ -142,8 +154,13 @@ def main() -> int:
     parser.add_argument("--repo-root", type=_existing_dir, default=Path(".").resolve())
     parser.add_argument("--scan-id", default="local-cairo-audit")
     parser.add_argument("--exclude", default="test,tests,mock,mocks,example,examples,preset,presets,fixture,fixtures,vendor,vendors")
-    parser.add_argument("--output-json", required=True)
-    parser.add_argument("--output-md", required=True)
+    parser.add_argument(
+        "--output-dir",
+        default="evals/reports/local",
+        help="Directory for generated reports when explicit output files are not provided.",
+    )
+    parser.add_argument("--output-json", default="")
+    parser.add_argument("--output-md", default="")
     parser.add_argument("--output-findings-jsonl", default="")
     parser.add_argument("--sierra-confirm", action="store_true", help="Run Sierra confirmation layer on this repo.")
     parser.add_argument(
@@ -157,6 +174,11 @@ def main() -> int:
         default=240,
         help="Timeout budget for each scarb metadata/build command in Sierra confirmation mode.",
     )
+    parser.add_argument(
+        "--fail-on-findings",
+        action="store_true",
+        help="Exit non-zero when findings are present.",
+    )
     args = parser.parse_args()
 
     repo_root = args.repo_root
@@ -164,6 +186,19 @@ def main() -> int:
     repo_slug = repo_root.name
     ref = _git_head(repo_root)
     excluded_markers = tuple(s.strip().lower() for s in args.exclude.split(",") if s.strip())
+    generated_at = datetime.now(UTC).replace(microsecond=0)
+    stamp = generated_at.strftime("%Y%m%dT%H%M%SZ")
+    safe_scan_id = _slug(args.scan_id)
+
+    output_dir = Path(args.output_dir).resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    out_json = Path(args.output_json).resolve() if args.output_json else (output_dir / f"{safe_scan_id}-{stamp}.json")
+    out_md = Path(args.output_md).resolve() if args.output_md else (output_dir / f"{safe_scan_id}-{stamp}.md")
+    out_jsonl = (
+        Path(args.output_findings_jsonl).resolve()
+        if args.output_findings_jsonl
+        else (output_dir / f"{safe_scan_id}-{stamp}.findings.jsonl")
+    )
 
     summary, findings = _scan_local(repo_root, repo_slug, ref, excluded_markers)
     class_counts = Counter(str(row["class_id"]) for row in findings)
@@ -191,18 +226,16 @@ def main() -> int:
             "errors": signal.errors,
         }
 
-    generated_at = datetime.now(UTC).replace(microsecond=0).isoformat()
+    generated_at_iso = generated_at.isoformat()
     payload: dict[str, object] = {
         "scan_id": args.scan_id,
-        "generated_at": generated_at,
+        "generated_at": generated_at_iso,
         "summary": summary,
         "class_counts": dict(class_counts),
         "findings": findings,
         "sierra_confirmation": sierra_payload,
     }
 
-    out_json = Path(args.output_json)
-    out_md = Path(args.output_md)
     out_json.parent.mkdir(parents=True, exist_ok=True)
     out_md.parent.mkdir(parents=True, exist_ok=True)
 
@@ -210,7 +243,7 @@ def main() -> int:
     out_md.write_text(
         _render_markdown(
             scan_id=args.scan_id,
-            generated_at=generated_at,
+            generated_at=generated_at_iso,
             summary=summary,
             class_counts=class_counts,
             findings=findings,
@@ -219,12 +252,10 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    if args.output_findings_jsonl:
-        out_jsonl = Path(args.output_findings_jsonl)
-        out_jsonl.parent.mkdir(parents=True, exist_ok=True)
-        with out_jsonl.open("w", encoding="utf-8") as handle:
-            for row in findings:
-                handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+    out_jsonl.parent.mkdir(parents=True, exist_ok=True)
+    with out_jsonl.open("w", encoding="utf-8") as handle:
+        for row in findings:
+            handle.write(json.dumps(row, ensure_ascii=True) + "\n")
 
     print(
         json.dumps(
@@ -232,12 +263,17 @@ def main() -> int:
                 "scan_id": args.scan_id,
                 "repo_root": repo_root.as_posix(),
                 "findings": len(findings),
+                "class_counts": dict(class_counts),
                 "output_json": out_json.as_posix(),
                 "output_md": out_md.as_posix(),
+                "output_findings_jsonl": out_jsonl.as_posix(),
             },
             ensure_ascii=True,
         )
     )
+
+    if args.fail_on_findings and findings:
+        return 2
     return 0
 
 

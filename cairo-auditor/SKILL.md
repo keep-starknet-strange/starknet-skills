@@ -36,7 +36,15 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 1. Open [workflows/default.md](workflows/default.md) for standard audits, or [workflows/deep.md](workflows/deep.md) for adversarial mode.
 2. Load [agents/vector-scan.md](agents/vector-scan.md), [references/judging.md](references/judging.md), and [references/README.md](references/README.md).
 3. Select attack-vector partitions from `references/attack-vectors/attack-vectors-1.md` through `references/attack-vectors/attack-vectors-4.md`.
-4. Format output using [references/report-formatting.md](references/report-formatting.md), then validate against `references/vulnerability-db/README.md`.
+4. Run deterministic preflight on target repo:
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/repo \
+  --scan-id local-audit
+```
+
+5. Format output using [references/report-formatting.md](references/report-formatting.md), then validate against `references/vulnerability-db/README.md`.
 
 ## Orchestration (4 Turns)
 

@@ -23,7 +23,10 @@
 - Add property/fuzz tests for invariant-sensitive logic.
 
 6. Security review
-- Run `cairo-auditor` in default mode.
+- Run `references/audit-handoff.md` flow.
+- Execute local deterministic preflight:
+  `python scripts/quality/audit_local_repo.py --repo-root /path/to/repo --scan-id handoff-audit`
+- Run `cairo-auditor` in default mode for deep finding narratives.
 - Patch findings and add regression tests.
 
 7. Distill findings into skills

@@ -31,7 +31,7 @@ Use this as the entrypoint for implementation decisions; load references only as
 2. Implement minimal external/write surface.
 3. Add explicit auth and invariant checks.
 4. Add tests before broadening feature surface.
-5. Run an audit pass with `cairo-auditor`.
+5. Run the authoring-to-audit handoff flow, then `cairo-auditor`.
 
 ## Security-Critical Rules
 
@@ -55,4 +55,5 @@ Use this as the entrypoint for implementation decisions; load references only as
 - Detailed authoring reference: [legacy reference](references/legacy-full.md)
 - Cairo language fundamentals reference: [language reference](references/language.md)
 - Build-side anti-pattern pairs: [anti-pattern pairs](references/anti-pattern-pairs.md)
+- Authoring to audit execution path: [audit handoff](references/audit-handoff.md)
 - Module index: [references index](references/README.md)

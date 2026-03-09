@@ -21,6 +21,8 @@
   - single-entry local repo audit command
   - runs deterministic detectors on local `.cairo` files
   - optionally runs Sierra confirmation (`--sierra-confirm [--allow-build]`)
+  - defaults to timestamped outputs under `evals/reports/local/`
+  - supports CI-friendly failure mode (`--fail-on-findings`)
 
 ## External Scan Tooling
 
@@ -77,9 +79,7 @@ Run a local deterministic audit:
 ```bash
 python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/your/cairo-repo \
-  --scan-id local-audit \
-  --output-json /path/to/output/local-audit.json \
-  --output-md /path/to/output/local-audit.md
+  --scan-id local-audit
 ```
 
 Run local audit + Sierra confirmation (build mode):
@@ -89,10 +89,23 @@ python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/your/cairo-repo \
   --scan-id local-audit-sierra \
   --sierra-confirm \
-  --allow-build \
-  --output-json /path/to/output/local-audit-sierra.json \
-  --output-md /path/to/output/local-audit-sierra.md
+  --allow-build
 ```
 
 Warning: `--allow-build` may execute repository build steps/tooling.
 Use build mode only on trusted code, or run in an isolated environment.
+
+Fail CI if any findings are detected:
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit-ci \
+  --fail-on-findings
+```
+
+By default, the script writes:
+
+- `evals/reports/local/<scan-id>-<timestamp>.json`
+- `evals/reports/local/<scan-id>-<timestamp>.md`
+- `evals/reports/local/<scan-id>-<timestamp>.findings.jsonl`
