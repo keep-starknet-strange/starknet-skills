@@ -152,6 +152,7 @@ Run one-shot external pack benchmark (first-time friendly):
 ```bash
 ./starkskills audit external --pack less-known --scan-id community-less-known
 ./starkskills audit deep --pack less-known --scan-id community-less-known-deep
+./starkskills audit external --pack issue32 --scan-id issue32-cairo1
 ```
 
 This command produces:
@@ -182,6 +183,23 @@ python scripts/quality/check_manual_gold_recall.py \
   --findings evals/reports/data/<scan-id>.findings.jsonl \
   --output-md evals/scorecards/<release>-cairo-auditor-manual-19-gold-recall.md \
   --output-json evals/scorecards/<release>-cairo-auditor-manual-19-gold-recall.json \
+  --min-recall 0.90 \
+  --min-class-recall 0.75
+```
+
+Run Issue #32 frozen external gold scorecard (TP/FP/NEW/FN trend):
+
+```bash
+python scripts/quality/score_issue32_gold.py \
+  --gold evals/reports/data/issue32-gold.jsonl \
+  --findings evals/reports/data/issue32-cairo1-2026-03-09-v3.findings.jsonl \
+  --release v0.2.1 \
+  --output-md evals/scorecards/v0.2.1-cairo-auditor-issue32-gold.md \
+  --output-json evals/scorecards/v0.2.1-cairo-auditor-issue32-gold.json \
+  --trend-md evals/scorecards/cairo-auditor-issue32-trend.md \
+  --output-fn-jsonl evals/reports/data/issue32-cairo1-2026-03-09-v3.fn.jsonl \
+  --output-fp-jsonl evals/reports/data/issue32-cairo1-2026-03-09-v3.fp.jsonl \
+  --min-precision 0.80 \
   --min-recall 0.90 \
   --min-class-recall 0.75
 ```

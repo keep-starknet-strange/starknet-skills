@@ -26,6 +26,9 @@
 - `check_manual_gold_recall.py`
   - validates recall against frozen manual gold findings
   - emits markdown/json recall reports
+- `score_issue32_gold.py`
+  - scores deterministic findings against frozen issue #32 gold rows
+  - reports TP/FP/NEW/FN, per-class recall, and release trend markdown
 - `audit_local_repo.py`
   - single-entry local repo audit command
   - runs deterministic detectors on local `.cairo` files
@@ -159,6 +162,7 @@ Run one-shot external pack audit (deterministic Stage-1 + Stage-2 bundle prep):
 ```bash
 ./starkskills audit external --pack less-known --scan-id community-less-known
 ./starkskills audit deep --pack less-known --scan-id community-less-known-deep
+./starkskills audit external --pack issue32 --scan-id issue32-cairo1
 ```
 
 Useful hardening flags:

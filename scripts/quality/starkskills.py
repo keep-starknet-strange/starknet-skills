@@ -479,7 +479,11 @@ def build_parser() -> argparse.ArgumentParser:
     for mode in ("external", "deep"):
         p = audit_sub.add_parser(mode, help=f"Run {mode} external benchmark pack workflow.")
         p.add_argument("--config", default="", help="Path to .starkskills.toml config.")
-        p.add_argument("--pack", default="less-known", choices=["less-known", "low-profile", "wave2"])
+        p.add_argument(
+            "--pack",
+            default="less-known",
+            choices=["less-known", "low-profile", "wave2", "issue32"],
+        )
         p.add_argument("--repos-file", default="")
         p.add_argument("--repos", nargs="*", default=[])
         p.add_argument("--scan-id", default=f"{mode}-audit")

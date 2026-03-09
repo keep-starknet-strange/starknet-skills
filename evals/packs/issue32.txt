@@ -1,0 +1,3 @@
+# Frozen external benchmark pack from issue #32 (manual Cairo 1 audit set).
+starknet-io/tokei@cae302b53bd347550700e24722c9663d706a6401
+keep-starknet-strange/satoru@6b6514c2abc85f6f8b4e343a4d32d389a70e9221

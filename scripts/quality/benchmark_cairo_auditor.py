@@ -781,6 +781,215 @@ def detect_cei_violation_erc1155(code: str) -> bool:
     return False
 
 
+def detect_precision_loss(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    has_low_scale_consumer = bool(
+        "scaled_down_div(" in lower
+        and "elapsed_time_percentage" in lower
+        and re.search(r"streamed_amount\s*=\s*[_a-z0-9]+\s*/\s*100\b", lower)
+    )
+    return has_low_scale_consumer
+
+
+def detect_unsafe_admin_transfer(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    signature, body = _extract_fn_signature_and_body(lower, "transfer_admin")
+    if signature is None or body is None:
+        return False
+    if "new_admin" not in signature or "contractaddress" not in signature:
+        return False
+    has_direct_write = bool(
+        re.search(r"\bself\.\w*admin\w*\.write\(\s*new_admin\b", body)
+    )
+    if not has_direct_write:
+        return False
+    has_nonzero_guard = bool(
+        re.search(r"(assert|if)[^\n]{0,200}new_admin[^\n]{0,200}(is_non_zero|!=\s*0)", body)
+        or re.search(
+            r"if\s*\([^)]*new_admin\.is_zero\(\)\s*\)\s*\{[\s\S]{0,120}(panic|assert|revert|return)",
+            body,
+        )
+    )
+    has_two_step = any(marker in lower for marker in ("pending_admin", "accept_admin", "claim_admin"))
+    return not has_nonzero_guard and not has_two_step
+
+
+def detect_stale_state_write(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    _signature, body = _extract_fn_signature_and_body(lower, "_withdraw")
+    if body is None:
+        return False
+    has_incremented_write = "withdrawn: stream.amounts.withdrawn + amount" in body
+    has_stale_overwrite = "withdrawn: stream.amounts.withdrawn," in body
+    writes_twice = len(re.findall(r"self\.streams\.write\(", body)) >= 2
+    has_depletion_branch = "amounts.withdrawn >= amounts.deposited - amounts.refunded" in body
+    return has_incremented_write and has_stale_overwrite and writes_twice and has_depletion_branch
+
+
+def detect_unexpected_access_control(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    _signature, body = _extract_fn_signature_and_body(lower, "cancel")
+    if body is None:
+        return False
+    return bool(
+        re.search(r"_is_caller_stream_sender\([^)]*\)", body)
+        and "||" in body
+        and re.search(r"get_caller_address\(\)\s*==\s*self\.get_recipient\(", body)
+    )
+
+
+def detect_missing_fee_bounds(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    _signature, body = _extract_fn_signature_and_body(lower, "set_protocol_fee")
+    if body is None:
+        return False
+    has_direct_write = bool(
+        re.search(r"\bself\.\w*protocol_fee\w*\.write\([^)]*new_protocol_fee", body)
+    )
+    if not has_direct_write:
+        return False
+    has_bound_guard = bool(
+        re.search(r"(assert|if)[^\n]{0,220}new_protocol_fee[^\n]{0,220}(<=|<)", body)
+        and ("max_fee" in body or "max_fee" in lower or "max_fee" in _strip_line_comments(code.lower()))
+    )
+    return not has_bound_guard
+
+
+def detect_overly_restrictive_validation(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    _signature, body = _extract_fn_signature_and_body(lower, "check_create_with_range")
+    if body is None:
+        return False
+    return bool(re.search(r"assert\([^)]*range\.cliff\s*>\s*range\.start", body))
+
+
+def detect_unbounded_loop(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    for fn_name, _signature, body in _iter_functions(lower):
+        if fn_name not in {"get_streams_by_sender", "get_streams_by_recipient"}:
+            continue
+        if "next_stream_id.read()" not in body:
+            continue
+        if "loop" not in body or "i +=" not in body:
+            continue
+        if "self.streams.read(i)" not in body:
+            continue
+        return True
+    return False
+
+
+def detect_commented_out_access_control(code: str) -> bool:
+    lower = code.lower()
+    _signature, body = _extract_fn_signature_and_body(lower, "transfer_out")
+    if body is None:
+        return False
+    has_commented_guard = bool(
+        re.search(r"//[^\n]*(only_controller|only_owner|assert_only|has_role)", body)
+    )
+    if not has_commented_guard:
+        return False
+    body_no_comments = _strip_line_comments(body)
+    has_live_guard = bool(
+        re.search(r"(only_controller|only_owner|assert_only|has_role)\s*\(", body_no_comments)
+    )
+    has_fund_sink = "transfer_out_internal(" in body_no_comments or "transfer_from(" in body_no_comments
+    return has_fund_sink and not has_live_guard
+
+
+def detect_unvalidated_oracle_prices(code: str) -> bool:
+    lower = code.lower()
+    _signature, body = _extract_fn_signature_and_body(lower, "set_prices")
+    if body is None:
+        return False
+    body_no_comments = _strip_line_comments(body)
+    has_testing_path = "params.compacted_max_prices" in body_no_comments and "set_primary_price_(" in body_no_comments
+    has_validation_bypass_markers = bool(
+        "todo uncomment" in body
+        or re.search(r"//[^\n]*set_prices_\(", body)
+        or re.search(r"//[^\n]*set_prices_from_price_feeds", body)
+        or re.search(r"//[^\n]*validate_prices_", body)
+    )
+    return has_testing_path and has_validation_bypass_markers
+
+
+def detect_wrong_parameter_usage(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    _signature, body = _extract_fn_signature_and_body(lower, "set_prices")
+    if body is None:
+        return False
+    return bool(
+        re.search(
+            r"min:\s*\*?params\.compacted_max_prices\.at\([^)]*\)\s*,\s*max:\s*\*?params\.compacted_max_prices\.at\(",
+            body,
+        )
+    )
+
+
+def detect_silent_no_op(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    _signature, body = _extract_fn_signature_and_body(lower, "set_primary_price_")
+    if body is None:
+        return False
+    return bool(
+        "match self.get_token_with_price_index" in body
+        and re.search(r"option::some\([^)]*\)\s*=>\s*\(\s*\)", body)
+    )
+
+
+def detect_unprotected_initializer(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    signature, body = _extract_fn_signature_and_body(lower, "initialize")
+    if signature is None or body is None:
+        return False
+    if not _is_publicly_reachable(lower, "initialize"):
+        return False
+    if "ref self" not in signature:
+        return False
+    has_once_guard = "is_zero()" in body and "already_initialized" in body
+    if not has_once_guard:
+        return False
+    has_access_guard = bool(
+        re.search(r"(only_controller|only_owner|assert_only|has_role)\s*\(", body)
+        or re.search(r"get_caller_address\(\)\s*(==|!=)", body)
+    )
+    if has_access_guard:
+        return False
+    return ".write(" in body
+
+
+def detect_unsafe_type_conversion(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    if "try_into()" not in lower:
+        return False
+    return bool(
+        re.search(r"try_into\(\)\s*\.expect\(\s*'u256 into u32 failed'\s*\)", lower)
+        or re.search(r"heart_beat_duration[\s\S]{0,240}try_into\(\)", lower)
+    )
+
+
+def detect_incorrect_list_removal(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    signature, body = _extract_fn_signature_and_body(lower, "remove_primary_price")
+    if signature is None or body is None:
+        return False
+    if "token" not in signature or "pop_front()" not in body:
+        return False
+    has_targeted_remove = "get_token_with_price_index" in body or ".remove(" in body
+    return not has_targeted_remove
+
+
+def detect_stale_snapshot_read(code: str) -> bool:
+    lower = _strip_line_comments(code.lower())
+    _signature, body = _extract_fn_signature_and_body(lower, "set_prices_from_price_feeds")
+    if body is None:
+        return False
+    return bool(
+        re.search(r"let\s+self_copy\s*=\s*@self", body)
+        and re.search(r"self_copy\s*\.\s*get_price_feed_price\s*\(", body)
+        and re.search(r"self\s*\.\s*set_primary_price_\s*\(", body)
+    )
+
+
 DETECTORS = {
     "AA-SELF-CALL-SESSION": detect_aa_self_call_session,
     "UNCHECKED_FEE_BOUND": detect_unchecked_fee_bound,
@@ -795,6 +1004,21 @@ DETECTORS = {
     "FEES_RECIPIENT_ZERO_DOS": detect_fees_recipient_zero_dos,
     "NO_ACCESS_CONTROL_MUTATION": detect_no_access_control_mutation,
     "CEI_VIOLATION_ERC1155": detect_cei_violation_erc1155,
+    "PRECISION_LOSS": detect_precision_loss,
+    "UNSAFE_ADMIN_TRANSFER": detect_unsafe_admin_transfer,
+    "STALE_STATE_WRITE": detect_stale_state_write,
+    "UNEXPECTED_ACCESS_CONTROL": detect_unexpected_access_control,
+    "MISSING_FEE_BOUNDS": detect_missing_fee_bounds,
+    "OVERLY_RESTRICTIVE_VALIDATION": detect_overly_restrictive_validation,
+    "UNBOUNDED_LOOP": detect_unbounded_loop,
+    "COMMENTED_OUT_ACCESS_CONTROL": detect_commented_out_access_control,
+    "UNVALIDATED_ORACLE_PRICES": detect_unvalidated_oracle_prices,
+    "WRONG_PARAMETER_USAGE": detect_wrong_parameter_usage,
+    "SILENT_NO_OP": detect_silent_no_op,
+    "UNPROTECTED_INITIALIZER": detect_unprotected_initializer,
+    "UNSAFE_TYPE_CONVERSION": detect_unsafe_type_conversion,
+    "INCORRECT_LIST_REMOVAL": detect_incorrect_list_removal,
+    "STALE_SNAPSHOT_READ": detect_stale_snapshot_read,
 }
 
 

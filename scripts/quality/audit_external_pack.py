@@ -18,6 +18,7 @@ PACK_FILES = {
     "low-profile": "evals/reports/data/external-repo-scan-low-profile-repos.txt",
     "wave2": "evals/reports/data/external-repo-scan-wave2-repos.txt",
     "less-known": "evals/packs/less-known.txt",
+    "issue32": "evals/packs/issue32.txt",
 }
 
 

@@ -54,6 +54,21 @@ SEVERITY_BY_CLASS: dict[str, str] = {
     "FEES_RECIPIENT_ZERO_DOS": "high",
     "NO_ACCESS_CONTROL_MUTATION": "high",
     "CEI_VIOLATION_ERC1155": "high",
+    "PRECISION_LOSS": "high",
+    "UNSAFE_ADMIN_TRANSFER": "high",
+    "STALE_STATE_WRITE": "high",
+    "UNEXPECTED_ACCESS_CONTROL": "medium",
+    "MISSING_FEE_BOUNDS": "medium",
+    "OVERLY_RESTRICTIVE_VALIDATION": "low",
+    "UNBOUNDED_LOOP": "low",
+    "COMMENTED_OUT_ACCESS_CONTROL": "high",
+    "UNVALIDATED_ORACLE_PRICES": "high",
+    "WRONG_PARAMETER_USAGE": "high",
+    "SILENT_NO_OP": "high",
+    "UNPROTECTED_INITIALIZER": "high",
+    "UNSAFE_TYPE_CONVERSION": "high",
+    "INCORRECT_LIST_REMOVAL": "medium",
+    "STALE_SNAPSHOT_READ": "medium",
 }
 
 PRIVILEGED_PATH_CLASSES = {
@@ -61,6 +76,10 @@ PRIVILEGED_PATH_CLASSES = {
     "IRREVOCABLE_ADMIN",
     "ONE_SHOT_REGISTRATION",
     "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD",
+    "UNSAFE_ADMIN_TRANSFER",
+    "UNPROTECTED_INITIALIZER",
+    "COMMENTED_OUT_ACCESS_CONTROL",
+    "UNVALIDATED_ORACLE_PRICES",
 }
 
 SELF_CONTAINED_IMPACT_CLASSES = {
@@ -69,6 +88,9 @@ SELF_CONTAINED_IMPACT_CLASSES = {
 
 PARTIAL_PATH_CLASSES = {
     "CONSTRUCTOR_DEAD_PARAM",
+    "UNBOUNDED_LOOP",
+    "OVERLY_RESTRICTIVE_VALIDATION",
+    "STALE_SNAPSHOT_READ",
 }
 
 FRAMEWORK_HINT_CLASSES = {
@@ -150,8 +172,39 @@ def clone_repo(spec: RepoSpec, workdir: Path, git_host: str) -> tuple[Path, str]
     clone_cmd = ["git", "clone", "--depth", "1", url, str(repo_dir)]
     run(clone_cmd)
     if spec.ref:
-        run(["git", "fetch", "--depth", "1", "origin", spec.ref], cwd=repo_dir)
-        run(["git", "checkout", spec.ref], cwd=repo_dir)
+        checked_out = False
+        try:
+            run(["git", "checkout", spec.ref], cwd=repo_dir)
+            checked_out = True
+        except Exception:
+            checked_out = False
+
+        if not checked_out:
+            fetch_attempts = [
+                ["git", "fetch", "--depth", "1", "origin", spec.ref],
+                ["git", "fetch", "origin", spec.ref],
+                ["git", "fetch", "--unshallow", "origin"],
+                ["git", "fetch", "origin", "--tags", "--prune"],
+            ]
+            last_error: Exception | None = None
+            for fetch_cmd in fetch_attempts:
+                try:
+                    run(fetch_cmd, cwd=repo_dir)
+                except Exception as exc:
+                    last_error = exc
+                    continue
+                try:
+                    run(["git", "checkout", spec.ref], cwd=repo_dir)
+                    checked_out = True
+                    break
+                except Exception as exc:
+                    last_error = exc
+                    continue
+            if not checked_out:
+                detail = str(last_error) if last_error else "unknown checkout failure"
+                raise RuntimeError(
+                    f"failed to resolve ref {spec.ref!r} for {spec.slug}: {detail}"
+                )
     resolved_ref = run(["git", "rev-parse", "HEAD"], cwd=repo_dir)
     return repo_dir, resolved_ref
 
