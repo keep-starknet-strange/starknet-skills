@@ -73,7 +73,7 @@
 - **FP:** old pending authority cleared on transfer completion.
 
 **79. Wrong event payload branch**
-- **D:** event emits mismatched payload (for example claim payload in refund path) and corrupts off-chain state.
+- **D:** event emits mismatched payload (for example claim payload in refund path), causing off-chain accounting to overcount due to stale accumulator state.
 - **FP:** event payload strictly tied to executed branch and tested.
 
 **80. Unbounded user-controlled iteration**
