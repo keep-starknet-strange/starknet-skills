@@ -9,8 +9,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from contract_benchmark_policy import (
+    MIN_CONSECUTIVE_REPORTABLE_RELEASES,
+    MIN_REPORTABLE_CASES,
+)
+
 VERSION_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)-contract-skill-benchmark\.md$")
-MIN_REPORTABLE_CASES = 60
 
 
 @dataclass
@@ -44,7 +48,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--min-consecutive",
         type=int,
-        default=2,
+        default=MIN_CONSECUTIVE_REPORTABLE_RELEASES,
         help="Consecutive reportable releases required for KPI publication",
     )
     parser.add_argument(

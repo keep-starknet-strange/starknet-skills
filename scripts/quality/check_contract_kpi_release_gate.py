@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from contract_benchmark_policy import MIN_CONSECUTIVE_REPORTABLE_RELEASES
+
 LATEST_RELEASE_RE = re.compile(r"- Latest release:\s+`([^`]+)`")
 STREAK_RE = re.compile(r"- Consecutive reportable releases \(latest-first\):\s+`(\d+)`")
 RELEASE_RE = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+$")
@@ -47,7 +49,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--min-consecutive",
         type=int,
-        default=2,
+        default=MIN_CONSECUTIVE_REPORTABLE_RELEASES,
         help="Minimum consecutive reportable releases required for publication",
     )
     parser.add_argument(

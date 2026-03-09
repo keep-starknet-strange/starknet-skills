@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-MIN_REPORTABLE_CASES = 60
+from contract_benchmark_policy import MIN_REPORTABLE_CASES
 ALLOWED_SECURITY_CLASSES: set[str] = {
     "auth",
     "input_validation",
