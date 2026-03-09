@@ -36,6 +36,24 @@ CLASS_DESCRIPTIONS: dict[str, str] = {
     "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": (
         "Constructor/initializer stores critical addresses without explicit non-zero assertions."
     ),
+    "CONSTRUCTOR_DEAD_PARAM": (
+        "Constructor accepts a parameter that is never used in constructor logic, indicating misleading or dead initialization surface."
+    ),
+    "FEES_RECIPIENT_ZERO_DOS": (
+        "Fee recipient address is stored without non-zero guard and later used in transfer/mint flow, risking permanent revert-based DOS."
+    ),
+    "NO_ACCESS_CONTROL_MUTATION": (
+        "State-changing privileged/configuration mutation function is callable without explicit caller/role/owner access control."
+    ),
+    "CEI_VIOLATION_ERC1155": (
+        "Function performs ERC1155 safe_transfer_from external interaction before critical state updates, enabling callback reentrancy risk."
+    ),
+    "IRREVOCABLE_ADMIN": (
+        "Contract seeds privileged admin/owner authority at initialization but exposes no rotation/transfer/revocation path."
+    ),
+    "ONE_SHOT_REGISTRATION": (
+        "Critical dependency address registration is write-once with no operational recovery/update route if initial value is wrong or compromised."
+    ),
 }
 
 

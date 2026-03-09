@@ -1,63 +1,77 @@
 # Quality Scripts
 
-- `validate_skills.py` enforces repository SKILL.md contract checks:
-  - required frontmatter (`name`, `description`)
-  - valid YAML frontmatter parsing (PyYAML)
-  - kebab-case and max length for `name`
-  - third-person trigger-style `description`
-  - `When to Use` / `When NOT to Use` sections for module skills
-  - `Rationalizations to Reject` for audit/security skills
-  - max 500 lines per SKILL.md
-  - one-level markdown link depth for progressive disclosure
-  - markdown link target existence and in-repo resolution
+- `validate_skills.py`: skill contract/lint checks for SKILL.md structure and links.
+- `parity_check.py`: required repository parity and local tool checks.
 
-- `parity_check.py` runs local parity checks against baseline quality bars:
-  - skill contract validator pass
-  - required governance/entry files present
-  - README install/use onboarding present
-  - `cairo-testing` docs match installed `snforge` CLI behavior
-  - `cairo-toolchain` docs match installed `sncast` CLI behavior
-  - explicit Trail of Bits-style authoring parity:
-    - required sections
-    - quick start in each module skill
-    - progressive-disclosure markdown links from entry skills
+## Cairo Auditor Benchmarks
 
-- `benchmark_cairo_auditor.py` runs a deterministic benchmark on Cairo snippets:
-  - case packs:
-    - `evals/cases/cairo_auditor_benchmark.jsonl`
-    - `evals/cases/cairo_auditor_realworld_benchmark.jsonl`
-  - class-level TP/FP/FN/TN metrics
-  - scorecard output to `evals/scorecards/*.md`
-  - precision/recall threshold gate for CI
+- `benchmark_cairo_auditor.py`
+  - deterministic detector benchmark over JSONL case packs
+  - emits markdown scorecards
+  - enforces precision/recall + per-class recall thresholds
+- `score_external_triage.py`
+  - computes precision/recall from manually labeled external findings
+  - emits release scorecard + trend table
+  - tracks labeled coverage against full findings and emits unlabeled backlog queue
+- `check_manual_gold_recall.py`
+  - validates recall against frozen manual gold findings
+  - emits markdown/json recall reports
+- `audit_local_repo.py`
+  - single-entry local repo audit command
+  - runs deterministic detectors on local `.cairo` files
+  - optionally runs Sierra confirmation (`--sierra-confirm [--allow-build]`)
 
-- `score_external_triage.py` scores human-reviewed external scan findings:
-  - label pack:
-    - `evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl`
-  - computes TP/FP/FN/TN, precision, recall from `tp`/`fp` outcomes
-  - emits release scorecard (`evals/scorecards/v*.md`) and trend table
-  - enforces minimum precision/recall thresholds in CI
+## External Scan Tooling
 
-- `benchmark_contract_skills.py` runs deterministic contract-oriented skill checks:
-  - case pack:
-    - `evals/cases/contract_skill_benchmark.jsonl`
-  - fixture projects:
-    - `evals/contracts/secure_owned_vault/`
-    - `evals/contracts/insecure_owned_vault/`
-    - `evals/contracts/secure_upgrade_controller/`
-    - `evals/contracts/insecure_upgrade_controller/`
-    - `evals/contracts/secure_math_patterns/`
-    - `evals/contracts/insecure_math_patterns/`
-  - checks:
-    - `scarb build`
-    - `snforge test`
-    - source-level must-match / must-not-match regex assertions
-  - emits scorecard markdown and enforces precision/recall thresholds
-  - supports reportable-gate thresholds (`--min-evaluated`, `--enforce-min-evaluated`)
-  - defaults to `22` minimum evaluated cases for reportable interpretation
-  - fails on zero evaluated cases unless `--allow-empty-evaluated` is explicitly set
+- `scan_external_repos.py`
+  - clones configured repos and scans production-scoped `.cairo` files
+  - emits JSON/JSONL/markdown artifacts
+  - isolates per-repo failures so one repo does not abort the full scan
+- `compare_scan_artifacts.py`
+  - compares two scan JSON artifacts
+  - outputs class/file deltas and added/removed findings
 
-- `render_contract_benchmark_trend.py` builds release trend reporting for contract benchmarks:
-  - scans `evals/scorecards/v*-contract-skill-benchmark.md`
-  - marks releases as reportable/non-reportable via minimum case policy
-  - tracks consecutive reportable releases for KPI publication readiness
-  - emits `evals/scorecards/contract-skill-benchmark-trend.md`
+## LLM and Sierra Signals
+
+- `run_llm_eval.py`
+  - held-out LLM evaluation tier via GitHub Models API
+- `sierra_parallel_signal.py`
+  - Sierra-native auxiliary confirmation pass
+  - resolves workspace/member target directories via `scarb metadata`
+  - parses `.sierra.json`, `.starknet_artifacts.json`, and `*.contract_class.json`
+  - emits function-order signal (`external_call` before `state_write`) for CEI triage
+
+## Quick Start
+
+Run a local deterministic audit:
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit \
+  --output-json /path/to/output/local-audit.json \
+  --output-md /path/to/output/local-audit.md
+```
+
+Run local audit + Sierra confirmation (build mode):
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit-sierra \
+  --sierra-confirm \
+  --allow-build \
+  --output-json /path/to/output/local-audit-sierra.json \
+  --output-md /path/to/output/local-audit-sierra.md
+```
+
+Warning: `--allow-build` may execute repository build steps/tooling.
+Use build mode only on trusted code, or run in an isolated environment.
+
+## Contract-Skill Benchmarks
+
+- `benchmark_contract_skills.py`
+  - deterministic contract fixture benchmark for authoring/testing/toolchain skills
+  - validates build/test + regex assertions over secure/insecure fixtures
+- `render_contract_benchmark_trend.py`
+  - aggregates versioned contract benchmark scorecards into trend markdown
