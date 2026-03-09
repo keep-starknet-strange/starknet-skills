@@ -81,10 +81,10 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cai
 | Module | What LLMs Commonly Miss |
 | --- | --- |
 | [cairo-auditor](cairo-auditor/SKILL.md) | Starknet upgrade/account edge cases and weak FP gates |
-| [cairo-contract-authoring](cairo-contract-authoring/SKILL.md) | Cairo component structure and secure initialization patterns |
+| [cairo-contract-authoring](cairo-contract-authoring/SKILL.md) | Applies Solidity structure directly to Cairo components |
 | [cairo-testing](cairo-testing/SKILL.md) | Invariants, adversarial tests, and regression discipline |
-| [cairo-optimization](cairo-optimization/SKILL.md) | Correct optimization targets without trace/Sierra context |
-| [cairo-toolchain](cairo-toolchain/SKILL.md) | Current Scarb/snforge/sncast workflows |
+| [cairo-optimization](cairo-optimization/SKILL.md) | Optimizes wrong paths without trace/Sierra context |
+| [cairo-toolchain](cairo-toolchain/SKILL.md) | Uses stale Scarb/snforge/sncast workflows |
 | [account-abstraction](account-abstraction/SKILL.md) | Session-key/self-call pitfalls and validation flow |
 | [starknet-network-facts](starknet-network-facts/SKILL.md) | Network semantics hallucinations and fee/timing assumptions |
 
