@@ -52,6 +52,8 @@
   - one-shot external benchmark runner with curated repo packs
   - default outputs include JSON/JSONL/markdown + all CSV artifacts
   - optionally prepares Stage-2 specialist bundles (4 vector partitions per repo)
+  - writes `<scan-id>.stage2-manifest.json` (repo-level metadata, skipped repos, skip reasons, truncation counters)
+  - writes `<scan-id>.stage2-runbook.md` (missing-reference warnings, per-repo truncation details, bundle prep instructions)
 - `compare_scan_artifacts.py`
   - compares two scan JSON artifacts
   - outputs class/file deltas and added/removed findings
@@ -167,13 +169,15 @@ python scripts/quality/audit_local_repo.py \
   --write-findings-jsonl
 ```
 
-Run one-shot external pack audit (deterministic Stage-1 + Stage-2 bundle prep):
+Run one-shot external pack audit:
 
 ```bash
-./starkskills audit external --pack less-known --scan-id community-less-known
-./starkskills audit deep --pack less-known --scan-id community-less-known-deep
-./starkskills audit external --pack issue32 --scan-id issue32-cairo1
+./starkskills audit external --pack less-known --scan-id community-less-known              # Stage-1 + Stage-2 bundle prep outputs
+./starkskills audit deep --pack less-known --scan-id community-less-known-deep             # deep analysis mode; Stage-2 outputs only when bundle prep is enabled
+./starkskills audit external --pack issue32 --scan-id issue32-cairo1                        # Stage-1 + Stage-2 bundle prep outputs
 ```
+
+Stage-2 artifacts are emitted under the same output directory as `<scan-id>.stage2-manifest.json` and `<scan-id>.stage2-runbook.md`. Check these first for skipped repos, skip reasons, truncation counts, and warning messages.
 
 Useful hardening flags:
 

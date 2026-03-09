@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -37,6 +38,10 @@ def _load_config(path: str) -> tuple[dict[str, Any], Path | None]:
         p = Path(path)
         if not p.is_absolute():
             p = (Path.cwd() / p).resolve()
+        if not p.exists():
+            raise FileNotFoundError(f"config file not found: {p.as_posix()}")
+        if not p.is_file():
+            raise ValueError(f"config path must be a file: {p.as_posix()}")
         candidates.append(p)
     else:
         candidates.append((Path.cwd() / ".starkskills.toml").resolve())
@@ -111,6 +116,12 @@ def _resolve_path(value: str | None, fallback: Path) -> Path:
     return fallback.resolve()
 
 
+def _safe_ref_token(ref: str) -> str:
+    cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "_", ref.strip())
+    cleaned = cleaned.strip("._-")
+    return cleaned[:40] if cleaned else "ref"
+
+
 def _remap_external_findings_for_sarif(*, findings_jsonl: str, workdir: Path, output_path: Path) -> Path:
     src = Path(findings_jsonl)
     if not src.is_file():
@@ -119,7 +130,8 @@ def _remap_external_findings_for_sarif(*, findings_jsonl: str, workdir: Path, ou
 
     out_path = output_path.resolve()
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    remapped_lines: list[str] = []
+    parsed_rows: list[dict[str, Any]] = []
+    refs_by_repo: dict[str, set[str]] = {}
 
     for line_no, line in enumerate(src.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
@@ -130,12 +142,56 @@ def _remap_external_findings_for_sarif(*, findings_jsonl: str, workdir: Path, ou
             raise ValueError(f"{src.as_posix()}:{line_no}: invalid JSON: {exc}") from exc
         if not isinstance(raw, dict):
             raise ValueError(f"{src.as_posix()}:{line_no}: expected JSON object")
+        parsed_rows.append(raw)
+        repo = str(raw.get("repo", "")).strip()
+        ref = str(raw.get("ref", "")).strip()
+        if repo:
+            refs_by_repo.setdefault(repo, set()).add(ref)
 
+    remapped_lines: list[str] = []
+    for raw in parsed_rows:
         repo = str(raw.get("repo", "")).strip()
         file_value = str(raw.get("file", "")).strip()
         if repo and file_value and not Path(file_value).is_absolute():
-            repo_dir = (workdir_resolved / repo.replace("/", "__")).resolve()
-            rel_repo_dir = repo_dir.relative_to(workdir_resolved).as_posix()
+            clone_dir_override = str(raw.get("clone_dir", "")).strip()
+            rel_repo_dir = ""
+            if clone_dir_override:
+                clone_dir_path = Path(clone_dir_override)
+                if not clone_dir_path.is_absolute():
+                    clone_dir_path = (workdir_resolved / clone_dir_path).resolve()
+                try:
+                    rel_repo_dir = clone_dir_path.relative_to(workdir_resolved).as_posix()
+                except ValueError:
+                    rel_repo_dir = clone_dir_path.name
+            else:
+                repo_token = repo.replace("/", "__")
+                ref = str(raw.get("ref", "")).strip()
+                repo_refs = {item for item in refs_by_repo.get(repo, set()) if item}
+                has_multi_ref = len(repo_refs) > 1
+                candidate_dirs: list[Path] = []
+                if ref:
+                    ref_token = _safe_ref_token(ref)
+                    candidate_dirs.append((workdir_resolved / f"{repo_token}__{ref_token}").resolve())
+                    candidate_dirs.append((workdir_resolved / f"{repo_token}@{ref_token}").resolve())
+                if not (has_multi_ref and ref):
+                    candidate_dirs.append((workdir_resolved / repo_token).resolve())
+
+                resolved_dir: Path | None = None
+                for candidate in candidate_dirs:
+                    if candidate.exists():
+                        resolved_dir = candidate
+                        break
+
+                if resolved_dir is not None:
+                    try:
+                        rel_repo_dir = resolved_dir.relative_to(workdir_resolved).as_posix()
+                    except ValueError:
+                        rel_repo_dir = resolved_dir.name
+                elif has_multi_ref and ref:
+                    rel_repo_dir = f"{repo_token}__{_safe_ref_token(ref)}"
+                else:
+                    rel_repo_dir = repo_token
+
             mapped = (Path(rel_repo_dir) / file_value).as_posix()
             raw["file"] = mapped
         remapped_lines.append(json.dumps(raw, ensure_ascii=True))
@@ -183,7 +239,11 @@ def _print_doctor_report(rows: list[dict[str, Any]], *, as_json: bool) -> int:
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
-    cfg, cfg_path = _load_config(args.config)
+    try:
+        cfg, cfg_path = _load_config(args.config)
+    except Exception as exc:
+        print(f"ERROR: failed to load config: {exc}", file=sys.stderr)
+        return 1
     rows: list[dict[str, Any]] = []
 
     rows.append({
@@ -273,7 +333,11 @@ def _print_next_actions(title: str, actions: list[str]) -> None:
 
 
 def cmd_audit_local(args: argparse.Namespace) -> int:
-    cfg, cfg_path = _load_config(args.config)
+    try:
+        cfg, cfg_path = _load_config(args.config)
+    except Exception as exc:
+        print(f"ERROR: failed to load config: {exc}", file=sys.stderr)
+        return 1
     repo_root = _resolve_path(args.repo_root, Path.cwd())
     output_dir_default = repo_root / str(_cfg(cfg, "local", "output_dir", "evals/reports/local"))
     output_dir = _resolve_path(args.output_dir, output_dir_default)
@@ -341,18 +405,26 @@ def cmd_audit_local(args: argparse.Namespace) -> int:
         return 1
     sarif_path: Path | None = None
     if args.format in {"sarif", "both"}:
-        out_json = Path(str(payload.get("output_json", "")))
-        findings_jsonl = payload.get("output_findings_jsonl")
-        default_sarif = out_json.with_suffix(".sarif.json") if out_json.name else (output_dir / f"{args.scan_id}.sarif.json")
-        sarif_out = _resolve_path(args.sarif_output, default_sarif)
-        sarif_path = _maybe_export_sarif(
-            findings_jsonl=str(findings_jsonl) if findings_jsonl else None,
-            scan_json=out_json.as_posix() if out_json else None,
-            output_path=sarif_out,
-            root=repo_root,
-            run_name=f"starkskills-local-{args.scan_id}",
-        )
-        print(json.dumps({"sarif_output": sarif_path.as_posix()}, ensure_ascii=True))
+        try:
+            out_json = Path(str(payload.get("output_json", "")))
+            findings_jsonl = payload.get("output_findings_jsonl")
+            default_sarif = (
+                out_json.with_suffix(".sarif.json")
+                if out_json.name
+                else (output_dir / f"{args.scan_id}.sarif.json")
+            )
+            sarif_out = _resolve_path(args.sarif_output, default_sarif)
+            sarif_path = _maybe_export_sarif(
+                findings_jsonl=str(findings_jsonl) if findings_jsonl else None,
+                scan_json=out_json.as_posix() if out_json else None,
+                output_path=sarif_out,
+                root=repo_root,
+                run_name=f"starkskills-local-{args.scan_id}",
+            )
+            print(json.dumps({"sarif_output": sarif_path.as_posix()}, ensure_ascii=True))
+        except Exception as exc:
+            print(f"ERROR: SARIF export failed in _maybe_export_sarif: {exc}", file=sys.stderr)
+            return 1
 
     actions = [
         f"Open markdown report: {payload.get('output_md')}",
@@ -370,7 +442,11 @@ def cmd_audit_local(args: argparse.Namespace) -> int:
 
 
 def _run_pack_backend(args: argparse.Namespace, *, force_stage2: bool | None) -> tuple[int, dict[str, Any]]:
-    cfg, cfg_path = _load_config(args.config)
+    try:
+        cfg, cfg_path = _load_config(args.config)
+    except Exception as exc:
+        print(f"ERROR: failed to load config: {exc}", file=sys.stderr)
+        return 1, {}
     output_dir = _resolve_path(args.output_dir, REPO_ROOT / str(_cfg(cfg, "defaults", "output_dir", "evals/reports/data")))
     default_workdir = Path(tempfile.gettempdir()) / "starknet-skills-external-scan"
     workdir = _resolve_path(
@@ -483,43 +559,54 @@ def _run_pack_backend(args: argparse.Namespace, *, force_stage2: bool | None) ->
 
 
 def _external_common(args: argparse.Namespace, *, deep_mode: bool) -> int:
-    code, payload = _run_pack_backend(args, force_stage2=True if deep_mode else args.prepare_stage2)
+    force_stage2 = args.prepare_stage2
+    if deep_mode and force_stage2 is None:
+        force_stage2 = True
+    code, payload = _run_pack_backend(args, force_stage2=force_stage2)
     if code != 0:
         return code
 
     sarif_path: Path | None = None
     if args.format in {"sarif", "both"}:
-        findings_jsonl = payload.get("findings_jsonl")
-        base_json = Path(str(payload.get("json", "")))
-        default_sarif = base_json.with_suffix(".sarif.json") if base_json.name else (Path.cwd() / f"{args.scan_id}.sarif.json")
-        sarif_out = _resolve_path(args.sarif_output, default_sarif)
-        sarif_findings_jsonl = str(findings_jsonl) if findings_jsonl else None
-        sarif_root = Path.cwd()
-        resolved_workdir = str(payload.get("_resolved_workdir", "")).strip()
-        if sarif_findings_jsonl and resolved_workdir:
-            workdir_path = Path(resolved_workdir).resolve()
-            with tempfile.TemporaryDirectory(prefix="starkskills-sarif-remap-") as temp_dir:
-                remapped_findings = _remap_external_findings_for_sarif(
-                    findings_jsonl=sarif_findings_jsonl,
-                    workdir=workdir_path,
-                    output_path=Path(temp_dir) / Path(sarif_findings_jsonl).name,
-                )
+        try:
+            findings_jsonl = payload.get("findings_jsonl")
+            base_json = Path(str(payload.get("json", "")))
+            default_sarif = (
+                base_json.with_suffix(".sarif.json")
+                if base_json.name
+                else (Path.cwd() / f"{args.scan_id}.sarif.json")
+            )
+            sarif_out = _resolve_path(args.sarif_output, default_sarif)
+            sarif_findings_jsonl = str(findings_jsonl) if findings_jsonl else None
+            sarif_root = Path.cwd()
+            resolved_workdir = str(payload.get("_resolved_workdir", "")).strip()
+            if sarif_findings_jsonl and resolved_workdir:
+                workdir_path = Path(resolved_workdir).resolve()
+                with tempfile.TemporaryDirectory(prefix="starkskills-sarif-remap-") as temp_dir:
+                    remapped_findings = _remap_external_findings_for_sarif(
+                        findings_jsonl=sarif_findings_jsonl,
+                        workdir=workdir_path,
+                        output_path=Path(temp_dir) / Path(sarif_findings_jsonl).name,
+                    )
+                    sarif_path = _maybe_export_sarif(
+                        findings_jsonl=remapped_findings.as_posix(),
+                        scan_json=base_json.as_posix() if base_json else None,
+                        output_path=sarif_out,
+                        root=workdir_path,
+                        run_name=f"starkskills-external-{args.scan_id}",
+                    )
+            else:
                 sarif_path = _maybe_export_sarif(
-                    findings_jsonl=remapped_findings.as_posix(),
+                    findings_jsonl=sarif_findings_jsonl,
                     scan_json=base_json.as_posix() if base_json else None,
                     output_path=sarif_out,
-                    root=workdir_path,
+                    root=sarif_root,
                     run_name=f"starkskills-external-{args.scan_id}",
                 )
-        else:
-            sarif_path = _maybe_export_sarif(
-                findings_jsonl=sarif_findings_jsonl,
-                scan_json=base_json.as_posix() if base_json else None,
-                output_path=sarif_out,
-                root=sarif_root,
-                run_name=f"starkskills-external-{args.scan_id}",
-            )
-        print(json.dumps({"sarif_output": sarif_path.as_posix()}, ensure_ascii=True))
+            print(json.dumps({"sarif_output": sarif_path.as_posix()}, ensure_ascii=True))
+        except Exception as exc:
+            print(f"ERROR: SARIF export failed in _external_common: {exc}", file=sys.stderr)
+            return 1
 
     title = "deep" if deep_mode else "external"
     actions = [

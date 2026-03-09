@@ -44,6 +44,12 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
      --scan-id local-audit
    ```
 
+   Alternative (same backend, simpler CLI):
+
+   ```bash
+   ./starkskills audit local --repo-root /path/to/repo --scan-id local-audit
+   ```
+
 5. Format output using [references/report-formatting.md](references/report-formatting.md), then validate against `references/vulnerability-db/README.md`.
 
 ## Orchestration (4 Turns)
@@ -137,6 +143,11 @@ for i in range(1, 5):
         "cairo-auditor/references/report-formatting.md",
         f"cairo-auditor/references/attack-vectors/attack-vectors-{i}.md",
     ]
+    missing_refs = [ref for ref in refs if not (skills_root / ref).is_file()]
+    if missing_refs:
+        raise FileNotFoundError(
+            "missing required reference files: " + ", ".join(missing_refs)
+        )
     chunks = [(skills_root / ref).read_text(encoding="utf-8").rstrip() for ref in refs]
     chunks.append(source_bundle.read_text(encoding="utf-8").rstrip())
     out = bundle_root / f"audit-agent-{i}-bundle.md"

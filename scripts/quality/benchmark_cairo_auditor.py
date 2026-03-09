@@ -956,9 +956,30 @@ def detect_unprotected_initializer(code: str) -> bool:
         return False
     if "ref self" not in signature:
         return False
-    has_access_guard = bool(
+    access_markers = (
+        "assert_only_",
+        "assert_only_owner",
+        "assert_only_role",
+        "assert_admin(",
+        "_assert_admin(",
+        "self.assert_admin(",
+        "self._assert_admin(",
+        "assert_owner(",
+        "_assert_owner(",
+        "self.assert_owner(",
+        "self._assert_owner(",
+        "ownable.assert_only_owner",
+        "accesscontrol.assert_only_role",
+        "access_control.assert_only_role",
+        "has_role(",
+    )
+    has_access_guard = any(marker in body for marker in access_markers) or bool(
         re.search(r"(only_controller|only_owner|assert_only|has_role)\s*\(", body)
         or re.search(r"get_caller_address\(\)\s*(==|!=)", body)
+        or re.search(
+            r"let\s+[a-z_][a-z0-9_]*\s*=\s*(?:starknet::)?get_caller_address\(\)[\s\S]{0,220}assert!?\([^)]*(==|!=)\s*self\.",
+            body,
+        )
     )
     if has_access_guard:
         return False

@@ -162,7 +162,7 @@ def _render_markdown(
     lines.append("| Class | Recall |")
     lines.append("| --- | ---: |")
     for class_id, value in sorted(class_recall.items()):
-        lines.append(f"| {class_id} | {value:.3f} |")
+        lines.append(f"| {_md_cell(class_id)} | {value:.3f} |")
     lines.append("")
 
     if fn_rows:
