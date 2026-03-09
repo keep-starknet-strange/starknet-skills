@@ -20,7 +20,7 @@ Cairo/Starknet skill modules for agent reliability: security review, contract au
 
 > Reasoning + security knowledge layer. For operational tooling, see [starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic) and [starkzap](https://github.com/keep-starknet-strange/starkzap).
 
-## Quick Start
+## Install & Use
 
 ### Router URL (fastest)
 
@@ -32,6 +32,7 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKI
 
 ```bash
 /plugin marketplace add keep-starknet-strange/starknet-skills
+/plugin menu
 /plugin install starknet-skills
 ```
 
