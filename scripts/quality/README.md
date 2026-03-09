@@ -63,6 +63,7 @@
 - `sierra_parallel_signal.py`
   - Sierra-native auxiliary confirmation pass
   - resolves workspace/member target directories via `scarb metadata`
+  - in build mode, retries toolchains (`scarb`, and `asdf`-managed versions when available) and `--ignore-cairo-version` fallback
   - parses `.sierra.json`, `.starknet_artifacts.json`, and `*.contract_class.json`
   - emits function-order signal (`external_call` before `state_write`) for CEI triage
 - `run_contract_generation_eval.py`
