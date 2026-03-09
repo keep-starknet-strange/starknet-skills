@@ -115,14 +115,15 @@ python scripts/quality/audit_local_repo.py \
 
 By default, the script writes:
 
-- `evals/reports/local/<scan-id>-<timestamp>.json`
-- `evals/reports/local/<scan-id>-<timestamp>.md`
+- `evals/reports/local/<safe-scan-id>-<timestamp>.json`
+- `evals/reports/local/<safe-scan-id>-<timestamp>.md`
 - If a filename already exists, the script appends `-N` before extension to avoid overwrite.
+  The script also slugifies `--scan-id` into `<safe-scan-id>` (lowercase alphanumeric with `-`/`_`).
 
 JSONL behavior:
 
 - `--write-findings-jsonl` writes to:
-  `evals/reports/local/<scan-id>-<timestamp>.findings.jsonl`
+  `evals/reports/local/<safe-scan-id>-<timestamp>.findings.jsonl`
 - `--output-findings-jsonl /custom/path/file.jsonl` writes to the provided path
   (and overrides the default location).
 

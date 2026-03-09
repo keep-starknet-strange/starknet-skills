@@ -59,12 +59,19 @@ def _next_available_stem(
     fallback_suffixes: list[str],
     *,
     max_attempts: int = 10_000,
-) -> str:
+) -> tuple[str, Path]:
     idx = 0
     while idx < max_attempts:
         candidate = base_stem if idx == 0 else f"{base_stem}-{idx}"
+        lock_path = output_dir / f".{candidate}.lock"
+        try:
+            lock_path.touch(exist_ok=False)
+        except FileExistsError:
+            idx += 1
+            continue
         if all(not (output_dir / f"{candidate}{suffix}").exists() for suffix in fallback_suffixes):
-            return candidate
+            return candidate, lock_path
+        lock_path.unlink(missing_ok=True)
         idx += 1
     raise RuntimeError(
         f"could not allocate unique output stem after {max_attempts} attempts: {base_stem}"
@@ -252,7 +259,11 @@ def main() -> int:
         fallback_suffixes.append(".md")
     if write_findings_jsonl and not args.output_findings_jsonl:
         fallback_suffixes.append(".findings.jsonl")
-    stem = _next_available_stem(output_dir, default_stem, fallback_suffixes) if fallback_suffixes else default_stem
+    lock_path: Path | None = None
+    if fallback_suffixes:
+        stem, lock_path = _next_available_stem(output_dir, default_stem, fallback_suffixes)
+    else:
+        stem = default_stem
 
     out_json = _resolve_path(args.output_json, repo_root) if args.output_json else (output_dir / f"{stem}.json")
     out_md = _resolve_path(args.output_md, repo_root) if args.output_md else (output_dir / f"{stem}.md")
@@ -300,27 +311,31 @@ def main() -> int:
         "sierra_confirmation": sierra_payload,
     }
 
-    out_json.parent.mkdir(parents=True, exist_ok=True)
-    out_md.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        out_json.parent.mkdir(parents=True, exist_ok=True)
+        out_md.parent.mkdir(parents=True, exist_ok=True)
 
-    out_json.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
-    out_md.write_text(
-        _render_markdown(
-            scan_id=args.scan_id,
-            generated_at=generated_at_iso,
-            summary=summary,
-            class_counts=class_counts,
-            findings=findings,
-            sierra=sierra_payload,
-        ),
-        encoding="utf-8",
-    )
+        out_json.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+        out_md.write_text(
+            _render_markdown(
+                scan_id=args.scan_id,
+                generated_at=generated_at_iso,
+                summary=summary,
+                class_counts=class_counts,
+                findings=findings,
+                sierra=sierra_payload,
+            ),
+            encoding="utf-8",
+        )
 
-    if out_jsonl:
-        out_jsonl.parent.mkdir(parents=True, exist_ok=True)
-        with out_jsonl.open("w", encoding="utf-8") as handle:
-            for row in findings:
-                handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+        if out_jsonl:
+            out_jsonl.parent.mkdir(parents=True, exist_ok=True)
+            with out_jsonl.open("w", encoding="utf-8") as handle:
+                for row in findings:
+                    handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+    finally:
+        if lock_path:
+            lock_path.unlink(missing_ok=True)
 
     print(
         json.dumps(
