@@ -112,4 +112,4 @@ Each finding must include:
 ## Output Rule
 
 - Report only findings that pass FP gate.
-- Findings below confidence threshold may be listed as low-confidence notes without a fix block.
+- Findings with confidence `<75` may be listed as low-confidence notes without a fix block.

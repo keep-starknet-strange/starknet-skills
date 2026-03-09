@@ -3,6 +3,9 @@
 - `validate_skills.py`: skill contract/lint checks for SKILL.md structure and links.
 - `validate_marketplace.py`: enforces `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` parity (name/version/source/description/author and skill path validity).
 - `parity_check.py`: required repository parity and local tool checks.
+- `check_vulndb_parity.py`: enforces benchmark/detector class parity with `cairo-auditor/references/vulnerability-db/`.
+- `check_attack_vector_coverage.py`: enforces minimum attack-vector corpus size and unique vector IDs.
+- `check_semgrep_vector_coverage.py`: enforces Semgrep `attack_vectors_core` metadata covers core vectors `1..80`.
 
 ## Cairo Auditor Benchmarks
 
@@ -72,6 +75,12 @@
   - generates fixture `src/lib.cairo`, then runs build/test/static policy checks
   - emits markdown/json reports with pass/vulnerability rates
   - intended as informative calibration telemetry (`continue-on-error` in workflow)
+- `run_caracal_adapter.py`
+  - optional Caracal adapter for Sierra-level auxiliary analysis
+  - fail-open by default when Caracal is unavailable
+- `run_semgrep_cairo.py`
+  - optional Semgrep adapter using `cairo-auditor/references/semgrep/rules/`
+  - fail-open by default when Semgrep is unavailable
 
 ## Quick Start
 
@@ -93,8 +102,9 @@ python scripts/quality/audit_local_repo.py \
   --allow-build
 ```
 
-Warning: `--allow-build` may execute repository build steps/tooling.
-Use build mode only on trusted code, or run in an isolated environment.
+Warning: any command using `--allow-build` (for example `audit_local_repo.py` and
+`run_caracal_adapter.py`) may execute repository build steps/tooling. Use build
+mode only on trusted code, or run in an isolated environment.
 
 Fail CI if any findings are detected:
 
@@ -128,6 +138,21 @@ JSONL behavior:
   `evals/reports/local/<safe-scan-id>-<timestamp>.findings.jsonl`
 - `--output-findings-jsonl /custom/path/file.jsonl` writes to the provided path
   (and overrides the default location).
+
+Run auxiliary adapters (optional, non-blocking):
+
+```bash
+python scripts/quality/run_caracal_adapter.py \
+  --repo-root /path/to/your/cairo-repo \
+  --allow-build \
+  --output-json /path/to/output/caracal-adapter.json \
+  --output-md /path/to/output/caracal-adapter.md
+
+python scripts/quality/run_semgrep_cairo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --output-json /path/to/output/semgrep-adapter.json \
+  --output-md /path/to/output/semgrep-adapter.md
+```
 
 Exit code behavior:
 

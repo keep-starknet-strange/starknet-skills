@@ -97,6 +97,14 @@ jobs:
           python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/reports/data/manual-19-gold.schema.json \
             --jsonl evals/reports/data/manual-19-gold.jsonl
+          python scripts/quality/check_vulndb_parity.py \
+            --cases evals/cases/cairo_auditor_benchmark.jsonl \
+            --cases evals/cases/cairo_auditor_realworld_benchmark.jsonl
+          python scripts/quality/check_attack_vector_coverage.py \
+            --min-vectors 120
+          python scripts/quality/check_semgrep_vector_coverage.py \
+            --core-min 1 \
+            --core-max 120
 
       - name: Held-out leakage guard
         run: python scripts/audit-pipeline/check_no_heldout_leak.py
@@ -226,7 +234,7 @@ jobs:
       - name: Sierra parallel signal (auxiliary)
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         continue-on-error: true
-        timeout-minutes: 15
+        timeout-minutes: 25
         run: |
           mkdir -p "${RUNNER_TEMP}/scorecards"
           python scripts/quality/sierra_parallel_signal.py \
@@ -237,6 +245,30 @@ jobs:
             --scarb-timeout-seconds 240 \
             --output-json "${RUNNER_TEMP}/scorecards/cairo-auditor-sierra-parallel.json" \
             --output-md "${RUNNER_TEMP}/scorecards/cairo-auditor-sierra-parallel.md"
+
+      - name: Caracal adapter (auxiliary)
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          python scripts/quality/run_caracal_adapter.py \
+            --repo-root . \
+            --allow-build \
+            --scarb-timeout-seconds 240 \
+            --output-json "${RUNNER_TEMP}/scorecards/cairo-auditor-caracal-adapter.json" \
+            --output-md "${RUNNER_TEMP}/scorecards/cairo-auditor-caracal-adapter.md"
+
+      - name: Semgrep Cairo adapter (auxiliary)
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        continue-on-error: true
+        timeout-minutes: 10
+        run: |
+          mkdir -p "${RUNNER_TEMP}/scorecards"
+          python scripts/quality/run_semgrep_cairo.py \
+            --repo-root . \
+            --output-json "${RUNNER_TEMP}/scorecards/cairo-auditor-semgrep-adapter.json" \
+            --output-md "${RUNNER_TEMP}/scorecards/cairo-auditor-semgrep-adapter.md"
 
       - name: Probe GitHub Models availability
         id: models_probe
@@ -321,6 +353,10 @@ jobs:
             ${{ runner.temp }}/scorecards/cairo-auditor-manual-19-gold-recall.json
             ${{ runner.temp }}/scorecards/cairo-auditor-sierra-parallel.md
             ${{ runner.temp }}/scorecards/cairo-auditor-sierra-parallel.json
+            ${{ runner.temp }}/scorecards/cairo-auditor-caracal-adapter.md
+            ${{ runner.temp }}/scorecards/cairo-auditor-caracal-adapter.json
+            ${{ runner.temp }}/scorecards/cairo-auditor-semgrep-adapter.md
+            ${{ runner.temp }}/scorecards/cairo-auditor-semgrep-adapter.json
             ${{ runner.temp }}/scorecards/cairo-auditor-llm-heldout.md
             ${{ runner.temp }}/scorecards/cairo-auditor-llm-heldout.json
             ${{ runner.temp }}/scorecards/contract-generation-eval.md

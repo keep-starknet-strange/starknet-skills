@@ -34,6 +34,23 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKI
 /plugin marketplace add keep-starknet-strange/starknet-skills
 /plugin menu
 /plugin install starknet-skills
+# Optional: install only the flagship audit module
+/plugin install cairo-auditor@starknet-skills
+```
+
+### Maintainer Publish Checklist
+
+```bash
+# 1) Validate manifests (root marketplace + module plugin)
+claude plugin validate .
+claude plugin validate cairo-auditor
+python3 scripts/quality/validate_marketplace.py
+
+# 2) Merge to main, then cut release
+VERSION="<sync with .claude-plugin/marketplace.json metadata.version>"
+git tag "v${VERSION}"
+git push origin "v${VERSION}"
+gh release create "v${VERSION}" --generate-notes
 ```
 
 ### Local clone

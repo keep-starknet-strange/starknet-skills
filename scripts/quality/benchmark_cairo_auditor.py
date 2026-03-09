@@ -401,11 +401,6 @@ def detect_irrevocable_admin(code: str) -> bool:
             seeded_via_direct_write = True
         if direct_seed or role_seed or init_seed:
             break
-        if re.search(
-            rf"\b(initializer|_grant_role)\([^)]*\b{param}\b", body_no_comments
-        ):
-            seeded_admin = True
-            break
     if not seeded_admin:
         return False
 

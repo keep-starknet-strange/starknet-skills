@@ -79,3 +79,43 @@
 **40. Event emission before interaction finality**
 - **D:** event logs success before external call outcome is known, confusing off-chain automation.
 - **FP:** success events emitted only after all critical interactions and writes succeed.
+
+**91. L1 handler replay by weak message keying**
+- **D:** L1 handler marks processed messages with incomplete key material (missing nonce/sender/value domain).
+- **FP:** replay key includes full domain-separated message identity.
+
+**92. Dispatcher callback reentrancy via trusted adapter**
+- **D:** adapter marked trusted can still re-enter caller path before state finalization.
+- **FP:** reentrancy lock/effects-first invariant spans adapter callback boundaries.
+
+**93. External return decoding without length validation**
+- **D:** call result is decoded into struct/tuple without asserting expected span length.
+- **FP:** decode path validates result shape/length before interpretation.
+
+**94. Fallback-to-default on external read failure**
+- **D:** failed external read (price/balance/config) silently falls back to unsafe default and continues.
+- **FP:** failed read reverts or routes to explicit fail-safe mode.
+
+**95. Multicall order dependence on mutable shared state**
+- **D:** same transaction can reorder calls to bypass per-call assumptions (auth/limits/nonce checks).
+- **FP:** order-independent invariants or explicit topological restrictions are enforced.
+
+**96. Session signature replay across bundled calls**
+- **D:** one signature/nonce authorizes multiple operations without per-call binding.
+- **FP:** signature domain binds call set/hash and nonce monotonicity per execution.
+
+**97. Bridge emit-before-lock/burn inconsistency**
+- **D:** outbound bridge message/event emitted before asset lock/burn is irreversible.
+- **FP:** bridge side effects are emitted only after asset state commit.
+
+**98. External call target mutable in same tx path**
+- **D:** target address can be changed then used immediately in same execution path without delay.
+- **FP:** target mutation and target use are separated by governance delay/checkpoint.
+
+**99. Post-interaction authorization check**
+- **D:** external interaction occurs before caller/role authorization is fully validated.
+- **FP:** full auth and policy checks happen strictly before any external interaction.
+
+**100. Error-logging without rollback in privileged path**
+- **D:** privileged flow catches/logs external error but keeps partial state updates.
+- **FP:** privileged path either reverts or atomically compensates all partial state.

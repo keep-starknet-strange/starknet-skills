@@ -79,3 +79,43 @@
 **80. Unbounded user-controlled iteration**
 - **D:** loops over user-controlled array/span without bound checks can DoS execution.
 - **FP:** explicit max bounds and fail-fast checks enforce bounded work.
+
+**111. Component storage namespace overlap**
+- **D:** Cairo component composition assigns overlapping component storage base/namespace, so writes in one component corrupt another.
+- **FP:** component storage namespaces are uniquely derived at composition time and collision-tested across all embedded components.
+
+**112. Derived storage key missing discriminator**
+- **D:** application-level derived key generation (for example via `storage_address_from_base`) omits record/action discriminator and aliases unrelated records.
+- **FP:** derived key includes full logical tuple (domain + action + actor + nonce/id) and is invariant-tested for alias resistance.
+
+**113. Class-hash registry downgrade without monotonicity**
+- **D:** registry accepts class hash replacement without version/epoch monotonicity checks.
+- **FP:** upgrades enforce monotonic versioning and downgrade policy.
+
+**114. Revocation leaves active authorization residue**
+- **D:** revocation clears primary role map but leaves secondary authorization surface (cache/root/session capability) still accepted by auth checks.
+- **FP:** revoke flow invalidates every authorization surface (role map + capability cache/root/session state) consumed by runtime checks.
+
+**115. Queue/index wraparound overwrite**
+- **D:** bounded index/counter wraps and overwrites pending operation state.
+- **FP:** queue/index arithmetic enforces monotonic non-overwrite behavior.
+
+**116. Hash preimage ambiguity in composite keys**
+- **D:** composite key hashing mixes heterogeneous field encodings (felt packing/spans/byte arrays) without canonical boundaries, creating preimage aliasing.
+- **FP:** composite keys use canonical encoding with explicit domain/version separators and deterministic field boundaries.
+
+**117. Signature domain omits chain or contract binding**
+- **D:** signature domain binds action/nonce but omits Starknet chain-id or verifier/account contract binding, enabling cross-deployment replay.
+- **FP:** signature domain explicitly binds chain-id, verifying contract/account context, action, and nonce.
+
+**118. Upgrade migration not idempotent**
+- **D:** migration step can be re-run and mutates state inconsistently on repeat execution.
+- **FP:** migration guarded by version bit and repeat-safe behavior.
+
+**119. Trusted relayer set mutation lacks auditability**
+- **D:** relayer/trusted-actor mutation occurs without event trail or immutable checkpoint.
+- **FP:** mutation emits complete audit event and is recoverable/observable.
+
+**120. Cross-module invariant gap after dependency swap**
+- **D:** dependency swap updates pointer successfully but does not revalidate post-swap invariants across tightly-coupled modules, leaving inconsistent cross-module state.
+- **FP:** swap path performs explicit post-swap invariant revalidation across coupled modules and aborts on inconsistency.
