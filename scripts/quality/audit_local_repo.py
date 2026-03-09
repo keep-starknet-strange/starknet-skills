@@ -188,8 +188,16 @@ def main() -> int:
         default="evals/reports/local",
         help="Directory for generated reports when explicit output files are not provided (relative paths resolve from --repo-root).",
     )
-    parser.add_argument("--output-json", default="")
-    parser.add_argument("--output-md", default="")
+    parser.add_argument(
+        "--output-json",
+        default="",
+        help="Write JSON report to this path (relative paths resolve from --repo-root). Defaults to output-dir.",
+    )
+    parser.add_argument(
+        "--output-md",
+        default="",
+        help="Write Markdown report to this path (relative paths resolve from --repo-root). Defaults to output-dir.",
+    )
     parser.add_argument(
         "--output-findings-jsonl",
         default="",
@@ -230,6 +238,7 @@ def main() -> int:
     default_stem = f"{safe_scan_id}-{stamp}"
 
     output_dir = _resolve_path(args.output_dir, repo_root)
+    # Setting --output-findings-jsonl implies --write-findings-jsonl.
     write_findings_jsonl = bool(args.output_findings_jsonl) or args.write_findings_jsonl
     # Only create output_dir when at least one output path falls back to it.
     uses_output_dir = (not args.output_json) or (not args.output_md) or (write_findings_jsonl and not args.output_findings_jsonl)
