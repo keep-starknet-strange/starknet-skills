@@ -22,7 +22,7 @@ on:
       - "**/references/**"
       - "evals/**"
       - "scripts/quality/**"
-      - ".github/workflows/full-evals.yml"
+      - ".github/workflows/**"
 
 jobs:
   full-evals:
@@ -178,16 +178,16 @@ jobs:
           ENFORCE_KPI_GATE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.enforce_kpi_release_gate == 'true' }}
         run: |
           mkdir -p "${RUNNER_TEMP}/scorecards"
-          args=""
+          extra_args=()
           if [ "${ENFORCE_KPI_GATE}" = "true" ]; then
-            args="--enforce"
+            extra_args+=(--enforce)
           fi
           python scripts/quality/check_contract_kpi_release_gate.py \
             --trend "${RUNNER_TEMP}/scorecards/contract-skill-benchmark-trend.md" \
             --signoffs evals/scorecards/security-review-signoffs.contract-skill-benchmark.jsonl \
             --output "${RUNNER_TEMP}/scorecards/contract-kpi-publication-gate.md" \
             --min-consecutive 2 \
-            ${args}
+            "${extra_args[@]}"
 
       - name: Cairo auditor external triage scorecard
         run: |
