@@ -31,6 +31,7 @@ Apply only after tests pass and behavior is locked.
 4. Re-run tests and compare resource deltas.
 5. Use anti-pattern/secure-pattern pairs to keep micro-optimizations explicit.
 6. Encode stable optimization rules in `../evals/cases/contract_skill_benchmark.jsonl` to prevent regressions.
+7. Run `cairo-auditor` on touched files to ensure no security regressions were introduced.
 
 ## Workflow
 

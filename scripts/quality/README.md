@@ -21,6 +21,8 @@
   - single-entry local repo audit command
   - runs deterministic detectors on local `.cairo` files
   - optionally runs Sierra confirmation (`--sierra-confirm [--allow-build]`)
+  - defaults to timestamped outputs under `<repo-root>/evals/reports/local/`
+  - supports CI-friendly failure mode (`--fail-on-findings`)
 
 ## External Scan Tooling
 
@@ -77,9 +79,7 @@ Run a local deterministic audit:
 ```bash
 python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/your/cairo-repo \
-  --scan-id local-audit \
-  --output-json /path/to/output/local-audit.json \
-  --output-md /path/to/output/local-audit.md
+  --scan-id local-audit
 ```
 
 Run local audit + Sierra confirmation (build mode):
@@ -89,10 +89,46 @@ python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/your/cairo-repo \
   --scan-id local-audit-sierra \
   --sierra-confirm \
-  --allow-build \
-  --output-json /path/to/output/local-audit-sierra.json \
-  --output-md /path/to/output/local-audit-sierra.md
+  --allow-build
 ```
 
 Warning: `--allow-build` may execute repository build steps/tooling.
 Use build mode only on trusted code, or run in an isolated environment.
+
+Fail CI if any findings are detected:
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit-ci \
+  --fail-on-findings
+```
+
+Write findings JSONL artifact:
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit-jsonl \
+  --write-findings-jsonl
+```
+
+By default, the script writes:
+
+- `evals/reports/local/<safe-scan-id>-<timestamp>.json`
+- `evals/reports/local/<safe-scan-id>-<timestamp>.md`
+- If a filename already exists, the script appends `-N` before extension to avoid overwrite.
+  The script also slugifies `--scan-id` into `<safe-scan-id>` (lowercase alphanumeric with `-`/`_`,
+  and repeated `-` runs are collapsed to a single dash).
+
+JSONL behavior:
+
+- `--write-findings-jsonl` writes to:
+  `evals/reports/local/<safe-scan-id>-<timestamp>.findings.jsonl`
+- `--output-findings-jsonl /custom/path/file.jsonl` writes to the provided path
+  (and overrides the default location).
+
+Exit code behavior:
+
+- `0`: success
+- `2`: findings present with `--fail-on-findings`

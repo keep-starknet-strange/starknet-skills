@@ -48,6 +48,31 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKI
 git clone https://github.com/keep-starknet-strange/starknet-skills.git
 ```
 
+## First Local Audit (60s)
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit
+```
+
+Optional Sierra confirmation (trusted repos only):
+
+```bash
+python scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id local-audit-sierra \
+  --sierra-confirm \
+  --allow-build
+```
+
+Warning: `--allow-build` may execute repository build steps/tooling.
+Use build mode only on trusted code, or run in an isolated environment.
+
+Reports are written under `<repo-root>/evals/reports/local/` by default (`.md`, `.json`).
+Add `--write-findings-jsonl` to emit `.findings.jsonl`.
+If a target filename already exists, the script appends `-N` to avoid overwrite.
+
 ## Skills
 
 | Module | What LLMs Get Wrong |
@@ -59,6 +84,8 @@ git clone https://github.com/keep-starknet-strange/starknet-skills.git
 | [cairo-toolchain](cairo-toolchain/SKILL.md) | Uses stale Scarb/sncast/snforge workflows |
 | [account-abstraction](account-abstraction/SKILL.md) | Misses session/self-call and validation pitfalls |
 | [starknet-network-facts](starknet-network-facts/SKILL.md) | Hallucinates network semantics and fee/timing assumptions |
+
+Recommended sequence for new contracts: `cairo-contract-authoring` -> `cairo-testing` -> `cairo-auditor`.
 
 ## Data Pipeline
 

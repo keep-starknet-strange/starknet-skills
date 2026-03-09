@@ -26,6 +26,7 @@ user-invocable: true
 2. Confirm `__execute__` enforces policy and selector boundaries.
 3. Verify replay protections (nonce/domain separation) for all signature paths.
 4. Add regression tests for each fixed session-key or policy finding.
+5. Run `cairo-auditor` for final AA/security pass before merge.
 
 ## Core Focus
 
