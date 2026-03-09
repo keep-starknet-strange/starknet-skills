@@ -49,8 +49,8 @@ Run a local deterministic audit:
 python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/your/cairo-repo \
   --scan-id local-audit \
-  --output-json /tmp/local-audit.json \
-  --output-md /tmp/local-audit.md
+  --output-json /path/to/output/local-audit.json \
+  --output-md /path/to/output/local-audit.md
 ```
 
 Run local audit + Sierra confirmation (build mode):
@@ -61,8 +61,8 @@ python scripts/quality/audit_local_repo.py \
   --scan-id local-audit-sierra \
   --sierra-confirm \
   --allow-build \
-  --output-json /tmp/local-audit-sierra.json \
-  --output-md /tmp/local-audit-sierra.md
+  --output-json /path/to/output/local-audit-sierra.json \
+  --output-md /path/to/output/local-audit-sierra.md
 ```
 
 Warning: `--allow-build` may execute repository build steps/tooling.

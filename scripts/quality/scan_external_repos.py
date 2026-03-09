@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.parse
 from collections import Counter
 from dataclasses import dataclass
@@ -25,6 +26,7 @@ class RepoSpec:
 
 
 REPO_SLUG_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+REF_RE = re.compile(r"^[A-Za-z0-9._/@+-]{1,200}$")
 
 
 def parse_repo_spec(raw: str) -> RepoSpec:
@@ -37,6 +39,11 @@ def parse_repo_spec(raw: str) -> RepoSpec:
         slug, ref = raw, None
     if not REPO_SLUG_RE.fullmatch(slug):
         raise ValueError(f"invalid repo slug: {raw}")
+    if ref:
+        if ref.startswith("-"):
+            raise ValueError(f"invalid repo ref (must not start with '-'): {raw}")
+        if not REF_RE.fullmatch(ref):
+            raise ValueError(f"invalid repo ref: {raw}")
     return RepoSpec(slug=slug, ref=ref or None)
 
 
@@ -220,7 +227,10 @@ def main() -> int:
     parser.add_argument("--output-json", required=True)
     parser.add_argument("--output-md", default="")
     parser.add_argument("--output-findings-jsonl", default="")
-    parser.add_argument("--workdir", default="/tmp/starknet-skills-external-scan")
+    parser.add_argument(
+        "--workdir",
+        default=str(Path(tempfile.gettempdir()) / "starknet-skills-external-scan"),
+    )
     parser.add_argument("--exclude", default="test,tests,mock,mocks,example,examples,preset,presets,fixture,fixtures,vendor,vendors")
     parser.add_argument("--detectors", default="")
     parser.add_argument("--git-host", default="https://github.com")

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -43,7 +44,11 @@ def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tup
         rel = file_path.relative_to(repo_root).as_posix()
         try:
             code = file_path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as exc:
+            print(
+                f"WARNING: utf-8 decode fallback for {rel}; using errors='ignore' ({exc})",
+                file=sys.stderr,
+            )
             code = file_path.read_text(encoding="utf-8", errors="ignore")
 
         for class_id, detector in DETECTORS.items():
