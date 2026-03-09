@@ -55,7 +55,10 @@ def _load_findings_from_jsonl(path: Path) -> list[Finding]:
     for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
-        raw = json.loads(line)
+        try:
+            raw = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
         findings.append(_coerce_finding(raw, source=f"{path}:{line_no}"))
     return findings
 

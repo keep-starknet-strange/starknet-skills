@@ -65,36 +65,83 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
    ```bash
    export SCAN_ID="${SCAN_ID:-cairo-audit-$(date +%Y%m%d)}"
    export REPO_ROOT="/path/to/repo"
+   export SKILLS_ROOT="${SKILLS_ROOT:-$(pwd)}"
    export BUNDLE_ROOT="/tmp/cairo-auditor/${SCAN_ID}"
    mkdir -p "$BUNDLE_ROOT"
 
-   rg --files "$REPO_ROOT" -g '*.cairo' \
-     -g '!**/test/**' -g '!**/tests/**' \
-     -g '!**/mock/**' -g '!**/mocks/**' \
-     -g '!**/example/**' -g '!**/examples/**' \
-     -g '!**/vendor/**' \
-     > "$BUNDLE_ROOT/in-scope-files.txt"
+   python - <<'PY'
+from pathlib import Path
+import sys
+
+repo_root = Path(__import__("os").environ["REPO_ROOT"]).resolve()
+skills_root = Path(__import__("os").environ["SKILLS_ROOT"]).resolve()
+bundle_root = Path(__import__("os").environ["BUNDLE_ROOT"]).resolve()
+
+sys.path.insert(0, str((skills_root / "scripts/quality").resolve()))
+from scan_external_repos import iter_cairo_files, is_excluded
+
+excluded = (
+    "test", "tests", "mock", "mocks", "example", "examples",
+    "preset", "presets", "fixture", "fixtures",
+    "vendor", "vendors", "generated",
+)
+
+in_scope: list[str] = []
+for file_path in iter_cairo_files(repo_root):
+    rel = file_path.relative_to(repo_root)
+    if is_excluded(rel, excluded):
+        continue
+    in_scope.append(rel.as_posix())
+
+out_path = bundle_root / "in-scope-files.txt"
+out_path.write_text("\n".join(in_scope) + ("\n" if in_scope else ""), encoding="utf-8")
+print(f"in-scope files: {len(in_scope)}")
+PY
    ```
 
 3. Build one shared source bundle and four specialist bundles:
 
    ```bash
-   : > "$BUNDLE_ROOT/source-bundle.md"
-   while IFS= read -r f; do
-     rel="${f#${REPO_ROOT}/}"
-     printf "### %s\n```cairo\n" "$rel" >> "$BUNDLE_ROOT/source-bundle.md"
-     cat "$f" >> "$BUNDLE_ROOT/source-bundle.md"
-     printf "\n```\n\n" >> "$BUNDLE_ROOT/source-bundle.md"
-   done < "$BUNDLE_ROOT/in-scope-files.txt"
+   python - <<'PY'
+from pathlib import Path
+import re
+import os
 
-   for i in 1 2 3 4; do
-     cat \
-       cairo-auditor/references/judging.md \
-       cairo-auditor/references/report-formatting.md \
-       "cairo-auditor/references/attack-vectors/attack-vectors-${i}.md" \
-       "$BUNDLE_ROOT/source-bundle.md" \
-       > "$BUNDLE_ROOT/audit-agent-${i}-bundle.md"
-   done
+repo_root = Path(os.environ["REPO_ROOT"]).resolve()
+skills_root = Path(os.environ["SKILLS_ROOT"]).resolve()
+bundle_root = Path(os.environ["BUNDLE_ROOT"]).resolve()
+scope_file = bundle_root / "in-scope-files.txt"
+source_bundle = bundle_root / "source-bundle.md"
+
+def fence_for(text: str) -> str:
+    longest = max((len(match.group(0)) for match in re.finditer(r"`+", text)), default=0)
+    return "`" * max(3, longest + 1)
+
+parts: list[str] = []
+for rel in scope_file.read_text(encoding="utf-8").splitlines():
+    if not rel:
+        continue
+    code_path = (repo_root / rel).resolve()
+    try:
+        code = code_path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        code = code_path.read_text(encoding="utf-8", errors="ignore")
+    fence = fence_for(code)
+    parts.extend([f"### {rel}", f"{fence}cairo", code.rstrip(), fence, ""])
+
+source_bundle.write_text("\n".join(parts) + ("\n" if parts else ""), encoding="utf-8")
+
+for i in range(1, 5):
+    refs = [
+        "cairo-auditor/references/judging.md",
+        "cairo-auditor/references/report-formatting.md",
+        f"cairo-auditor/references/attack-vectors/attack-vectors-{i}.md",
+    ]
+    chunks = [(skills_root / ref).read_text(encoding="utf-8").rstrip() for ref in refs]
+    chunks.append(source_bundle.read_text(encoding="utf-8").rstrip())
+    out = bundle_root / f"audit-agent-{i}-bundle.md"
+    out.write_text("\n\n".join(chunk for chunk in chunks if chunk) + "\n", encoding="utf-8")
+PY
    ```
 
 4. Record bundle size before spawn:

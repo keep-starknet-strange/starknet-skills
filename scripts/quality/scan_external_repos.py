@@ -118,6 +118,8 @@ FRAMEWORK_GUARD_MARKERS = (
     "upgradeablecomponent",
 )
 
+SPREADSHEET_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
 
 def parse_repo_spec(raw: str) -> RepoSpec:
     raw = raw.strip()
@@ -457,6 +459,13 @@ def render_markdown(
     return "\n".join(lines) + "\n"
 
 
+def _csv_safe(value: object) -> str:
+    text = "" if value is None else str(value)
+    if text.startswith(SPREADSHEET_FORMULA_PREFIXES):
+        return "'" + text
+    return text
+
+
 def write_repo_summary_csv(path: Path, rows: list[dict[str, object]]) -> None:
     fieldnames = [
         "repo",
@@ -473,7 +482,7 @@ def write_repo_summary_csv(path: Path, rows: list[dict[str, object]]) -> None:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         for row in rows:
-            writer.writerow({key: row.get(key, "") for key in fieldnames})
+            writer.writerow({key: _csv_safe(row.get(key, "")) for key in fieldnames})
 
 
 def write_findings_csv(path: Path, findings: list[dict[str, object]]) -> None:
@@ -495,7 +504,7 @@ def write_findings_csv(path: Path, findings: list[dict[str, object]]) -> None:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         for row in findings:
-            writer.writerow({key: row.get(key, "") for key in fieldnames})
+            writer.writerow({key: _csv_safe(row.get(key, "")) for key in fieldnames})
 
 
 def write_manual_triage_csv(path: Path, findings: list[dict[str, object]], *, id_prefix: str) -> None:
@@ -529,8 +538,8 @@ def write_manual_triage_csv(path: Path, findings: list[dict[str, object]], *, id
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         for i, row in enumerate(rows_sorted, start=1):
-            out = {key: row.get(key, "") for key in fieldnames}
-            out["finding_id"] = f"{id_prefix}-{i:03d}"
+            out = {key: _csv_safe(row.get(key, "")) for key in fieldnames}
+            out["finding_id"] = _csv_safe(f"{id_prefix}-{i:03d}")
             out["manual_verdict"] = ""
             out["manual_notes"] = ""
             writer.writerow(out)

@@ -850,7 +850,7 @@ def detect_missing_fee_bounds(code: str) -> bool:
         return False
     has_bound_guard = bool(
         re.search(r"(assert|if)[^\n]{0,220}new_protocol_fee[^\n]{0,220}(<=|<)", body)
-        and ("max_fee" in body or "max_fee" in lower or "max_fee" in _strip_line_comments(code.lower()))
+        and ("max_fee" in body or "max_fee" in lower)
     )
     return not has_bound_guard
 

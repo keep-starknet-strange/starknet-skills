@@ -115,6 +115,13 @@ jobs:
             --min-precision 0.80 \
             --min-recall 0.90 \
             --min-class-recall 0.75
+          sed '/^Generated:/d' evals/scorecards/v0.2.1-cairo-auditor-issue32-gold.md > /tmp/issue32-gold-scorecard.committed.norm.md
+          sed '/^Generated:/d' /tmp/issue32-gold-scorecard.md > /tmp/issue32-gold-scorecard.generated.norm.md
+          diff -u /tmp/issue32-gold-scorecard.committed.norm.md /tmp/issue32-gold-scorecard.generated.norm.md
+          jq 'del(.generated_at)' evals/scorecards/v0.2.1-cairo-auditor-issue32-gold.json > /tmp/issue32-gold-scorecard.committed.norm.json
+          jq 'del(.generated_at)' /tmp/issue32-gold-scorecard.json > /tmp/issue32-gold-scorecard.generated.norm.json
+          diff -u /tmp/issue32-gold-scorecard.committed.norm.json /tmp/issue32-gold-scorecard.generated.norm.json
+          diff -u evals/scorecards/cairo-auditor-issue32-trend.md /tmp/issue32-gold-trend.md
 
       - name: Validate manifest JSONL
         run: |

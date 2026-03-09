@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+
+SEMVER_RELEASE_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
 
 
 @dataclass(frozen=True)
@@ -98,8 +101,11 @@ def load_findings(path: Path) -> list[FindingRow]:
         missing = sorted(required - set(raw.keys()))
         if missing:
             raise ValueError(f"{path}:{line_no}: missing keys: {missing}")
-        if "predicted_detect" in raw and not bool(raw["predicted_detect"]):
-            continue
+        if "predicted_detect" in raw:
+            if not isinstance(raw["predicted_detect"], bool):
+                raise ValueError(f"{path}:{line_no}: predicted_detect must be boolean")
+            if not raw["predicted_detect"]:
+                continue
         row = FindingRow(
             repo=str(raw["repo"]),
             ref=str(raw["ref"]),
@@ -197,12 +203,19 @@ def _render_markdown(
     return "\n".join(lines)
 
 
+def _parse_semver_release(label: str) -> tuple[int, int, int] | None:
+    match = SEMVER_RELEASE_RE.fullmatch(label.strip())
+    if not match:
+        return None
+    return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+
+
 def _parse_trend_rows(path: Path) -> list[tuple[str, int, int, int, int, float, float, str]]:
     if not path.exists():
         return []
     rows: list[tuple[str, int, int, int, int, float, float, str]] = []
     for line in path.read_text(encoding="utf-8").splitlines():
-        if not line.startswith("| v"):
+        if not line.startswith("|"):
             continue
         parts = [x.strip() for x in line.strip("|").split("|")]
         if len(parts) != 8:
@@ -240,7 +253,19 @@ def _write_trend(
 ) -> None:
     rows = [row for row in _parse_trend_rows(path) if row[0] != release]
     rows.append((release, tp, fp, new, fn, precision, recall, generated_at.split("T", 1)[0]))
-    rows.sort(key=lambda item: item[0])
+    indexed_rows = list(enumerate(rows))
+
+    def _trend_sort_key(item: tuple[int, tuple[str, int, int, int, int, float, float, str]]) -> tuple[object, ...]:
+        idx, row = item
+        parsed = _parse_semver_release(row[0])
+        if parsed is None:
+            # Preserve insertion order for non-semver labels (e.g. main/nightly).
+            return (1, idx)
+        # Semantic ordering for version releases (e.g., v0.2.10 after v0.2.9).
+        return (0, parsed[0], parsed[1], parsed[2], idx)
+
+    indexed_rows.sort(key=_trend_sort_key)
+    rows = [row for _, row in indexed_rows]
 
     lines = [
         "# Cairo Auditor Issue #32 Trend",

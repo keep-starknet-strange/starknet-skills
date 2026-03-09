@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -72,7 +73,10 @@ def _resolve_repo_file(repo_root: Path, args: argparse.Namespace) -> tuple[Path,
 
 
 def _build_output_paths(output_dir: Path, scan_id: str) -> OutputPaths:
-    base = output_dir / scan_id
+    token = scan_id.strip()
+    if token in {"", ".", ".."} or token != Path(token).name or "/" in token or "\\" in token:
+        raise ValueError("scan_id must be a simple filename token without path separators")
+    base = output_dir / token
     return OutputPaths(
         json=Path(f"{base.as_posix()}.json"),
         markdown=Path(f"{base.as_posix()}.md"),
@@ -146,7 +150,7 @@ def _run_scan(
             f"Original error: {exc}"
         ) from exc
     if proc.stdout.strip():
-        print(proc.stdout.strip())
+        print(proc.stdout.strip(), file=sys.stderr)
     if proc.stderr.strip():
         print(proc.stderr.strip(), file=sys.stderr)
     return json.loads(outputs.json.read_text(encoding="utf-8"))
@@ -161,6 +165,11 @@ def _load_reference(repo_root: Path, rel: str) -> str:
             "`git submodule update --init --recursive`)."
         )
     return path.read_text(encoding="utf-8")
+
+
+def _markdown_fence(text: str) -> str:
+    longest_run = max((len(match.group(0)) for match in re.finditer(r"`+", text)), default=0)
+    return "`" * max(3, longest_run + 1)
 
 
 def _render_bundle(
@@ -201,10 +210,11 @@ def _render_bundle(
             lines.append(f"- {note}")
         lines.append("")
     for rel_path, code in included_sources:
+        fence = _markdown_fence(code)
         lines.append(f"### {rel_path}")
-        lines.append("```cairo")
+        lines.append(f"{fence}cairo")
         lines.append(code.rstrip())
-        lines.append("```")
+        lines.append(fence)
         lines.append("")
     lines.append("## Judging (FP Gate + Confidence)")
     lines.append("")
