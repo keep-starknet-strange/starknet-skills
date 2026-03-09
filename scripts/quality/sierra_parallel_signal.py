@@ -9,7 +9,9 @@ import os
 import re
 import shutil
 import subprocess
+import time
 from collections import Counter, defaultdict
+from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -54,21 +56,21 @@ CEI_CLASSES = {
 
 STARKNET_DEP_RE = re.compile(r'^\s*starknet\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)"\s*$', re.MULTILINE)
 SEMVER_RE = re.compile(r"^([0-9]+)\.([0-9]+)\.([0-9]+)$")
-SENSITIVE_ENV_PREFIXES = (
-    "AWS_",
-    "AZURE_",
-    "GCP_",
-    "GOOGLE_",
-    "OPENAI_",
-    "ANTHROPIC_",
-    "STARKNET_",
-)
-SENSITIVE_ENV_FRAGMENTS = (
-    "PRIVATE_KEY",
-    "SECRET",
-    "TOKEN",
-    "PASSWORD",
-    "API_KEY",
+SAFE_ENV_KEYS = (
+    "PATH",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TERM",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    "SYSTEMROOT",
+    "WINDIR",
+    "ASDF_DIR",
+    "ASDF_DATA_DIR",
+    "ASDF_CONFIG_FILE",
+    "ASDF_CONCURRENCY",
 )
 
 
@@ -85,13 +87,22 @@ def _safe_repo_rel(path: Path, repo_dir: Path) -> str:
             return path.name
 
 
-def _is_sensitive_env_key(key: str) -> bool:
-    upper = key.upper()
-    if any(upper.startswith(prefix) for prefix in SENSITIVE_ENV_PREFIXES):
-        return True
-    if any(fragment in upper for fragment in SENSITIVE_ENV_FRAGMENTS):
-        return True
-    return False
+def _build_command_env(cwd: Path, extra_env: dict[str, str] | None) -> dict[str, str]:
+    env: dict[str, str] = {}
+    for key in SAFE_ENV_KEYS:
+        value = os.environ.get(key)
+        if value:
+            env[key] = value
+    # Isolate build-home from host credentials and per-user shell state.
+    env["HOME"] = str(cwd.resolve())
+    host_home = os.environ.get("HOME")
+    if "ASDF_DATA_DIR" not in env and host_home:
+        env["ASDF_DATA_DIR"] = str((Path(host_home) / ".asdf").resolve())
+    if "ASDF_DIR" not in env and "ASDF_DATA_DIR" in env:
+        env["ASDF_DIR"] = env["ASDF_DATA_DIR"]
+    if extra_env:
+        env.update(extra_env)
+    return env
 
 
 def run_unchecked(
@@ -101,9 +112,7 @@ def run_unchecked(
     *,
     extra_env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    env = {k: v for k, v in os.environ.items() if not _is_sensitive_env_key(k)}
-    if extra_env:
-        env.update(extra_env)
+    env = _build_command_env(cwd, extra_env)
     try:
         return subprocess.run(
             cmd,
@@ -193,7 +202,7 @@ def _semver_tuple(raw: str) -> tuple[int, int, int] | None:
     return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
 
 
-def _compatible_installed_versions(requested: str, installed: set[str]) -> list[str]:
+def _compatible_installed_versions(requested: str, installed: Collection[str]) -> list[str]:
     parsed = _semver_tuple(requested)
     if parsed is None:
         return []
@@ -209,7 +218,7 @@ def _compatible_installed_versions(requested: str, installed: set[str]) -> list[
     return [raw for _, raw in compatible]
 
 
-@functools.lru_cache(maxsize=1)
+@functools.cache
 def _asdf_installed_scarb_versions() -> frozenset[str]:
     asdf_bin = shutil.which("asdf")
     if not asdf_bin:
@@ -606,19 +615,36 @@ def analyze_repo(
         target_dirs: set[Path]
         if allow_build:
             build_ok = False
+            deadline_exceeded = False
             proc: subprocess.CompletedProcess[str] | None = None
             chosen_prefix: list[str] = ["scarb"]
             chosen_env: dict[str, str] = {}
             chosen_ignore_cairo = False
+            project_deadline_s = max(300.0, scarb_timeout_s * 2.0)
+            deadline_at = time.monotonic() + project_deadline_s
             for label, scarb_prefix, scarb_env in _candidate_scarb_invocations(project, repo_dir):
                 for ignore_cairo in (False, True):
+                    remaining = deadline_at - time.monotonic()
+                    if remaining <= 0:
+                        deadline_exceeded = True
+                        build_attempts.append(
+                            {
+                                "repo": spec.slug,
+                                "project": _safe_repo_rel(project, repo_dir),
+                                "toolchain": label,
+                                "ignore_cairo_version": str(ignore_cairo).lower(),
+                                "status": "deadline_exceeded",
+                                "error": f"per-project build deadline exceeded ({project_deadline_s:.0f}s)",
+                            }
+                        )
+                        break
                     build_cmd = [*scarb_prefix, "build"]
                     if ignore_cairo:
                         build_cmd.append("--ignore-cairo-version")
                     proc = run_unchecked(
                         build_cmd,
                         cwd=project,
-                        timeout_s=scarb_timeout_s,
+                        timeout_s=min(scarb_timeout_s, remaining),
                         extra_env=scarb_env,
                     )
                     build_attempts.append(
@@ -637,8 +663,15 @@ def analyze_repo(
                         chosen_env = scarb_env
                         chosen_ignore_cairo = ignore_cairo
                         break
-                if build_ok:
+                if build_ok or deadline_exceeded:
                     break
+
+            if deadline_exceeded and not build_ok:
+                projects_failed += 1
+                errors.append(
+                    f"{_safe_repo_rel(project, repo_dir)}: per-project build deadline exceeded ({project_deadline_s:.0f}s)"
+                )
+                continue
 
             if not build_ok:
                 projects_failed += 1
