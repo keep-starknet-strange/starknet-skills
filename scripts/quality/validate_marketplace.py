@@ -259,7 +259,9 @@ def main() -> int:
                 except OSError as exc:
                     errors.append(f"cannot read {version_file}: {exc}")
                     module_version = ""
-                if module_version and manifest_version != module_version:
+                if not module_version:
+                    errors.append(f"{version_file} must contain a non-empty version")
+                elif manifest_version != module_version:
                     errors.append(
                         f"version mismatch for source {entry_source}: plugin.json='{manifest_version}' vs VERSION='{module_version}'"
                     )

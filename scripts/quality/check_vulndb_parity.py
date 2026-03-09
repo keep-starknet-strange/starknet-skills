@@ -13,7 +13,7 @@ REPO_ROOT = SCRIPT_DIR.parent.parent
 if SCRIPT_DIR.as_posix() not in sys.path:
     sys.path.insert(0, SCRIPT_DIR.as_posix())
 
-from benchmark_cairo_auditor import DETECTORS
+from benchmark_cairo_auditor import DETECTORS  # noqa: E402
 
 
 def _normalize(identifier: str) -> str:

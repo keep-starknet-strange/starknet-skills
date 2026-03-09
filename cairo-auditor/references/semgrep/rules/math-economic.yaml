@@ -125,17 +125,13 @@ rules:
     metadata:
       confidence: low
       triage: manual-review-required
-      detection_scope: function-heuristic
+      detection_scope: file-heuristic
       attack_vectors_core: [48, 59, 60]
       attack_vectors_extended: [103, 109]
     paths:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-inside: |
-          fn $FN(...) {
-            ...
-          }
       - pattern-regex: "(?s)(?=.*\\bblock_timestamp\\b)(?=.*\\bblock_number\\b).*?(<=|>=|<|>)"
 
   - id: cairo.math.reciprocal-and-denominator-guards

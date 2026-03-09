@@ -139,7 +139,7 @@ def main() -> int:
                 text=True,
                 capture_output=True,
                 check=False,
-                timeout=args.caracal_timeout_seconds,
+                timeout=args.scarb_timeout_seconds,
             )
             payload["build_exit_code"] = build_proc.returncode
             artifacts = _collect_sierra_artifacts(repo_root)
@@ -195,7 +195,7 @@ def main() -> int:
                 text=True,
                 capture_output=True,
                 check=False,
-                timeout=args.scarb_timeout_seconds,
+                timeout=args.caracal_timeout_seconds,
             )
         except subprocess.TimeoutExpired as exc:
             attempts.append(
