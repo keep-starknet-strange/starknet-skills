@@ -21,7 +21,7 @@ class SecuritySignoff:
     release: str
     reviewer: str
     approved: bool
-    approved_at: str
+    approved_at: str | None
     notes: str
 
 
@@ -67,6 +67,10 @@ def parse_trend(path: Path) -> tuple[str, int]:
             f"trend format missing required fields: {path}"
         )
     latest_release = latest_match.group(1)
+    if RELEASE_RE.match(latest_release) is None:
+        raise RuntimeError(
+            f"trend file contains unexpected release format: {latest_release!r}"
+        )
     streak = int(streak_match.group(1))
     return latest_release, streak
 
@@ -78,10 +82,16 @@ def load_signoffs(path: Path) -> list[SecuritySignoff]:
     for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
-        raw = json.loads(line)
+        try:
+            raw = json.loads(line)
+        except json.JSONDecodeError as exc:
+            snippet = line.strip()
+            raise RuntimeError(
+                f"{path}:{line_no}: invalid JSON ({exc.msg}); line={snippet!r}"
+            ) from exc
         if not isinstance(raw, dict):
             raise RuntimeError(f"{path}:{line_no}: signoff entry must be object")
-        for key in ("release", "reviewer", "approved", "approved_at"):
+        for key in ("release", "reviewer", "approved"):
             if key not in raw:
                 raise RuntimeError(f"{path}:{line_no}: missing key '{key}'")
         if not isinstance(raw["release"], str) or RELEASE_RE.match(raw["release"]) is None:
@@ -90,12 +100,12 @@ def load_signoffs(path: Path) -> list[SecuritySignoff]:
             raise RuntimeError(f"{path}:{line_no}: invalid reviewer")
         if not isinstance(raw["approved"], bool):
             raise RuntimeError(f"{path}:{line_no}: approved must be bool")
-        if (
-            not isinstance(raw["approved_at"], str)
-            or len(raw["approved_at"]) < 10
-            or APPROVED_AT_RE.match(raw["approved_at"]) is None
-        ):
-            raise RuntimeError(f"{path}:{line_no}: invalid approved_at")
+        approved_at = raw.get("approved_at")
+        if raw["approved"]:
+            if not isinstance(approved_at, str) or APPROVED_AT_RE.match(approved_at) is None:
+                raise RuntimeError(f"{path}:{line_no}: invalid approved_at")
+        elif approved_at is not None:
+            raise RuntimeError(f"{path}:{line_no}: approved_at must be omitted when approved=false")
         notes = raw.get("notes", "")
         if not isinstance(notes, str):
             raise RuntimeError(f"{path}:{line_no}: notes must be string when present")
@@ -104,7 +114,7 @@ def load_signoffs(path: Path) -> list[SecuritySignoff]:
                 release=raw["release"],
                 reviewer=raw["reviewer"],
                 approved=raw["approved"],
-                approved_at=raw["approved_at"],
+                approved_at=approved_at,
                 notes=notes,
             )
         )
@@ -116,7 +126,7 @@ def latest_approved_signoff(signoffs: list[SecuritySignoff], release: str) -> Se
     if not approved:
         return None
     # ISO timestamps sort lexicographically.
-    return sorted(approved, key=lambda item: item.approved_at)[-1]
+    return sorted(approved, key=lambda item: item.approved_at or "")[-1]
 
 
 def render_report(
@@ -130,7 +140,7 @@ def render_report(
     generated = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     signoff_status = "present" if signoff is not None else "missing"
     reviewer = signoff.reviewer if signoff is not None else "n/a"
-    approved_at = signoff.approved_at if signoff is not None else "n/a"
+    approved_at = signoff.approved_at if signoff is not None and signoff.approved_at else "n/a"
     notes = signoff.notes if signoff is not None and signoff.notes else "n/a"
     return "\n".join(
         [
