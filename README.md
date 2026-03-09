@@ -82,10 +82,10 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cai
 | --- | --- |
 | [cairo-auditor](cairo-auditor/SKILL.md) | Misses Starknet upgrade/account edge cases and weak FP gates |
 | [cairo-contract-authoring](cairo-contract-authoring/SKILL.md) | Applies Solidity structure directly to Cairo components |
-| [cairo-testing](cairo-testing/SKILL.md) | Invariants, adversarial tests, and regression discipline |
+| [cairo-testing](cairo-testing/SKILL.md) | Stops at unit tests and skips invariants/adversarial regression coverage |
 | [cairo-optimization](cairo-optimization/SKILL.md) | Optimizes wrong paths without trace/Sierra context |
 | [cairo-toolchain](cairo-toolchain/SKILL.md) | Uses stale Scarb/snforge/sncast workflows |
-| [account-abstraction](account-abstraction/SKILL.md) | Session-key/self-call pitfalls and validation flow |
+| [account-abstraction](account-abstraction/SKILL.md) | Misses session-key/self-call and validation-flow pitfalls |
 | [starknet-network-facts](starknet-network-facts/SKILL.md) | Network semantics hallucinations and fee/timing assumptions |
 
 Recommended sequence for new contracts: `cairo-contract-authoring` -> `cairo-testing` -> `cairo-auditor`.
