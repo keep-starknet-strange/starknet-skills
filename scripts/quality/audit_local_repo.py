@@ -212,7 +212,6 @@ def main() -> int:
     safe_scan_id = _slug(args.scan_id)
 
     output_dir = _resolve_path(args.output_dir, repo_root)
-    output_dir.mkdir(parents=True, exist_ok=True)
     out_json = _resolve_path(args.output_json, repo_root) if args.output_json else (output_dir / f"{safe_scan_id}-{stamp}.json")
     out_md = _resolve_path(args.output_md, repo_root) if args.output_md else (output_dir / f"{safe_scan_id}-{stamp}.md")
     write_findings_jsonl = bool(args.output_findings_jsonl) or args.write_findings_jsonl
@@ -223,6 +222,10 @@ def main() -> int:
             if args.output_findings_jsonl
             else (output_dir / f"{safe_scan_id}-{stamp}.findings.jsonl")
         )
+
+    uses_output_dir = (not args.output_json) or (not args.output_md) or (write_findings_jsonl and not args.output_findings_jsonl)
+    if uses_output_dir:
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     summary, findings = _scan_local(repo_root, repo_slug, ref, excluded_markers)
     class_counts = Counter(str(row["class_id"]) for row in findings)
