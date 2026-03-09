@@ -35,7 +35,7 @@ Use this exact structure for each finding.
 
 ## Confidence Threshold Rule
 
-- Findings with confidence `<80` can be reported, but omit the `Fix` diff block.
+- Findings with confidence `<75` can be reported, but omit the `Fix` diff block.
 - Findings that fail FP gate must be dropped and not reported.
 
 ## Deduplication Rule

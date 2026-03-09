@@ -79,3 +79,43 @@
 **20. Admin transfer lockout edge**
 - **D:** admin transfer path allows zero/self/inconsistent target and can lock governance flows.
 - **FP:** transfer validates target and preserves recoverability guarantees.
+
+**81. Mixed authority drift between Ownable and AccessControl**
+- **D:** one privileged path checks Ownable while another checks role state, enabling desynced authority.
+- **FP:** single authority model or explicit sync invariant across both models.
+
+**82. Mutable timelock-delay downgrade**
+- **D:** governance can set timelock delay to zero (or near-zero) and immediately execute privileged action.
+- **FP:** delay changes are themselves timelocked with minimum floor enforcement.
+
+**83. Schedule cancellation by lower privilege**
+- **D:** pending upgrade/action can be canceled by role that cannot schedule/execute it.
+- **FP:** cancellation privilege is equal or stricter than scheduling privilege.
+
+**84. Pending upgrade overwrite race**
+- **D:** new pending class hash overwrites existing schedule without explicit cancellation workflow.
+- **FP:** overwrite blocked unless prior schedule is canceled/expired.
+
+**85. Library-call governance bypass**
+- **D:** privileged flow uses `library_call` path controlled by mutable class hash/registry.
+- **FP:** class hash is immutable or strictly timelocked and allowlisted.
+
+**86. Upgrade without initializer version guard**
+- **D:** post-upgrade initializer can be replayed because version/init slot is not advanced.
+- **FP:** initializer versioning is monotonic and replay-safe.
+
+**87. Caller source confusion in auth check**
+- **D:** auth compares wrong caller source (`get_tx_info` account vs `get_caller_address`) for path semantics.
+- **FP:** caller primitive matches the actual trust boundary of the entrypoint.
+
+**88. Role grant seeds invalid principal**
+- **D:** grant/seed path accepts zero or malformed principal for critical role.
+- **FP:** role grant validates non-zero and expected principal domain.
+
+**89. Pause gate bypass via alias entrypoint**
+- **D:** one selector is paused while an equivalent alias/casing path remains active.
+- **FP:** shared pause gate covers all equivalent privileged/state-mutating routes.
+
+**90. Internal privileged helper exposed externally**
+- **D:** helper intended for privileged internal use is reachable through unguarded external wrapper.
+- **FP:** every external wrapper enforces the same auth invariant as the helper contract.

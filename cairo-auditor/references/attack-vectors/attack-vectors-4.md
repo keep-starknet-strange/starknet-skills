@@ -79,3 +79,43 @@
 **80. Unbounded user-controlled iteration**
 - **D:** loops over user-controlled array/span without bound checks can DoS execution.
 - **FP:** explicit max bounds and fail-fast checks enforce bounded work.
+
+**111. Component storage namespace overlap**
+- **D:** multiple components map into overlapping storage namespace and corrupt each other.
+- **FP:** storage paths are unique and collision-tested at composition boundaries.
+
+**112. Derived storage key missing discriminator**
+- **D:** `storage_address_from_base` style keying omits one discriminator and aliases records.
+- **FP:** key derivation includes full record tuple and domain separator.
+
+**113. Class-hash registry downgrade without monotonicity**
+- **D:** registry accepts class hash replacement without version/epoch monotonicity checks.
+- **FP:** upgrades enforce monotonic versioning and downgrade policy.
+
+**114. Revocation leaves active authorization residue**
+- **D:** revocation updates one map/flag but authorization check still reads stale auxiliary state.
+- **FP:** revoke flow clears all authorization surfaces used by read path.
+
+**115. Queue/index wraparound overwrite**
+- **D:** bounded index/counter wraps and overwrites pending operation state.
+- **FP:** queue/index arithmetic enforces monotonic non-overwrite behavior.
+
+**116. Hash preimage ambiguity in composite keys**
+- **D:** composite hash key omits explicit separators/length markers between fields.
+- **FP:** field boundaries are domain-separated and unambiguous.
+
+**117. Signature domain omits chain or contract binding**
+- **D:** signed message hash omits chain-id or contract context and is replayable elsewhere.
+- **FP:** signature domain binds chain, contract, action, and nonce context.
+
+**118. Upgrade migration not idempotent**
+- **D:** migration step can be re-run and mutates state inconsistently on repeat execution.
+- **FP:** migration guarded by version bit and repeat-safe behavior.
+
+**119. Trusted relayer set mutation lacks auditability**
+- **D:** relayer/trusted-actor mutation occurs without event trail or immutable checkpoint.
+- **FP:** mutation emits complete audit event and is recoverable/observable.
+
+**120. Cross-module invariant gap after dependency swap**
+- **D:** dependency address swap updates pointer but does not revalidate coupled module invariants.
+- **FP:** swap path revalidates coupled invariants and blocks inconsistent state.

@@ -18,15 +18,21 @@ Start at `100`, apply deductions:
 - Partial path (cannot prove full transition to impact) -> `-20`
 - Impact self-contained to attacker-only funds -> `-15`
 - Requires narrow environmental assumptions (sequencer timing / unusual off-chain behavior) -> `-10`
+- Safety depends on indirect framework behavior that is present but not locally asserted -> `-10`
 
 Report format uses `[score]` confidence tags.
+Findings with confidence `<75` may be reported as low-confidence notes, without fix blocks.
 
 ## Do Not Report
 
 - Style/naming/comments/NatSpec-only findings.
+- Linter/compiler-only warnings already enforced by toolchain.
 - Generic centralization notes without concrete exploit path.
 - Privileged-only path reports without explicit governance/admin-risk framing.
 - Gas-only micro-optimizations.
+- Missing events when no concrete security or accounting impact exists.
+- Pure documentation debt without exploitability.
+- Theoretical attacks that require compromised prover/sequencer and no realistic trigger path.
 - Duplicate root causes already captured by a higher-confidence finding.
 
 ## Cairo-Specific Notes

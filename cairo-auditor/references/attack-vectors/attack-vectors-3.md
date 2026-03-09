@@ -79,3 +79,43 @@
 **60. Epoch settlement can be blocked by negative/overflow edge**
 - **D:** settlement path panics on signed-edge value and blocks epoch close.
 - **FP:** settlement branch handles signed edge and remains progress-safe.
+
+**101. Liquidation bonus rounding inversion**
+- **D:** liquidation reward math rounds in favor of liquidator when policy requires protocol/user protection.
+- **FP:** rounding direction is explicit, documented, and invariant-tested.
+
+**102. Cap check after value mint/accounting mutation**
+- **D:** mint/accounting state is updated before cap/limit assertion executes.
+- **FP:** cap/limit validation is enforced prior to state mutation.
+
+**103. Interest accrual uses stale timestamp snapshot**
+- **D:** accrual math uses pre-interaction timestamp after external calls that can delay/update state.
+- **FP:** accrual snapshot refreshed at the final accounting boundary.
+
+**104. BPS denominator mismatch**
+- **D:** one path uses `10_000` while another uses alternate denominator for same fee/rate domain.
+- **FP:** denominator constant is shared and tested across all rate paths.
+
+**105. Signed funding-rate clamp asymmetry**
+- **D:** positive and negative funding bounds are clamped differently, creating directional leakage.
+- **FP:** symmetric clamp policy with explicit signed-bound tests.
+
+**106. Batch update bypasses cumulative delta guard**
+- **D:** per-item delta checks pass while aggregate batch delta exceeds policy limit.
+- **FP:** both per-item and cumulative deltas are enforced.
+
+**107. Decimal normalization source mismatch**
+- **D:** normalization uses one asset's decimals for another asset path.
+- **FP:** each asset path resolves and validates its own decimal domain.
+
+**108. Multiply chain overflow before safe divide**
+- **D:** high-order multiply happens before overflow-safe divide/cast boundary.
+- **FP:** operation ordering or helpers ensure overflow-safe intermediate math.
+
+**109. Timestamp/block-number domain confusion**
+- **D:** staleness/expiry check compares timestamp-based values to block-number domain.
+- **FP:** freshness checks are domain-consistent and unit-tested.
+
+**110. Reciprocal pricing missing zero/underflow guards**
+- **D:** inverse price math executes without zero-floor and bound checks.
+- **FP:** reciprocal path validates non-zero numerator/denominator and bounds.
