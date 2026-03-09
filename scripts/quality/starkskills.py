@@ -349,6 +349,8 @@ def _run_pack_backend(args: argparse.Namespace, *, force_stage2: bool | None) ->
         str(int(_cfg(cfg, "defaults", "bundle_max_files", 150))),
         "--bundle-max-bytes",
         str(int(_cfg(cfg, "defaults", "bundle_max_bytes", 800000))),
+        "--bundle-max-chars",
+        str(int(_cfg(cfg, "defaults", "bundle_max_chars", 900000))),
     ]
 
     if args.repos_file:

@@ -527,18 +527,22 @@ def main() -> int:
     workdir = Path(args.workdir).resolve()
     workdir.mkdir(parents=True, exist_ok=True)
 
-    payload = _run_scan(
-        repo_root=repo_root,
-        repos_file=repos_file,
-        outputs=outputs,
-        scan_id=scan_id,
-        workdir=workdir,
-        exclude=args.exclude,
-        detectors=args.detectors,
-        git_host=args.git_host,
-        manual_prefix=manual_prefix,
-        timeout_seconds=args.scan_timeout_seconds,
-    )
+    try:
+        payload = _run_scan(
+            repo_root=repo_root,
+            repos_file=repos_file,
+            outputs=outputs,
+            scan_id=scan_id,
+            workdir=workdir,
+            exclude=args.exclude,
+            detectors=args.detectors,
+            git_host=args.git_host,
+            manual_prefix=manual_prefix,
+            timeout_seconds=args.scan_timeout_seconds,
+        )
+    except RuntimeError as exc:
+        print(f"ERROR: Stage-1 scan failed: {exc}", file=sys.stderr)
+        return 1
 
     if args.prepare_stage2:
         excluded_markers = tuple(part.strip().lower() for part in args.exclude.split(",") if part.strip())

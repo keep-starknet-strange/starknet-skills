@@ -226,7 +226,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if bool(args.findings_jsonl) == bool(args.scan_json):
-        raise ValueError("provide exactly one of --findings-jsonl or --scan-json")
+        parser.error("provide exactly one of --findings-jsonl or --scan-json")
 
     if args.findings_jsonl:
         findings = _load_findings_from_jsonl(Path(args.findings_jsonl))
