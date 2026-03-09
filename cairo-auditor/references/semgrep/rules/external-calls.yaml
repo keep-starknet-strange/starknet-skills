@@ -48,7 +48,7 @@ rules:
         - "**/*.cairo"
     patterns:
       - pattern-regex: "(balanceOf|balance_of|transferFrom|transfer_from)"
-      - pattern-regex: "(fallback|retry|or_else|match\\s+Err|if\\s+.*err)"
+      - pattern-regex: "(fallback|retry|or_else|match\\s+Err|if[\\s\\S]{0,120}?\\berr\\b)"
 
   - id: cairo.external.arbitrary-call-proxy
     message: "Privileged path appears to forward arbitrary external calls."

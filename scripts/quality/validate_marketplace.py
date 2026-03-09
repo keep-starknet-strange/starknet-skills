@@ -90,6 +90,7 @@ def validate_skill_paths(
         )
         if skill_doc_resolved is None:
             continue
+        # Defensive check: a path may exist but still resolve to a non-regular file.
         if not skill_doc_resolved.is_file():
             errors.append(f"{label} skills[{idx}] SKILL.md is not a file: {entry}")
 

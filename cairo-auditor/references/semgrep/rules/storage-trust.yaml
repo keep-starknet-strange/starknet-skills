@@ -30,7 +30,7 @@ rules:
         - "**/*.cairo"
     patterns:
       - pattern-regex: "(LegacyMap|Map<|mapping|id_to_info|pending_owner|pending_admin)"
-      - pattern-regex: "(burn|revoke|renounce|unset|clear)"
+      - pattern-regex: "(revoke|renounce|unset|clear_(role|owner|admin)|revoke_role|remove_role)"
       - pattern-not-regex: "(remove|delete|clear_all|explicit_exists_flag|is_set)"
 
   - id: cairo.storage.cross-contract-auth-dependency
