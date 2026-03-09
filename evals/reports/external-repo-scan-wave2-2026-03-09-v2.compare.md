@@ -1,7 +1,7 @@
 # Wave-2 External Scan Delta (2026-03-09 v2)
 
-- Baseline: `/Users/espejelomar/StarkNet/ai-agents-starknet/starknet-skills/evals/reports/data/external-repo-scan-wave2-2026-03-09.json`
-- Rerun: `/Users/espejelomar/StarkNet/ai-agents-starknet/starknet-skills/evals/reports/data/external-repo-scan-wave2-2026-03-09-v2.json`
+- Baseline: `evals/reports/data/external-repo-scan-wave2-2026-03-09.json`
+- Rerun: `evals/reports/data/external-repo-scan-wave2-2026-03-09-v2.json`
 
 ## Topline
 

@@ -1,6 +1,6 @@
 {
   "scan_id": "external-repo-scan-low-profile-rerun-2026-03-09-v3",
-  "generated_at": "2026-03-08T22:45:36+00:00",
+  "generated_at": "2026-03-09T00:00:05+00:00",
   "scanner": {
     "tool": "scripts/quality/scan_external_repos.py",
     "detectors_source": "scripts/quality/benchmark_cairo_auditor.py",
@@ -11,7 +11,9 @@
       "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
       "FEES_RECIPIENT_ZERO_DOS",
       "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK",
+      "IRREVOCABLE_ADMIN",
       "NO_ACCESS_CONTROL_MUTATION",
+      "ONE_SHOT_REGISTRATION",
       "SHUTDOWN_OVERRIDE_PRECEDENCE",
       "SYSCALL_SELECTOR_FALLBACK_ASSUMPTION",
       "UNCHECKED_FEE_BOUND",
@@ -23,7 +25,13 @@
       "mock",
       "mocks",
       "example",
-      "examples"
+      "examples",
+      "preset",
+      "presets",
+      "fixture",
+      "fixtures",
+      "vendor",
+      "vendors"
     ]
   },
   "repos": [
@@ -33,7 +41,7 @@
       "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
       "all_cairo_files": 144,
       "prod_cairo_files": 122,
-      "prod_hits": 15
+      "prod_hits": 20
     },
     {
       "repo": "StarkVote/starkvote",
@@ -49,7 +57,7 @@
       "ref": "5373340688bc77f3780dc973d8984fd541228831",
       "all_cairo_files": 7,
       "prod_cairo_files": 7,
-      "prod_hits": 5
+      "prod_hits": 6
     },
     {
       "repo": "fatlabsxyz/tongo",
@@ -57,7 +65,7 @@
       "ref": "1e201d9ffbfedee607dda92f709967362f302ead",
       "all_cairo_files": 48,
       "prod_cairo_files": 31,
-      "prod_hits": 1
+      "prod_hits": 2
     },
     {
       "repo": "kiroshi-market/kiroshi-protocol",
@@ -65,7 +73,7 @@
       "ref": "40d1ba6e1648033ea86421a779298493819cdb96",
       "all_cairo_files": 18,
       "prod_cairo_files": 11,
-      "prod_hits": 1
+      "prod_hits": 3
     },
     {
       "repo": "medialane-io/medialane-contracts",
@@ -73,22 +81,23 @@
       "ref": "aba0fcc775e1e64aad095b902b0fe493b620711b",
       "all_cairo_files": 12,
       "prod_cairo_files": 7,
-      "prod_hits": 2
+      "prod_hits": 3
     },
     {
       "repo": "salazarsebas/Zylith",
       "url": "https://github.com/salazarsebas/Zylith.git",
       "ref": "1991f53f794ae7c5856ca9533ddc1981544884c7",
       "all_cairo_files": 47,
-      "prod_cairo_files": 39,
-      "prod_hits": 3
+      "prod_cairo_files": 40,
+      "prod_hits": 5
     }
   ],
   "summary": {
     "all_cairo_files": 358,
-    "prod_cairo_files": 283,
-    "prod_hits": 27
+    "prod_cairo_files": 284,
+    "prod_hits": 39
   },
+  "failures": [],
   "findings": [
     {
       "repo": "ForgeYields/starknet_vault_kit",
@@ -136,6 +145,13 @@
       "repo": "ForgeYields/starknet_vault_kit",
       "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
       "file": "packages/vault/src/vault/vault.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "ForgeYields/starknet_vault_kit",
+      "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
+      "file": "packages/vault/src/vault/vault.cairo",
       "class_id": "FEES_RECIPIENT_ZERO_DOS",
       "scope": "prod_scan"
     },
@@ -170,6 +186,13 @@
     {
       "repo": "ForgeYields/starknet_vault_kit",
       "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
+      "file": "packages/vault_allocator/src/manager/manager.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "ForgeYields/starknet_vault_kit",
+      "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
       "file": "packages/vault_allocator/src/periphery/price_router/price_router.cairo",
       "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
       "scope": "prod_scan"
@@ -177,8 +200,22 @@
     {
       "repo": "ForgeYields/starknet_vault_kit",
       "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
+      "file": "packages/vault_allocator/src/periphery/price_router/price_router.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "ForgeYields/starknet_vault_kit",
+      "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
       "file": "packages/vault_allocator/src/periphery/price_router_vesu/price_router_vesu.cairo",
       "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "ForgeYields/starknet_vault_kit",
+      "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
+      "file": "packages/vault_allocator/src/periphery/price_router_vesu/price_router_vesu.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
       "scope": "prod_scan"
     },
     {
@@ -193,6 +230,13 @@
       "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
       "file": "packages/vault_allocator/src/vault_allocator/vault_allocator.cairo",
       "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "ForgeYields/starknet_vault_kit",
+      "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
+      "file": "packages/vault_allocator/src/vault_allocator/vault_allocator.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
       "scope": "prod_scan"
     },
     {
@@ -219,6 +263,13 @@
     {
       "repo": "cavos-labs/argus",
       "ref": "5373340688bc77f3780dc973d8984fd541228831",
+      "file": "contracts/src/argus.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "cavos-labs/argus",
+      "ref": "5373340688bc77f3780dc973d8984fd541228831",
       "file": "contracts/src/jwks_registry.cairo",
       "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
       "scope": "prod_scan"
@@ -238,10 +289,31 @@
       "scope": "prod_scan"
     },
     {
+      "repo": "fatlabsxyz/tongo",
+      "ref": "1e201d9ffbfedee607dda92f709967362f302ead",
+      "file": "packages/contracts/src/tongo/Tongo.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
+      "scope": "prod_scan"
+    },
+    {
       "repo": "kiroshi-market/kiroshi-protocol",
       "ref": "40d1ba6e1648033ea86421a779298493819cdb96",
       "file": "contracts/main/src/markets/factory.cairo",
       "class_id": "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "kiroshi-market/kiroshi-protocol",
+      "ref": "40d1ba6e1648033ea86421a779298493819cdb96",
+      "file": "contracts/main/src/markets/factory.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "kiroshi-market/kiroshi-protocol",
+      "ref": "40d1ba6e1648033ea86421a779298493819cdb96",
+      "file": "contracts/main/src/pool/shielded_pool.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
       "scope": "prod_scan"
     },
     {
@@ -256,6 +328,13 @@
       "ref": "aba0fcc775e1e64aad095b902b0fe493b620711b",
       "file": "contracts/Medialane-Protocol/src/core/medialane.cairo",
       "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "medialane-io/medialane-contracts",
+      "ref": "aba0fcc775e1e64aad095b902b0fe493b620711b",
+      "file": "contracts/Medialane-Protocol/src/core/medialane.cairo",
+      "class_id": "CEI_VIOLATION_ERC1155",
       "scope": "prod_scan"
     },
     {
@@ -268,8 +347,22 @@
     {
       "repo": "salazarsebas/Zylith",
       "ref": "1991f53f794ae7c5856ca9533ddc1981544884c7",
+      "file": "src/pool/contract.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "salazarsebas/Zylith",
+      "ref": "1991f53f794ae7c5856ca9533ddc1981544884c7",
       "file": "src/verifier/coordinator.cairo",
       "class_id": "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD",
+      "scope": "prod_scan"
+    },
+    {
+      "repo": "salazarsebas/Zylith",
+      "ref": "1991f53f794ae7c5856ca9533ddc1981544884c7",
+      "file": "src/verifier/coordinator.cairo",
+      "class_id": "IRREVOCABLE_ADMIN",
       "scope": "prod_scan"
     },
     {

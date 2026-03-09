@@ -89,3 +89,6 @@ By repo:
 | `salazarsebas/Zylith` | `src/verifier/coordinator.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
 | `salazarsebas/Zylith` | `src/verifier/coordinator.cairo` | `NO_ACCESS_CONTROL_MUTATION` |
 
+## Triage Note
+
+- `ForgeYields/.../redeem_request.cairo` appears multiple times across classes. Treat this as a manual root-cause dedupe candidate before severity roll-up.

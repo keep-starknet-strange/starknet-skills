@@ -1,6 +1,6 @@
 # External Repo Detector Sweep (external-repo-scan-low-profile-rerun-2026-03-09-v3)
 
-Generated: 2026-03-08T22:45:36+00:00
+Generated: 2026-03-09T00:00:05+00:00
 
 Machine-readable artifact:
 
@@ -20,35 +20,37 @@ Machine-readable artifact:
 
 | Repo | Cairo files (all) | Cairo files (prod-only) | Hits |
 | --- | ---: | ---: | ---: |
-| ForgeYields/starknet_vault_kit | 144 | 122 | 15 |
+| ForgeYields/starknet_vault_kit | 144 | 122 | 20 |
 | StarkVote/starkvote | 82 | 66 | 0 |
-| cavos-labs/argus | 7 | 7 | 5 |
-| fatlabsxyz/tongo | 48 | 31 | 1 |
-| kiroshi-market/kiroshi-protocol | 18 | 11 | 1 |
-| medialane-io/medialane-contracts | 12 | 7 | 2 |
-| salazarsebas/Zylith | 47 | 39 | 3 |
+| cavos-labs/argus | 7 | 7 | 6 |
+| fatlabsxyz/tongo | 48 | 31 | 2 |
+| kiroshi-market/kiroshi-protocol | 18 | 11 | 3 |
+| medialane-io/medialane-contracts | 12 | 7 | 3 |
+| salazarsebas/Zylith | 47 | 40 | 5 |
 
 ## Results
 
-- Total findings: **27**
+- Total findings: **39**
 
 By class:
 
+- `CEI_VIOLATION_ERC1155`: 1
 - `CONSTRUCTOR_DEAD_PARAM`: 1
 - `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD`: 14
 - `FEES_RECIPIENT_ZERO_DOS`: 1
 - `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK`: 8
+- `IRREVOCABLE_ADMIN`: 11
 - `NO_ACCESS_CONTROL_MUTATION`: 2
 - `UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD`: 1
 
 By repo:
 
-- `ForgeYields/starknet_vault_kit`: 15
-- `cavos-labs/argus`: 5
-- `fatlabsxyz/tongo`: 1
-- `kiroshi-market/kiroshi-protocol`: 1
-- `medialane-io/medialane-contracts`: 2
-- `salazarsebas/Zylith`: 3
+- `ForgeYields/starknet_vault_kit`: 20
+- `cavos-labs/argus`: 6
+- `fatlabsxyz/tongo`: 2
+- `kiroshi-market/kiroshi-protocol`: 3
+- `medialane-io/medialane-contracts`: 3
+- `salazarsebas/Zylith`: 5
 
 ## Findings
 
@@ -60,25 +62,37 @@ By repo:
 | `ForgeYields/starknet_vault_kit` | `packages/vault/src/redeem_request/redeem_request.cairo` | `CONSTRUCTOR_DEAD_PARAM` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault/src/vault/vault.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault/src/vault/vault.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `ForgeYields/starknet_vault_kit` | `packages/vault/src/vault/vault.cairo` | `IRREVOCABLE_ADMIN` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault/src/vault/vault.cairo` | `FEES_RECIPIENT_ZERO_DOS` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/adapters/ekubo_adapter/ekubo_adapter.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/adapters/ekubo_adapter/ekubo_adapter.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/manager/manager.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/manager/manager.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/manager/manager.cairo` | `IRREVOCABLE_ADMIN` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/periphery/price_router/price_router.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/periphery/price_router/price_router.cairo` | `IRREVOCABLE_ADMIN` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/periphery/price_router_vesu/price_router_vesu.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/periphery/price_router_vesu/price_router_vesu.cairo` | `IRREVOCABLE_ADMIN` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/vault_allocator/vault_allocator.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/vault_allocator/vault_allocator.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `ForgeYields/starknet_vault_kit` | `packages/vault_allocator/src/vault_allocator/vault_allocator.cairo` | `IRREVOCABLE_ADMIN` |
 | `cavos-labs/argus` | `contracts/src/argus.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `cavos-labs/argus` | `contracts/src/argus.cairo` | `UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD` |
 | `cavos-labs/argus` | `contracts/src/argus.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `cavos-labs/argus` | `contracts/src/argus.cairo` | `IRREVOCABLE_ADMIN` |
 | `cavos-labs/argus` | `contracts/src/jwks_registry.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
 | `cavos-labs/argus` | `contracts/src/jwks_registry.cairo` | `NO_ACCESS_CONTROL_MUTATION` |
 | `fatlabsxyz/tongo` | `packages/contracts/src/tongo/Tongo.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `fatlabsxyz/tongo` | `packages/contracts/src/tongo/Tongo.cairo` | `IRREVOCABLE_ADMIN` |
 | `kiroshi-market/kiroshi-protocol` | `contracts/main/src/markets/factory.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
+| `kiroshi-market/kiroshi-protocol` | `contracts/main/src/markets/factory.cairo` | `IRREVOCABLE_ADMIN` |
+| `kiroshi-market/kiroshi-protocol` | `contracts/main/src/pool/shielded_pool.cairo` | `IRREVOCABLE_ADMIN` |
 | `medialane-io/medialane-contracts` | `contracts/Medialane-Protocol/src/core/medialane.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `medialane-io/medialane-contracts` | `contracts/Medialane-Protocol/src/core/medialane.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `medialane-io/medialane-contracts` | `contracts/Medialane-Protocol/src/core/medialane.cairo` | `CEI_VIOLATION_ERC1155` |
 | `salazarsebas/Zylith` | `src/pool/contract.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `salazarsebas/Zylith` | `src/pool/contract.cairo` | `IRREVOCABLE_ADMIN` |
 | `salazarsebas/Zylith` | `src/verifier/coordinator.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
+| `salazarsebas/Zylith` | `src/verifier/coordinator.cairo` | `IRREVOCABLE_ADMIN` |
 | `salazarsebas/Zylith` | `src/verifier/coordinator.cairo` | `NO_ACCESS_CONTROL_MUTATION` |
 

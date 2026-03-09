@@ -1,21 +1,18 @@
 {
   "scan_id": "sierra-parallel-low-profile-2026-03-09",
-  "generated_at": "2026-03-08T23:24:27+00:00",
+  "generated_at": "2026-03-09T00:03:06+00:00",
+  "git_host": "https://github.com",
+  "allow_build": false,
   "detector_findings_jsonl": "evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v3.findings.jsonl",
   "repos": [
     {
       "repo": "ForgeYields/starknet_vault_kit",
       "ref": "babfc20931cb7ba16a86fae0157634026732dcb6",
       "projects_total": 3,
-      "projects_built": 3,
+      "projects_built": 0,
       "projects_failed": 0,
-      "artifacts": 1,
-      "marker_counts": {
-        "external_call": 0,
-        "state_write": 0,
-        "state_read": 0,
-        "event_emit": 0
-      },
+      "artifacts": 0,
+      "marker_counts": {},
       "signal_flags": {
         "has_external_call_markers": false,
         "has_state_write_markers": false,
@@ -23,21 +20,16 @@
         "cei_parallel_signal": false
       },
       "errors": [],
-      "detector_hits": 15
+      "detector_hits": 20
     },
     {
       "repo": "StarkVote/starkvote",
       "ref": "a25548c0c3a98616e36b31b455ec1822c35a3102",
       "projects_total": 4,
-      "projects_built": 4,
+      "projects_built": 0,
       "projects_failed": 0,
-      "artifacts": 2,
-      "marker_counts": {
-        "external_call": 0,
-        "state_write": 0,
-        "state_read": 0,
-        "event_emit": 0
-      },
+      "artifacts": 0,
+      "marker_counts": {},
       "signal_flags": {
         "has_external_call_markers": false,
         "has_state_write_markers": false,
@@ -62,52 +54,13 @@
         "cei_parallel_signal": false
       },
       "errors": [],
-      "detector_hits": 5
+      "detector_hits": 6
     },
     {
       "repo": "fatlabsxyz/tongo",
       "ref": "1e201d9ffbfedee607dda92f709967362f302ead",
       "projects_total": 2,
-      "projects_built": 2,
-      "projects_failed": 0,
-      "artifacts": 2,
-      "marker_counts": {
-        "external_call": 4,
-        "state_write": 22,
-        "state_read": 37,
-        "event_emit": 11
-      },
-      "signal_flags": {
-        "has_external_call_markers": true,
-        "has_state_write_markers": true,
-        "has_upgrade_markers": false,
-        "cei_parallel_signal": true
-      },
-      "errors": [],
-      "detector_hits": 1
-    },
-    {
-      "repo": "kiroshi-market/kiroshi-protocol",
-      "ref": "40d1ba6e1648033ea86421a779298493819cdb96",
-      "projects_total": 2,
-      "projects_built": 2,
-      "projects_failed": 0,
-      "artifacts": 0,
-      "marker_counts": {},
-      "signal_flags": {
-        "has_external_call_markers": false,
-        "has_state_write_markers": false,
-        "has_upgrade_markers": false,
-        "cei_parallel_signal": false
-      },
-      "errors": [],
-      "detector_hits": 1
-    },
-    {
-      "repo": "medialane-io/medialane-contracts",
-      "ref": "aba0fcc775e1e64aad095b902b0fe493b620711b",
-      "projects_total": 1,
-      "projects_built": 1,
+      "projects_built": 0,
       "projects_failed": 0,
       "artifacts": 0,
       "marker_counts": {},
@@ -121,10 +74,10 @@
       "detector_hits": 2
     },
     {
-      "repo": "salazarsebas/Zylith",
-      "ref": "1991f53f794ae7c5856ca9533ddc1981544884c7",
-      "projects_total": 5,
-      "projects_built": 5,
+      "repo": "kiroshi-market/kiroshi-protocol",
+      "ref": "40d1ba6e1648033ea86421a779298493819cdb96",
+      "projects_total": 2,
+      "projects_built": 0,
       "projects_failed": 0,
       "artifacts": 0,
       "marker_counts": {},
@@ -136,6 +89,40 @@
       },
       "errors": [],
       "detector_hits": 3
+    },
+    {
+      "repo": "medialane-io/medialane-contracts",
+      "ref": "aba0fcc775e1e64aad095b902b0fe493b620711b",
+      "projects_total": 1,
+      "projects_built": 0,
+      "projects_failed": 0,
+      "artifacts": 0,
+      "marker_counts": {},
+      "signal_flags": {
+        "has_external_call_markers": false,
+        "has_state_write_markers": false,
+        "has_upgrade_markers": false,
+        "cei_parallel_signal": false
+      },
+      "errors": [],
+      "detector_hits": 3
+    },
+    {
+      "repo": "salazarsebas/Zylith",
+      "ref": "1991f53f794ae7c5856ca9533ddc1981544884c7",
+      "projects_total": 5,
+      "projects_built": 0,
+      "projects_failed": 0,
+      "artifacts": 0,
+      "marker_counts": {},
+      "signal_flags": {
+        "has_external_call_markers": false,
+        "has_state_write_markers": false,
+        "has_upgrade_markers": false,
+        "cei_parallel_signal": false
+      },
+      "errors": [],
+      "detector_hits": 5
     }
   ]
 }
