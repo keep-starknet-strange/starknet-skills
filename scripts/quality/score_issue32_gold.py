@@ -172,7 +172,7 @@ def _render_markdown(
         lines.append("| --- | --- | --- | --- |")
         for row in sorted(fn_rows, key=lambda item: item.finding_id):
             lines.append(
-                f"| {row.finding_id} | {row.class_id} | `{row.repo}` | `{row.file}` |"
+                f"| {_md_cell(row.finding_id)} | {_md_cell(row.class_id)} | {_md_cell(row.repo)} | {_md_cell(row.file)} |"
             )
         lines.append("")
 
@@ -182,7 +182,7 @@ def _render_markdown(
         lines.append("| Repo | File | Class |")
         lines.append("| --- | --- | --- |")
         for row in sorted(fp_rows, key=lambda item: (item.repo, item.file, item.class_id)):
-            lines.append(f"| `{row.repo}` | `{row.file}` | `{row.class_id}` |")
+            lines.append(f"| {_md_cell(row.repo)} | {_md_cell(row.file)} | {_md_cell(row.class_id)} |")
         lines.append("")
 
     if new_rows:
@@ -191,7 +191,7 @@ def _render_markdown(
         lines.append("| Repo | File | Class |")
         lines.append("| --- | --- | --- |")
         for row in sorted(new_rows, key=lambda item: (item.repo, item.file, item.class_id)):
-            lines.append(f"| `{row.repo}` | `{row.file}` | `{row.class_id}` |")
+            lines.append(f"| {_md_cell(row.repo)} | {_md_cell(row.file)} | {_md_cell(row.class_id)} |")
         lines.append("")
 
     lines.append("## Notes")
@@ -201,6 +201,16 @@ def _render_markdown(
     lines.append("- NEW tracks extra detections in audited files not present in frozen rows.")
     lines.append("")
     return "\n".join(lines)
+
+
+def _md_cell(value: str) -> str:
+    return (
+        value.replace("\\", "\\\\")
+        .replace("|", "\\|")
+        .replace("`", "\\`")
+        .replace("\n", " ")
+        .replace("\r", " ")
+    )
 
 
 def _parse_semver_release(label: str) -> tuple[int, int, int] | None:

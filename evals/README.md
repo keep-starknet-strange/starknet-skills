@@ -192,6 +192,8 @@ python scripts/quality/check_manual_gold_recall.py \
 
 Run Issue #32 frozen external gold scorecard (TP/FP/NEW/FN trend):
 
+This example intentionally scores the checked-in frozen findings snapshot. For a fresh run, replace `--findings` with your own `<scan-id>.findings.jsonl`.
+
 ```bash
 python scripts/quality/score_issue32_gold.py \
   --gold evals/reports/data/issue32-gold.jsonl \

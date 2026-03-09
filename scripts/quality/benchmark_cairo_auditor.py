@@ -956,15 +956,14 @@ def detect_unprotected_initializer(code: str) -> bool:
         return False
     if "ref self" not in signature:
         return False
-    has_once_guard = "is_zero()" in body and "already_initialized" in body
-    if not has_once_guard:
-        return False
     has_access_guard = bool(
         re.search(r"(only_controller|only_owner|assert_only|has_role)\s*\(", body)
         or re.search(r"get_caller_address\(\)\s*(==|!=)", body)
     )
     if has_access_guard:
         return False
+    # Public initializers that write state without caller gating are risky both
+    # with and without explicit once-guards.
     return ".write(" in body
 
 
