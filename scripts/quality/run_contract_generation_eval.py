@@ -12,6 +12,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -409,6 +410,7 @@ def run_static_rules(*, case: GenerationCase, fixture: Path) -> list[str]:
             errors.append(f"must_match_file_missing:{rule.path}:{rule.description}")
             continue
         text = target.read_text(encoding="utf-8")
+        # Flags intentionally omitted: patterns rely on [\s\S] for cross-line behavior.
         if re.search(rule.pattern, text) is None:
             errors.append(f"must_match_failed:{rule.path}:{rule.description}")
 
@@ -421,6 +423,7 @@ def run_static_rules(*, case: GenerationCase, fixture: Path) -> list[str]:
             # Missing file means forbidden pattern cannot be present.
             continue
         text = target.read_text(encoding="utf-8")
+        # Flags intentionally omitted: patterns rely on [\s\S] for cross-line behavior.
         if re.search(rule.pattern, text) is not None:
             errors.append(f"must_not_match_failed:{rule.path}:{rule.description}")
 
