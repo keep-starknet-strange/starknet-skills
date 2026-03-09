@@ -644,8 +644,16 @@ def main() -> int:
     args = parse_args()
 
     api_key = os.environ.get(args.auth_env, "").strip()
+    used_fallback_auth = False
     if not api_key and args.auth_env != "OPENAI_API_KEY":
         api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+        used_fallback_auth = bool(api_key)
+    if used_fallback_auth:
+        print(
+            f"[warn] {args.auth_env} is unset; falling back to OPENAI_API_KEY. "
+            "Ensure --api-url points to a trusted endpoint.",
+            file=sys.stderr,
+        )
     if not api_key:
         print(
             f"{args.auth_env} is required for generation eval "
