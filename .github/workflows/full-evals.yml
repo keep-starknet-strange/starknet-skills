@@ -74,7 +74,7 @@ jobs:
             --jsonl evals/heldout/cairo_auditor_llm_eval_cases.jsonl
           python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/reports/data/external-triage-label.schema.json \
-            --jsonl evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl
+            --jsonl evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.labels.jsonl
           python scripts/audit-pipeline/validate_jsonl.py \
             --schema evals/reports/data/manual-19-gold.schema.json \
             --jsonl evals/reports/data/manual-19-gold.jsonl
@@ -135,7 +135,7 @@ jobs:
           mkdir -p "${RUNNER_TEMP}/scorecards"
           python scripts/quality/check_manual_gold_recall.py \
             --gold evals/reports/data/manual-19-gold.jsonl \
-            --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v4.findings.jsonl \
+            --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.findings.jsonl \
             --output-md "${RUNNER_TEMP}/scorecards/cairo-auditor-manual-19-gold-recall.md" \
             --output-json "${RUNNER_TEMP}/scorecards/cairo-auditor-manual-19-gold-recall.json" \
             --min-recall 0.90 \
@@ -168,8 +168,8 @@ jobs:
         run: |
           mkdir -p "${RUNNER_TEMP}/scorecards"
           python scripts/quality/score_external_triage.py \
-            --labels evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl \
-            --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v4.findings.jsonl \
+            --labels evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.labels.jsonl \
+            --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.findings.jsonl \
             --release v0.2.0 \
             --output-md "${RUNNER_TEMP}/scorecards/cairo-auditor-external-triage.md" \
             --output-json "${RUNNER_TEMP}/scorecards/cairo-auditor-external-triage.json" \
@@ -177,7 +177,7 @@ jobs:
             --trend-md "${RUNNER_TEMP}/scorecards/cairo-auditor-external-trend.md" \
             --min-precision 0.70 \
             --min-recall 0.90 \
-            --min-labeled-coverage 0.50
+            --min-labeled-coverage 0.90
 
       - name: Sierra parallel signal (auxiliary)
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
@@ -187,7 +187,7 @@ jobs:
           python scripts/quality/sierra_parallel_signal.py \
             --scan-id "ci-sierra-parallel-low-profile-${{ github.run_id }}" \
             --repos-file evals/reports/data/external-repo-scan-low-profile-repos.txt \
-            --detector-findings-jsonl evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v4.findings.jsonl \
+            --detector-findings-jsonl evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.findings.jsonl \
             --allow-build \
             --scarb-timeout-seconds 240 \
             --output-json "${RUNNER_TEMP}/scorecards/cairo-auditor-sierra-parallel.json" \

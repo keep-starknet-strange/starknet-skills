@@ -98,16 +98,16 @@ Run external triage scoring (human-labeled external findings):
 
 ```bash
 python scripts/quality/score_external_triage.py \
-  --labels evals/reports/data/external-repo-scan-low-profile-2026-03-08-v2.labels.jsonl \
-  --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v4.findings.jsonl \
+  --labels evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.labels.jsonl \
+  --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.findings.jsonl \
   --release v0.2.0 \
   --output-md evals/scorecards/v0.2.0-cairo-auditor-external-triage.md \
   --output-json evals/scorecards/v0.2.0-cairo-auditor-external-triage.json \
-  --output-unlabeled-jsonl evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v4.unlabeled.jsonl \
+  --output-unlabeled-jsonl evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.unlabeled.jsonl \
   --trend-md evals/scorecards/cairo-auditor-external-trend.md \
   --min-precision 0.70 \
   --min-recall 0.90 \
-  --min-labeled-coverage 0.50
+  --min-labeled-coverage 0.90
 ```
 
 Run manual-19 gold recall check:
@@ -115,7 +115,7 @@ Run manual-19 gold recall check:
 ```bash
 python scripts/quality/check_manual_gold_recall.py \
   --gold evals/reports/data/manual-19-gold.jsonl \
-  --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v4.findings.jsonl \
+  --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.findings.jsonl \
   --output-md evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.md \
   --output-json evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.json \
   --min-recall 0.90 \
@@ -138,7 +138,7 @@ Run Sierra confirmation on low-profile external scan set (build mode):
 python scripts/quality/sierra_parallel_signal.py \
   --scan-id sierra-parallel-low-profile-local \
   --repos-file evals/reports/data/external-repo-scan-low-profile-repos.txt \
-  --detector-findings-jsonl evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v4.findings.jsonl \
+  --detector-findings-jsonl evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.findings.jsonl \
   --allow-build \
   --scarb-timeout-seconds 240 \
   --output-json /tmp/sierra-parallel-low-profile.json \

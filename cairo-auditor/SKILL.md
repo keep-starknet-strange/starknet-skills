@@ -36,41 +36,45 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 ### Turn 1: Discover
 
 1. Determine mode (`default`, `deep`, `targeted`).
-2. Discover in-scope `.cairo` files and exclude tests/mocks/examples/vendor.
-3. Run deterministic preflight context checks:
-   - identify risky upgrade/auth/session/external-call surfaces quickly,
-   - record likely classes before deep analysis.
+2. Discover in-scope `.cairo` files; exclude tests/mocks/examples/vendor/generated paths.
+3. Run deterministic preflight checks to identify likely classes (upgrade/auth/session/external-call).
 
 ### Turn 2: Prepare
 
-1. Read specialist instructions:
+1. Load specialist instructions and references:
    - `agents/vector-scan.md`
    - `references/judging.md`
-2. Create 4 specialist bundles, each with:
-   - full in-scope Cairo file set,
-   - one attack-vector partition:
+   - `references/report-formatting.md`
+2. Build four specialist bundles. Each bundle includes:
+   - full in-scope Cairo code,
+   - one vector partition:
      - `references/attack-vectors/attack-vectors-1.md`
      - `references/attack-vectors/attack-vectors-2.md`
      - `references/attack-vectors/attack-vectors-3.md`
      - `references/attack-vectors/attack-vectors-4.md`
+3. Record line counts per bundle for parallel chunk-reading instructions.
 
 ### Turn 3: Spawn
 
-1. Run 4 parallel vector specialists (one per bundle).
-2. In `deep` mode, run `agents/adversarial.md` in parallel as an additional pass.
-3. Each specialist must produce findings that pass `references/judging.md`.
+1. Spawn 4 parallel vector specialists (one per bundle) following `agents/vector-scan.md`.
+2. In `deep` mode, spawn `agents/adversarial.md` in parallel.
+3. Each specialist must:
+   - triage vectors (`Skip/Borderline/Survive`),
+   - apply FP gate from `references/judging.md`,
+   - output only findings formatted by `references/report-formatting.md`.
 
 ### Turn 4: Report
 
-1. Merge specialist outputs.
+1. Merge outputs.
 2. Deduplicate by root cause (keep higher-confidence variant).
-3. If Scarb/Sierra is available, run Sierra confirmation for upgrade/CEI classes.
-4. Sort by confidence/severity.
-5. Emit only actionable findings and required regression tests.
+3. Run composability pass when multiple findings interact.
+4. If Scarb/Sierra is available, run Sierra confirmation for CEI and upgrade classes.
+5. Sort by priority and confidence.
+6. Emit actionable findings + required regression tests.
 
 ## Reporting Contract
 
-Each finding should include:
+Each finding must include:
 
 - `class_id`
 - `severity`
@@ -92,5 +96,5 @@ Each finding should include:
 
 ## Output Rule
 
-- Report only findings that pass the FP gate.
-- Below-threshold confidence findings can be listed as low-confidence notes (no fix block).
+- Report only findings that pass FP gate.
+- Findings below confidence threshold may be listed as low-confidence notes without a fix block.

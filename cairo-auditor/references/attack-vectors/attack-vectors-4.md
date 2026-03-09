@@ -1,49 +1,81 @@
 # Cairo Attack Vectors (4/4): Storage + Components + Trust Chains
 
-**37. Constructor dead parameter**
-- **D:** constructor accepts a security- or config-critical parameter that is never used in state/init path, leaving unsafe defaults or unrecoverable misconfiguration.
-- **FP:** parameter is compatibility/deprecation-only, explicitly documented, and cannot affect privileged roles, dependencies, or invariants.
+**61. Constructor dead parameter**
+- **D:** constructor accepts security-critical parameter but never uses it (ForgeYields redeem request pattern).
+- **FP:** parameter is explicitly deprecated/compat-only and cannot affect privilege/invariants.
 
-**38. Map-zero default confusion**
-- **D:** zero default map entry is treated as initialized/valid state.
-- **FP:** explicit existence flags or sentinel distinction.
+**62. Map-zero default confusion**
+- **D:** zero default map entry is treated as initialized/authorized state.
+- **FP:** explicit existence flag or non-zero sentinel separates unset from set.
 
-**39. Stale storage after burn/revoke**
-- **D:** identity/state mappings remain readable/active after burn/revoke when logic assumes deletion.
-- **FP:** stale retention intentional and callers gated accordingly.
+**63. Stale storage after burn/revoke**
+- **D:** post-burn/revoke mappings remain active where logic assumes deletion.
+- **FP:** retention is intentional and read paths are gated accordingly.
 
-**40. Cross-contract role dependency break**
-- **D:** authorization depends on mutable external contract state that can desync.
-- **FP:** dependency is immutable or integrity-checked before sensitive actions.
+**64. Cross-contract role dependency break**
+- **D:** auth depends on mutable external contract state that can desync or be upgraded unexpectedly.
+- **FP:** dependency immutable or validated with integrity checks.
 
-**41. External decoder/sanitizer trust assumption**
-- **D:** policy verification depends on external decoder contract without integrity guarantees.
-- **FP:** decoder identity pinned + governance controls + fail-safe checks.
+**65. External decoder/sanitizer trust assumption**
+- **D:** proof/policy validation relies on external decoder contract without integrity pinning.
+- **FP:** decoder identity pinned and governed with fail-safe fallback.
 
-**42. Immutable dependency without recovery path**
-- **D:** critical dependency set once with no upgrade/recovery mechanism.
-- **FP:** immutable-by-design and covered by explicit threat model/ops runbook.
+**66. Immutable dependency without recovery path**
+- **D:** critical dispatcher/dependency set once and not recoverable after failure.
+- **FP:** immutable-by-design and explicitly covered by ops runbook/threat model.
 
-**43. Registry hash/domain mismatch**
-- **D:** hashed keys/signatures omit domain separators or key length semantics.
+**67. Registry hash/domain mismatch**
+- **D:** hashed keys/signatures omit domain separator or key-length semantics.
 - **FP:** domain-separated and length-aware hashing.
 
-**44. Nonce monotonicity gap across state transitions**
-- **D:** nonce not incremented on all state-reset/unset paths enabling stale replay.
-- **FP:** nonce increments across every state transition that can invalidate old signatures.
+**68. Nonce monotonicity gap across transitions**
+- **D:** nonce not incremented on unset/reset transitions, enabling stale signature replay.
+- **FP:** nonce increments on every transition that invalidates signed intent.
 
-**45. Event visibility gap for mass revocation**
-- **D:** bulk operation updates state without emitting per-item events needed by indexers.
-- **FP:** per-item event emission or documented alternative query guarantee.
+**69. Event visibility gap for bulk revocation**
+- **D:** bulk state updates omit per-item events needed by indexers.
+- **FP:** per-item event emission or equivalent query-safe indexing contract.
 
-**46. Upgrade/change audit trail loss**
-- **D:** upgrade event omits previous hash/identifier, hindering forensic reconstruction.
-- **FP:** event includes old and new identifiers.
+**70. Upgrade audit trail loss**
+- **D:** upgrade/change event omits prior class hash/identifier.
+- **FP:** old and new identifiers emitted atomically.
 
-**47. Initialization branch deadlock**
-- **D:** constructor config can permanently disable required init branch with no alternative path.
-- **FP:** constructor validates init preconditions or offers explicit alternate init flow.
+**71. Initialization branch deadlock**
+- **D:** constructor config can permanently disable required init branch.
+- **FP:** constructor validates branch preconditions or exposes safe alternate init.
 
-**48. Over-broad persistence in helper registries**
-- **D:** helper/metadata registries allow arbitrary writes causing spam or indexer DoS.
-- **FP:** bounded writes, scoped permissions, or rate-limiting controls.
+**72. Over-broad registry persistence**
+- **D:** helper registry accepts arbitrary writes enabling spam/indexer DoS.
+- **FP:** bounded writes, scoped permissions, or explicit pagination caps.
+
+**73. Nonce domain collision across action types**
+- **D:** same nonce key reused for distinct actions (set/unset/upgrade) enabling cross-action replay.
+- **FP:** nonce scope includes action domain and contract context.
+
+**74. Storage key composition collision**
+- **D:** composite storage keys omit one discriminator and collide across logical records.
+- **FP:** full key tuple encoded in storage address/hash derivation.
+
+**75. Merkle/root history overwrite without uniqueness check**
+- **D:** root history accepts repeated/invalid replacement that weakens finality assumptions.
+- **FP:** root insertion enforces expected progression and duplicate handling rules.
+
+**76. Proof verifier address mutability without governance delay**
+- **D:** verifier endpoint mutable via immediate admin call, enabling sudden trust shift.
+- **FP:** verifier changes timelocked and event-auditable.
+
+**77. ABI variant fallback masks integration breakage**
+- **D:** integration tries multiple ABI variants and proceeds on partial decode assumptions.
+- **FP:** one canonical ABI and strict decode failure handling.
+
+**78. Pending-owner/admin stale state leak**
+- **D:** ownership transfer leaves stale pending/old authority state that still influences checks.
+- **FP:** old pending authority cleared on transfer completion.
+
+**79. Wrong event payload branch**
+- **D:** event emits mismatched payload (for example claim payload in refund path) and corrupts off-chain state.
+- **FP:** event payload strictly tied to executed branch and tested.
+
+**80. Unbounded user-controlled iteration**
+- **D:** loops over user-controlled array/span without bound checks can DoS execution.
+- **FP:** explicit max bounds and fail-fast checks enforce bounded work.

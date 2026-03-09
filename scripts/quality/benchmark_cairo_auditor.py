@@ -281,6 +281,7 @@ def detect_upgrade_class_hash_without_nonzero_guard(code: str) -> bool:
 
 def detect_critical_address_init_without_nonzero_guard(code: str) -> bool:
     lower = code.lower()
+    lower_no_comments = _strip_line_comments(lower)
     constructor_sig, body = _extract_fn_signature_and_body(lower, "constructor")
     if constructor_sig is None or body is None:
         return False
@@ -312,6 +313,11 @@ def detect_critical_address_init_without_nonzero_guard(code: str) -> bool:
     if not critical_params:
         return False
 
+    # Known component initializers that enforce non-zero checks internally.
+    safe_initializer_surfaces = {
+        "baseaumprovidercomponent",
+    }
+
     for param in critical_params:
         has_guard = bool(
             re.search(
@@ -322,12 +328,23 @@ def detect_critical_address_init_without_nonzero_guard(code: str) -> bool:
         )
         if has_guard:
             continue
-        used_for_init = bool(
-            re.search(rf"\b\w+\.write\(\s*{param}\b", body)
-            or re.search(rf"\binitializer\([^)]*\b{param}\b", body)
-            or re.search(rf"\b_grant_role\([^)]*\b{param}\b", body)
-        )
-        if used_for_init:
+        direct_write = bool(re.search(rf"\b\w+\.write\(\s*{param}\b", body))
+        role_seed = bool(re.search(rf"\b_grant_role\([^)]*\b{param}\b", body))
+        init_calls = list(re.finditer(rf"\b([a-z_][a-z0-9_]*)\.initializer\([^)]*\b{param}\b", body))
+        if direct_write or role_seed:
+            return True
+        if not init_calls:
+            continue
+        safe_initializer = False
+        for init_match in init_calls:
+            receiver = init_match.group(1)
+            if receiver.startswith("base_aum_provider") and "baseaumprovidercomponent" in lower_no_comments:
+                safe_initializer = True
+                break
+            if any(surface in lower_no_comments for surface in safe_initializer_surfaces):
+                safe_initializer = True
+                break
+        if not safe_initializer:
             return True
     return False
 
@@ -369,8 +386,21 @@ def detect_irrevocable_admin(code: str) -> bool:
         return False
 
     seeded_admin = False
+    seeded_via_role = False
+    seeded_via_direct_write = False
     for param in admin_params:
-        if re.search(rf"\b\w+\.write\(\s*{param}\b", body) or re.search(
+        direct_seed = bool(re.search(rf"\b\w+\.write\(\s*{param}\b", body))
+        role_seed = bool(re.search(rf"\b_grant_role\([^)]*\b{param}\b", body))
+        init_seed = bool(re.search(rf"\binitializer\([^)]*\b{param}\b", body))
+        if direct_seed or role_seed or init_seed:
+            seeded_admin = True
+        if role_seed:
+            seeded_via_role = True
+        if direct_seed:
+            seeded_via_direct_write = True
+        if direct_seed or role_seed or init_seed:
+            break
+        if re.search(
             rf"\b(initializer|_grant_role)\([^)]*\b{param}\b", body
         ):
             seeded_admin = True
@@ -387,6 +417,16 @@ def detect_irrevocable_admin(code: str) -> bool:
     # Treat canonical owner-only ownable setups as revocable, but do not suppress
     # contracts that also seed dedicated admin/governor/upgrade roles.
     if owner_only_params and has_ownable_rotation_surface:
+        return False
+
+    has_accesscontrol_rotation_surface = (
+        "accesscontrolcomponent" in lower_no_comments
+        and (
+            "impl accesscontrolimpl" in lower_no_comments
+            or "accesscontrolcomponent::accesscontrolimpl" in lower_no_comments
+        )
+    )
+    if seeded_via_role and not seeded_via_direct_write and has_accesscontrol_rotation_surface:
         return False
 
     rotation_name_tokens = ("admin", "owner", "governor", "upgrade")
@@ -630,6 +670,10 @@ def detect_no_access_control_mutation(code: str) -> bool:
         "assert_only_",
         "assert_only_owner",
         "assert_only_role",
+        "assert_admin(",
+        "_assert_admin(",
+        "self.assert_admin(",
+        "self._assert_admin(",
         "ownable.assert_only_owner",
         "accesscontrol.assert_only_role",
         "access_control.assert_only_role",
@@ -675,6 +719,8 @@ def detect_no_access_control_mutation(code: str) -> bool:
                 r"let\s+[a-z_][a-z0-9_]*\s*=\s*(?:starknet::)?get_caller_address\(\)[\s\S]{0,220}assert!?\([^)]*(==|!=)\s*self\.",
                 body,
             )
+            or re.search(r"\bself\.(?:_)?assert_(?:admin|owner|role|caller|auth)[a-z0-9_]*\s*\(", body)
+            or re.search(r"\b(?:_)?assert_(?:admin|owner|role|caller|auth)[a-z0-9_]*\s*\(", body)
         )
         if has_access_guard:
             continue
