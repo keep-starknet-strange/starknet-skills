@@ -21,6 +21,10 @@ class Case:
     code: str
 
 
+def _strip_line_comments(text: str) -> str:
+    return re.sub(r"//[^\n]*", "", text)
+
+
 def load_cases(path: Path) -> list[Case]:
     cases: list[Case] = []
     seen_case_ids: set[str] = set()
@@ -341,7 +345,7 @@ def detect_constructor_dead_param(code: str) -> bool:
     if not params:
         return False
 
-    stripped_body = re.sub(r"//[^\n]*", "", body)
+    stripped_body = _strip_line_comments(body)
     for param, _param_type in params:
         if param.startswith("_"):
             continue
@@ -398,6 +402,7 @@ def detect_irrevocable_admin(code: str) -> bool:
     for fn_name, _sig, fn_body in _iter_functions(lower):
         if fn_name == "constructor":
             continue
+        fn_body = _strip_line_comments(fn_body)
         if fn_name.startswith(rotation_prefixes) and any(token in fn_name for token in rotation_name_tokens):
             return False
         if any(
@@ -519,7 +524,7 @@ def _called_functions(body: str, known_functions: set[str]) -> list[tuple[str, i
 def _is_abi_exposed(lower: str, fn_name: str) -> bool:
     escaped = re.escape(fn_name)
     if re.search(
-        rf"#\[\s*external(?:\([^\]]*\))?\s*\][\s\S]{{0,220}}\bfn\s+{escaped}\s*\(",
+        rf"#\[\s*external(?:\([^\]]*\))?\s*\]\s*(?:(?://[^\n]*\n)|\s)*\bfn\s+{escaped}\s*\(",
         lower,
         flags=re.IGNORECASE,
     ):

@@ -1,6 +1,6 @@
 {
   "scan_id": "sierra-parallel-low-profile-2026-03-09-v2",
-  "generated_at": "2026-03-09T00:46:15+00:00",
+  "generated_at": "2026-03-09T00:57:39+00:00",
   "git_host": "https://github.com",
   "allow_build": true,
   "scarb_timeout_seconds": 240.0,
@@ -38,6 +38,7 @@
         "cei_parallel_signal": true,
         "has_external_then_write_functions": false
       },
+      "analysis_status": "completed",
       "confirmation": {
         "upgrade_findings": 5,
         "upgrade_ir_confirmed": true,
@@ -79,6 +80,7 @@
         "cei_parallel_signal": false,
         "has_external_then_write_functions": false
       },
+      "analysis_status": "completed",
       "confirmation": {
         "upgrade_findings": 0,
         "upgrade_ir_confirmed": false,
@@ -102,16 +104,17 @@
       "marker_counts": {},
       "function_signals": {},
       "signal_flags": {
-        "has_external_call_markers": false,
-        "has_state_write_markers": false,
-        "has_upgrade_markers": false,
-        "cei_parallel_signal": false,
-        "has_external_then_write_functions": false
+        "has_external_call_markers": null,
+        "has_state_write_markers": null,
+        "has_upgrade_markers": null,
+        "cei_parallel_signal": null,
+        "has_external_then_write_functions": null
       },
+      "analysis_status": "skipped_no_artifacts",
       "confirmation": {
         "upgrade_findings": 2,
         "upgrade_ir_confirmed": false,
-        "upgrade_ir_missing": true,
+        "upgrade_ir_missing": false,
         "cei_findings": 0,
         "cei_ir_confirmed": false,
         "cei_ir_missing": false,
@@ -151,6 +154,7 @@
         "cei_parallel_signal": true,
         "has_external_then_write_functions": false
       },
+      "analysis_status": "completed",
       "confirmation": {
         "upgrade_findings": 0,
         "upgrade_ir_confirmed": false,
@@ -189,6 +193,7 @@
         "cei_parallel_signal": true,
         "has_external_then_write_functions": false
       },
+      "analysis_status": "completed",
       "confirmation": {
         "upgrade_findings": 1,
         "upgrade_ir_confirmed": true,
@@ -227,6 +232,7 @@
         "cei_parallel_signal": true,
         "has_external_then_write_functions": false
       },
+      "analysis_status": "completed",
       "confirmation": {
         "upgrade_findings": 1,
         "upgrade_ir_confirmed": true,
@@ -265,6 +271,7 @@
         "cei_parallel_signal": true,
         "has_external_then_write_functions": false
       },
+      "analysis_status": "completed",
       "confirmation": {
         "upgrade_findings": 0,
         "upgrade_ir_confirmed": false,

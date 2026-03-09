@@ -1,6 +1,6 @@
 # External Repo Detector Sweep (external-repo-scan-wave2-2026-03-09-v3)
 
-Generated: 2026-03-09T00:02:24+00:00
+Generated: 2026-03-09T00:54:42+00:00
 
 Machine-readable artifact:
 
@@ -20,33 +20,33 @@ Machine-readable artifact:
 
 | Repo | Cairo files (all) | Cairo files (prod-only) | Hits |
 | --- | ---: | ---: | ---: |
-| OpenZeppelin/cairo-contracts | 307 | 165 | 2 |
+| OpenZeppelin/cairo-contracts | 307 | 145 | 3 |
 | atomiqlabs/atomiq-contracts-starknet | 120 | 56 | 0 |
 | typhoonmixer/typhoon-contracts | 16 | 12 | 8 |
 | karnotxyz/starknet_bridge | 43 | 18 | 3 |
-| keep-starknet-strange/piltover | 25 | 18 | 5 |
-| dojoengine/dojo | 105 | 47 | 3 |
+| keep-starknet-strange/piltover | 25 | 15 | 3 |
+| dojoengine/dojo | 105 | 39 | 3 |
 | spiko-tech/starknet-contracts | 5 | 4 | 9 |
 
 ## Results
 
-- Total findings: **30**
+- Total findings: **29**
 
 By class:
 
 - `CEI_VIOLATION_ERC1155`: 2
-- `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD`: 8
-- `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK`: 11
-- `IRREVOCABLE_ADMIN`: 7
+- `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD`: 7
+- `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK`: 12
+- `IRREVOCABLE_ADMIN`: 6
 - `NO_ACCESS_CONTROL_MUTATION`: 1
 - `UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD`: 1
 
 By repo:
 
-- `OpenZeppelin/cairo-contracts`: 2
+- `OpenZeppelin/cairo-contracts`: 3
 - `dojoengine/dojo`: 3
 - `karnotxyz/starknet_bridge`: 3
-- `keep-starknet-strange/piltover`: 5
+- `keep-starknet-strange/piltover`: 3
 - `spiko-tech/starknet-contracts`: 9
 - `typhoonmixer/typhoon-contracts`: 8
 
@@ -56,6 +56,7 @@ By repo:
 | --- | --- | --- |
 | `OpenZeppelin/cairo-contracts` | `packages/token/src/erc1155/erc1155.cairo` | `CEI_VIOLATION_ERC1155` |
 | `OpenZeppelin/cairo-contracts` | `packages/token/src/erc721/erc721.cairo` | `CEI_VIOLATION_ERC1155` |
+| `OpenZeppelin/cairo-contracts` | `packages/upgrades/src/upgradeable.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `typhoonmixer/typhoon-contracts` | `src/NoteAccount.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `typhoonmixer/typhoon-contracts` | `src/NoteAccount.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
 | `typhoonmixer/typhoon-contracts` | `src/NoteAccount.cairo` | `IRREVOCABLE_ADMIN` |
@@ -70,8 +71,6 @@ By repo:
 | `keep-starknet-strange/piltover` | `src/appchain.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `keep-starknet-strange/piltover` | `src/appchain.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
 | `keep-starknet-strange/piltover` | `src/appchain.cairo` | `IRREVOCABLE_ADMIN` |
-| `keep-starknet-strange/piltover` | `src/config/mock.cairo` | `CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD` |
-| `keep-starknet-strange/piltover` | `src/config/mock.cairo` | `IRREVOCABLE_ADMIN` |
 | `dojoengine/dojo` | `crates/dojo/core/src/contract/components/upgradeable.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `dojoengine/dojo` | `crates/dojo/core/src/world/world_contract.cairo` | `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK` |
 | `dojoengine/dojo` | `crates/dojo/core/src/world/world_contract.cairo` | `NO_ACCESS_CONTROL_MUTATION` |

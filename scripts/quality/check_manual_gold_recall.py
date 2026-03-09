@@ -101,7 +101,7 @@ def render_markdown(
     matched = len(matched_rows)
     missing = len(missing_rows)
     overall_recall = recall(matched, total)
-    overall_precision = precision(matched, len(false_positive_rows))
+    overall_precision = None if len(negative_rows) == 0 else precision(matched, len(false_positive_rows))
 
     per_class_total: dict[str, int] = defaultdict(int)
     per_class_matched: dict[str, int] = defaultdict(int)
@@ -124,7 +124,10 @@ def render_markdown(
     lines.append(f"- Matched: {matched}")
     lines.append(f"- Missing: {missing}")
     lines.append(f"- False positives (gold negatives hit): {len(false_positive_rows)}")
-    lines.append(f"- Precision (gold-scope): {overall_precision:.3f}")
+    if overall_precision is None:
+        lines.append("- Precision (gold-scope): N/A (no gold negatives)")
+    else:
+        lines.append(f"- Precision (gold-scope): {overall_precision:.3f}")
     lines.append(f"- Recall: {overall_recall:.3f}")
     lines.append("")
     lines.append("## Per Class Recall")
@@ -191,7 +194,8 @@ def main() -> int:
         per_class_matched[row.class_id] += 1
 
     overall_recall = recall(len(matched_rows), len(positive_rows))
-    overall_precision = precision(len(matched_rows), len(false_positive_rows))
+    has_negative_gold = len(negative_rows) > 0
+    overall_precision = precision(len(matched_rows), len(false_positive_rows)) if has_negative_gold else None
     class_violations: list[tuple[str, float]] = []
     for class_id, total in sorted(per_class_total.items()):
         class_recall = recall(per_class_matched.get(class_id, 0), total)
@@ -222,7 +226,7 @@ def main() -> int:
         "false_positive_count": len(false_positive_rows),
         "overall_precision": overall_precision,
         "overall_recall": overall_recall,
-        "min_precision": args.min_precision,
+        "min_precision": args.min_precision if has_negative_gold else None,
         "min_recall": args.min_recall,
         "min_class_recall": args.min_class_recall,
         "class_recall": {
@@ -240,7 +244,7 @@ def main() -> int:
                 "gold": len(gold_rows),
                 "matched": len(matched_rows),
                 "false_positive_count": len(false_positive_rows),
-                "overall_precision": round(overall_precision, 6),
+                "overall_precision": round(overall_precision, 6) if overall_precision is not None else None,
                 "overall_recall": round(overall_recall, 6),
                 "output_md": out_md.as_posix(),
                 "output_json": out_json.as_posix(),
@@ -249,7 +253,7 @@ def main() -> int:
         )
     )
 
-    if overall_precision < args.min_precision:
+    if overall_precision is not None and overall_precision < args.min_precision:
         print(
             f"FAILED: manual gold precision={overall_precision:.3f} < min_precision={args.min_precision:.3f}"
         )

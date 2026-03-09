@@ -1,6 +1,6 @@
 {
   "scan_id": "external-repo-scan-low-profile-rerun-2026-03-09-v4",
-  "generated_at": "2026-03-09T00:40:10+00:00",
+  "generated_at": "2026-03-09T00:54:44+00:00",
   "scanner": {
     "tool": "scripts/quality/scan_external_repos.py",
     "detectors_source": "scripts/quality/benchmark_cairo_auditor.py",
@@ -48,7 +48,7 @@
       "url": "https://github.com/StarkVote/starkvote.git",
       "ref": "a25548c0c3a98616e36b31b455ec1822c35a3102",
       "all_cairo_files": 82,
-      "prod_cairo_files": 66,
+      "prod_cairo_files": 62,
       "prod_hits": 0
     },
     {
@@ -88,13 +88,13 @@
       "url": "https://github.com/salazarsebas/Zylith.git",
       "ref": "1991f53f794ae7c5856ca9533ddc1981544884c7",
       "all_cairo_files": 47,
-      "prod_cairo_files": 40,
+      "prod_cairo_files": 39,
       "prod_hits": 5
     }
   ],
   "summary": {
     "all_cairo_files": 358,
-    "prod_cairo_files": 284,
+    "prod_cairo_files": 279,
     "prod_hits": 39
   },
   "failures": [],

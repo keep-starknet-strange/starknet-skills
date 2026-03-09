@@ -1,6 +1,6 @@
 # External Repo Detector Sweep (external-repo-scan-low-profile-rerun-2026-03-09-v4)
 
-Generated: 2026-03-09T00:40:10+00:00
+Generated: 2026-03-09T00:54:44+00:00
 
 Machine-readable artifact:
 
@@ -21,12 +21,12 @@ Machine-readable artifact:
 | Repo | Cairo files (all) | Cairo files (prod-only) | Hits |
 | --- | ---: | ---: | ---: |
 | ForgeYields/starknet_vault_kit | 144 | 122 | 20 |
-| StarkVote/starkvote | 82 | 66 | 0 |
+| StarkVote/starkvote | 82 | 62 | 0 |
 | cavos-labs/argus | 7 | 7 | 6 |
 | fatlabsxyz/tongo | 48 | 31 | 2 |
 | kiroshi-market/kiroshi-protocol | 18 | 11 | 3 |
 | medialane-io/medialane-contracts | 12 | 7 | 3 |
-| salazarsebas/Zylith | 47 | 40 | 5 |
+| salazarsebas/Zylith | 47 | 39 | 5 |
 
 ## Results
 

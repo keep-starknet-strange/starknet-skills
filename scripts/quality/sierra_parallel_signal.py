@@ -25,7 +25,8 @@ class RepoSignal:
     artifact_breakdown: dict[str, int]
     marker_counts: dict[str, int]
     function_signals: dict[str, int]
-    signal_flags: dict[str, bool]
+    signal_flags: dict[str, bool | None]
+    analysis_status: str
     confirmation: dict[str, object]
     errors: list[str]
 
@@ -335,6 +336,7 @@ def _build_confirmation(
     marker_counts: Counter[str],
     function_signals: Counter[str],
     cei_examples: list[str],
+    signal_observed: bool,
 ) -> dict[str, object]:
     upgrade_findings = sum(class_counts.get(c, 0) for c in UPGRADE_CLASSES)
     cei_findings = sum(class_counts.get(c, 0) for c in CEI_CLASSES)
@@ -344,11 +346,11 @@ def _build_confirmation(
 
     return {
         "upgrade_findings": upgrade_findings,
-        "upgrade_ir_confirmed": upgrade_findings > 0 and has_upgrade_markers,
-        "upgrade_ir_missing": upgrade_findings > 0 and not has_upgrade_markers,
+        "upgrade_ir_confirmed": signal_observed and upgrade_findings > 0 and has_upgrade_markers,
+        "upgrade_ir_missing": signal_observed and upgrade_findings > 0 and not has_upgrade_markers,
         "cei_findings": cei_findings,
-        "cei_ir_confirmed": cei_findings > 0 and cei_parallel,
-        "cei_ir_missing": cei_findings > 0 and not cei_parallel,
+        "cei_ir_confirmed": signal_observed and cei_findings > 0 and cei_parallel,
+        "cei_ir_missing": signal_observed and cei_findings > 0 and not cei_parallel,
         "cei_example_functions": cei_examples,
     }
 
@@ -398,13 +400,25 @@ def analyze_repo(
                 if fn_name not in cei_examples and len(cei_examples) < 5:
                     cei_examples.append(fn_name)
 
-    flags = {
-        "has_external_call_markers": marker_counts["external_call"] > 0,
-        "has_state_write_markers": marker_counts["state_write"] > 0,
-        "has_upgrade_markers": marker_counts["replace_class_syscall"] > 0,
-        "cei_parallel_signal": marker_counts["external_call"] > 0 and marker_counts["state_write"] > 0,
-        "has_external_then_write_functions": function_signals["functions_external_then_write"] > 0,
-    }
+    signal_observed = artifact_count > 0
+    if signal_observed:
+        flags: dict[str, bool | None] = {
+            "has_external_call_markers": marker_counts["external_call"] > 0,
+            "has_state_write_markers": marker_counts["state_write"] > 0,
+            "has_upgrade_markers": marker_counts["replace_class_syscall"] > 0,
+            "cei_parallel_signal": marker_counts["external_call"] > 0 and marker_counts["state_write"] > 0,
+            "has_external_then_write_functions": function_signals["functions_external_then_write"] > 0,
+        }
+        analysis_status = "completed"
+    else:
+        flags = {
+            "has_external_call_markers": None,
+            "has_state_write_markers": None,
+            "has_upgrade_markers": None,
+            "cei_parallel_signal": None,
+            "has_external_then_write_functions": None,
+        }
+        analysis_status = "skipped_no_artifacts"
 
     class_counts = detector_class_counts.get(spec.slug, Counter())
     confirmation = _build_confirmation(
@@ -412,6 +426,7 @@ def analyze_repo(
         marker_counts=marker_counts,
         function_signals=function_signals,
         cei_examples=cei_examples,
+        signal_observed=signal_observed,
     )
 
     return RepoSignal(
@@ -425,6 +440,7 @@ def analyze_repo(
         marker_counts=dict(marker_counts),
         function_signals=dict(function_signals),
         signal_flags=flags,
+        analysis_status=analysis_status,
         confirmation=confirmation,
         errors=errors,
     )
@@ -468,8 +484,8 @@ def render_markdown(
     lines.append("")
     lines.append("Sierra is used here as a confirmation layer for source-level detections (not as a standalone verdict engine).")
     lines.append("")
-    lines.append("| Repo | Projects (built/total) | Artifacts | ReplaceClass | Fn Ext->Write | Detector Hits | Upgrade Oracle | CEI Oracle |")
-    lines.append("| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |")
+    lines.append("| Repo | Projects (built/total) | Artifacts | Status | ReplaceClass | Fn Ext->Write | Detector Hits | Upgrade Oracle | CEI Oracle |")
+    lines.append("| --- | ---: | ---: | --- | ---: | ---: | ---: | --- | --- |")
     for row in rows:
         replace = row.marker_counts.get("replace_class_syscall", 0)
         ext_then_write = row.function_signals.get("functions_external_then_write", 0)
@@ -478,17 +494,21 @@ def render_markdown(
         upgrade_findings = int(row.confirmation.get("upgrade_findings", 0))
         if upgrade_findings == 0:
             upgrade_oracle = "-"
+        elif row.analysis_status != "completed":
+            upgrade_oracle = "unknown"
         else:
             upgrade_oracle = "confirm" if row.confirmation.get("upgrade_ir_confirmed", False) else "missing"
 
         cei_findings = int(row.confirmation.get("cei_findings", 0))
         if cei_findings == 0:
             cei_oracle = "-"
+        elif row.analysis_status != "completed":
+            cei_oracle = "unknown"
         else:
             cei_oracle = "confirm" if row.confirmation.get("cei_ir_confirmed", False) else "missing"
 
         lines.append(
-            f"| `{row.repo}` | {row.projects_built}/{row.projects_total} | {row.artifacts} | {replace} | {ext_then_write} | {hits} | {upgrade_oracle} | {cei_oracle} |"
+            f"| `{row.repo}` | {row.projects_built}/{row.projects_total} | {row.artifacts} | {row.analysis_status} | {replace} | {ext_then_write} | {hits} | {upgrade_oracle} | {cei_oracle} |"
         )
 
     lines.append("")
@@ -609,12 +629,13 @@ def main() -> int:
                     marker_counts={},
                     function_signals={},
                     signal_flags={
-                        "has_external_call_markers": False,
-                        "has_state_write_markers": False,
-                        "has_upgrade_markers": False,
-                        "cei_parallel_signal": False,
-                        "has_external_then_write_functions": False,
+                        "has_external_call_markers": None,
+                        "has_state_write_markers": None,
+                        "has_upgrade_markers": None,
+                        "cei_parallel_signal": None,
+                        "has_external_then_write_functions": None,
                     },
+                    analysis_status="failed",
                     confirmation={
                         "upgrade_findings": 0,
                         "upgrade_ir_confirmed": False,
@@ -648,6 +669,7 @@ def main() -> int:
                 "marker_counts": row.marker_counts,
                 "function_signals": row.function_signals,
                 "signal_flags": row.signal_flags,
+                "analysis_status": row.analysis_status,
                 "confirmation": row.confirmation,
                 "errors": row.errors,
                 "detector_hits": detector_hits.get(row.repo, 0),

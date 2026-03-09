@@ -1,8 +1,8 @@
 # Cairo Attack Vectors (4/4): Storage + Components + Trust Chains
 
 **37. Constructor dead parameter**
-- **D:** constructor accepts parameter never used in state/init path.
-- **FP:** parameter intentionally unused only when explicitly documented and harmless.
+- **D:** constructor accepts a security- or config-critical parameter that is never used in state/init path, leaving unsafe defaults or unrecoverable misconfiguration.
+- **FP:** parameter is compatibility/deprecation-only, explicitly documented, and cannot affect privileged roles, dependencies, or invariants.
 
 **38. Map-zero default confusion**
 - **D:** zero default map entry is treated as initialized/valid state.

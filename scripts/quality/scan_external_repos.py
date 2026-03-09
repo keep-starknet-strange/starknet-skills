@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -23,6 +24,9 @@ class RepoSpec:
     ref: str | None
 
 
+REPO_SLUG_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+
+
 def parse_repo_spec(raw: str) -> RepoSpec:
     raw = raw.strip()
     if not raw:
@@ -31,7 +35,7 @@ def parse_repo_spec(raw: str) -> RepoSpec:
         slug, ref = raw.split("@", 1)
     else:
         slug, ref = raw, None
-    if "/" not in slug:
+    if not REPO_SLUG_RE.fullmatch(slug):
         raise ValueError(f"invalid repo slug: {raw}")
     return RepoSpec(slug=slug, ref=ref or None)
 
@@ -57,7 +61,10 @@ def repo_git_url(spec: RepoSpec, git_host: str) -> str:
     host = git_host.strip().rstrip("/")
     if not host:
         raise ValueError("git_host cannot be empty")
-    return urllib.parse.urljoin(f"{host}/", f"{spec.slug}.git")
+    parsed = urllib.parse.urlparse(host)
+    if not parsed.scheme or not parsed.netloc:
+        raise ValueError(f"invalid git_host: {git_host}")
+    return f"{host}/{spec.slug}.git"
 
 
 def clone_repo(spec: RepoSpec, workdir: Path, git_host: str) -> tuple[Path, str]:
@@ -81,7 +88,15 @@ def iter_cairo_files(repo_dir: Path) -> list[Path]:
 def is_excluded(path: Path, excluded_markers: tuple[str, ...]) -> bool:
     parts = [p.lower() for p in path.as_posix().split("/")]
     for marker in excluded_markers:
-        if any(part == marker for part in parts):
+        if any(
+            part == marker
+            or Path(part).stem.lower() == marker
+            or part.startswith(f"{marker}_")
+            or part.endswith(f"_{marker}")
+            or part.startswith(f"{marker}-")
+            or part.endswith(f"-{marker}")
+            for part in parts
+        ):
             return True
     return False
 
