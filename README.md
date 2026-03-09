@@ -80,7 +80,7 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cai
 
 | Module | What LLMs Commonly Miss |
 | --- | --- |
-| [cairo-auditor](cairo-auditor/SKILL.md) | Starknet upgrade/account edge cases and weak FP gates |
+| [cairo-auditor](cairo-auditor/SKILL.md) | Misses Starknet upgrade/account edge cases and weak FP gates |
 | [cairo-contract-authoring](cairo-contract-authoring/SKILL.md) | Applies Solidity structure directly to Cairo components |
 | [cairo-testing](cairo-testing/SKILL.md) | Invariants, adversarial tests, and regression discipline |
 | [cairo-optimization](cairo-optimization/SKILL.md) | Optimizes wrong paths without trace/Sierra context |
