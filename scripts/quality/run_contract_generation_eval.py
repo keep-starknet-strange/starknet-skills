@@ -432,26 +432,7 @@ def run_static_rules(*, case: GenerationCase, fixture: Path) -> list[str]:
 
 
 def _is_vuln_static_error(error: str) -> bool:
-    if error.startswith("must_not_match_failed:"):
-        return True
-    if not error.startswith("must_match_failed:"):
-        return False
-    parts = error.split(":", 2)
-    if len(parts) < 3:
-        return False
-    desc = parts[2].lower()
-    security_hints = (
-        "guard",
-        "timelock",
-        "reject",
-        "require",
-        "owner",
-        "non-zero",
-        "must clear",
-        "must bound",
-        "must source time",
-    )
-    return any(hint in desc for hint in security_hints)
+    return error.startswith("must_not_match_failed:") or error.startswith("must_match_failed:")
 
 
 def evaluate_case(
@@ -732,7 +713,7 @@ def main() -> int:
                     skill_id=case.skill_id,
                     security_class=case.security_class,
                     fixture=case.fixture,
-                    build_attempted=case.run_build,
+                    build_attempted=False,
                     build_ok=False,
                     tests_ok=False,
                     static_ok=False,
