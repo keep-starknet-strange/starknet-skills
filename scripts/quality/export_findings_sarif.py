@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
 SEVERITY_TO_LEVEL = {
     "critical": "error",
     "high": "error",
@@ -98,11 +100,20 @@ def _coerce_finding(raw: dict, *, source: str) -> Finding:
         scope=str(raw.get("scope", "prod_scan")),
         severity=severity,
         confidence_score=score,
-        confidence_tier=str(raw.get("confidence_tier", "high")),
-        actionability=str(raw.get("actionability", "actionable")),
-        gate_status=str(raw.get("gate_status", "pass")),
+        confidence_tier=str(raw.get("confidence_tier", "unscored")),
+        actionability=str(raw.get("actionability", "unscored")),
+        gate_status=str(raw.get("gate_status", "unknown")),
         gate_reason=str(raw.get("gate_reason", "")),
     )
+
+
+def _tool_version() -> str:
+    version_file = REPO_ROOT / "cairo-auditor/VERSION"
+    if version_file.is_file():
+        value = version_file.read_text(encoding="utf-8").strip()
+        if value:
+            return value
+    return "dev"
 
 
 def _build_sarif(*, findings: list[Finding], root_uri: str, run_name: str) -> dict:
@@ -182,7 +193,7 @@ def _build_sarif(*, findings: list[Finding], root_uri: str, run_name: str) -> di
                     "driver": {
                         "name": "starkskills-cairo-auditor",
                         "informationUri": "https://github.com/keep-starknet-strange/starknet-skills",
-                        "version": "v0.2.x",
+                        "version": _tool_version(),
                         "rules": [rules_by_id[key] for key in sorted(rules_by_id.keys())],
                     }
                 },

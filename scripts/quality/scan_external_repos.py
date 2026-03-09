@@ -217,8 +217,8 @@ def assess_finding(*, class_id: str, code: str) -> ConfidenceAssessment:
         deductions.append(("framework-guard-surface-present", 10))
 
     if class_id == "IRREVOCABLE_ADMIN" and _contains_any(code_l, OWNERSHIP_ROTATION_MARKERS):
-        gate_status = "suppressed"
-        gate_reason = "ownership-rotation-surface-detected"
+        # File-level heuristic note: this signal may be unrelated to the flagged surface.
+        gate_reason = "ownership-rotation-surface-detected-file-level-heuristic"
     elif class_id == "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD" and _contains_any(
         code_l, OZ_UPGRADEABLE_MARKERS
     ):

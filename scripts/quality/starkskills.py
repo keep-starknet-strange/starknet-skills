@@ -62,15 +62,21 @@ def _run(
     timeout: float | None = None,
     input_text: str | None = None,
 ) -> CommandResult:
-    proc = subprocess.run(
-        cmd,
-        cwd=cwd,
-        text=True,
-        capture_output=True,
-        input=input_text,
-        timeout=timeout,
-        check=False,
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            input=input_text,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        cmd_preview = " ".join(cmd)
+        raise RuntimeError(
+            f"command timed out after {timeout}s in {cwd.as_posix()}: {cmd_preview}"
+        ) from exc
     return CommandResult(returncode=proc.returncode, stdout=proc.stdout, stderr=proc.stderr)
 
 
@@ -188,19 +194,26 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                 "-d",
                 '{"model":"openai/gpt-4o-mini","messages":[{"role":"user","content":"ping"}],"max_tokens":1}',
             ]
-            probe = _run(
-                cmd,
-                cwd=REPO_ROOT,
-                timeout=20,
-                input_text=f"Authorization: Bearer {token}\n",
-            )
-            code = (probe.stdout or "").strip()
-            ok_codes = {"200", "201"}
-            rows.append({
-                "name": "github_models_probe",
-                "status": "ok" if code in ok_codes else "warn",
-                "detail": f"http={code or 'unknown'}",
-            })
+            try:
+                probe = _run(
+                    cmd,
+                    cwd=REPO_ROOT,
+                    timeout=20,
+                    input_text=f"Authorization: Bearer {token}\n",
+                )
+                code = (probe.stdout or "").strip()
+                ok_codes = {"200", "201"}
+                rows.append({
+                    "name": "github_models_probe",
+                    "status": "ok" if code in ok_codes else "warn",
+                    "detail": f"http={code or 'unknown'}",
+                })
+            except RuntimeError as exc:
+                rows.append({
+                    "name": "github_models_probe",
+                    "status": "warn",
+                    "detail": str(exc),
+                })
 
     return _print_doctor_report(rows, as_json=args.json)
 
@@ -250,7 +263,15 @@ def cmd_audit_local(args: argparse.Namespace) -> int:
     if args.fail_on_findings:
         cmd.append("--fail-on-findings")
 
-    result = _run(cmd, cwd=REPO_ROOT, timeout=float(_cfg(cfg, "defaults", "scan_timeout_seconds", 1200)))
+    try:
+        result = _run(
+            cmd,
+            cwd=REPO_ROOT,
+            timeout=float(_cfg(cfg, "defaults", "scan_timeout_seconds", 1200)),
+        )
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     if result.stdout.strip():
         print(result.stdout.strip())
     if result.stderr.strip():
@@ -351,7 +372,15 @@ def _run_pack_backend(args: argparse.Namespace, *, force_stage2: bool | None) ->
         prepare_stage2 = bool(_cfg(cfg, "external", "prepare_stage2", False))
         cmd.append("--prepare-stage2" if prepare_stage2 else "--no-prepare-stage2")
 
-    result = _run(cmd, cwd=REPO_ROOT, timeout=float(_cfg(cfg, "defaults", "scan_timeout_seconds", 1200)) + 60)
+    try:
+        result = _run(
+            cmd,
+            cwd=REPO_ROOT,
+            timeout=float(_cfg(cfg, "defaults", "scan_timeout_seconds", 1200)) + 60,
+        )
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1, {}
     if result.stdout.strip():
         print(result.stdout.strip())
     if result.stderr.strip():
