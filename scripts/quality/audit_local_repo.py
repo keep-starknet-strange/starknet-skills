@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from collections import Counter
@@ -43,7 +44,9 @@ def _slug(value: str) -> str:
             safe.append(ch)
         else:
             safe.append("-")
-    return "".join(safe).strip("-") or "local-cairo-audit"
+    normalized = "".join(safe).strip("-")
+    normalized = re.sub(r"-{2,}", "-", normalized)
+    return normalized or "local-cairo-audit"
 
 
 def _resolve_path(raw: str, base: Path) -> Path:

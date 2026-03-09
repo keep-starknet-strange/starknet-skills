@@ -118,7 +118,8 @@ By default, the script writes:
 - `evals/reports/local/<safe-scan-id>-<timestamp>.json`
 - `evals/reports/local/<safe-scan-id>-<timestamp>.md`
 - If a filename already exists, the script appends `-N` before extension to avoid overwrite.
-  The script also slugifies `--scan-id` into `<safe-scan-id>` (lowercase alphanumeric with `-`/`_`).
+  The script also slugifies `--scan-id` into `<safe-scan-id>` (lowercase alphanumeric with `-`/`_`,
+  and repeated `-` runs are collapsed to a single dash).
 
 JSONL behavior:
 
