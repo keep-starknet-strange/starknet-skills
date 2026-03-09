@@ -41,7 +41,7 @@ rules:
       confidence: low
       triage: manual-review-required
       detection_scope: function-heuristic
-      attack_vectors_core: [23, 27, 39, 77]
+      attack_vectors_core: [23, 27, 39]
       attack_vectors_extended: [77]
     paths:
       include:
@@ -75,16 +75,15 @@ rules:
     metadata:
       confidence: low
       triage: manual-review-required
-      detection_scope: file-heuristic
+      detection_scope: function-heuristic
       attack_vectors_core: [31, 32, 34, 49]
       attack_vectors_extended: [94, 100]
     paths:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "(match\\s+.*Err|if\\s+.*is_err|unwrap_or|unwrap_or_default)"
-      - pattern-regex: "(transfer\\(|call_contract_syscall\\()"
-      - pattern-regex: "\\.write\\("
+      - pattern-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,820}?(call_contract_syscall\\(|transfer\\()[\\s\\S]{0,520}?(match\\s+[\\s\\S]{0,120}?Err\\s*\\{|if\\s+[\\s\\S]{0,120}?is_err\\(|unwrap_or(?:_default)?\\()[\\s\\S]{0,420}?(continue|\\.write\\(|emit\\(|return\\s+Ok)"
+      - pattern-not-regex: "fn\\s+[a-zA-Z0-9_]+[\\s\\S]{0,1100}?(call_contract_syscall\\(|transfer\\()[\\s\\S]{0,720}?(panic_with|expect\\(|unwrap\\(|return\\s+Err|assert\\([^)]*is_ok)"
 
   - id: cairo.external.cross-domain-replay-origin-gap
     message: "L1/L2 message path appears without strong sender/domain/replay verification."

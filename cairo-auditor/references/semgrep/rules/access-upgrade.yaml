@@ -74,12 +74,12 @@ rules:
       triage: manual-review-required
       detection_scope: function-heuristic
       attack_vectors_core: [5, 66]
-      attack_vectors_extended: [66]
     paths:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "fn\\s+register_[a-zA-Z0-9_]+[\\s\\S]{0,520}?is_non_zero\\([\\s\\S]{0,360}?\\.write\\("
+      - pattern-regex: "fn\\s+register_[a-zA-Z0-9_]+[\\s\\S]{0,640}?\\.write\\("
+      - pattern-not-regex: "fn\\s+register_[a-zA-Z0-9_]+[\\s\\S]{0,640}?(is_non_zero\\(|!=\\s*0|assert\\(.*!=\\s*0\\)|assert\\(.*is_non_zero\\()"
 
   - id: cairo.access.ungated-privileged-mutation
     message: "External privileged mutation path appears without explicit access check."
