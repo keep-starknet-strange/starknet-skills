@@ -55,7 +55,7 @@ CEI_CLASSES = {
     "CEI_VIOLATION_ERC1155",
 }
 
-STARKNET_DEP_RE = re.compile(r'^\s*starknet\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)"\s*$', re.MULTILINE)
+STARKNET_DEP_LINE_RE = re.compile(r'^starknet\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)"\s*$')
 SEMVER_RE = re.compile(r"^([0-9]+)\.([0-9]+)\.([0-9]+)$")
 SAFE_ENV_KEYS = (
     "PATH",
@@ -70,10 +70,8 @@ SAFE_ENV_KEYS = (
     "WINDIR",
     "ASDF_DIR",
     "ASDF_DATA_DIR",
-    "ASDF_CONFIG_FILE",
     "ASDF_CONCURRENCY",
     "SCARB_CACHE",
-    "SCARB_CONFIG",
 )
 
 
@@ -170,7 +168,7 @@ def _iter_tool_versions_paths(project_root: Path, repo_dir: Path) -> list[Path]:
         return paths
     while True:
         candidate = current / ".tool-versions"
-        if candidate.exists():
+        if candidate.is_file():
             paths.append(candidate)
         if current == repo_resolved or current.parent == current:
             break
@@ -196,15 +194,29 @@ def _extract_scarb_version_candidates(project_root: Path, repo_dir: Path) -> lis
                         versions.append(version)
 
     manifest = project_root / "Scarb.toml"
-    if manifest.exists():
-        match = STARKNET_DEP_RE.search(manifest.read_text(encoding="utf-8", errors="ignore"))
-        if match:
+    if manifest.is_file():
+        manifest_text = manifest.read_text(encoding="utf-8", errors="ignore")
+        in_dependencies = False
+        for raw_line in manifest_text.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("[") and line.endswith("]"):
+                section = line[1:-1].strip().lower()
+                in_dependencies = section == "dependencies"
+                continue
+            if not in_dependencies:
+                continue
+            match = STARKNET_DEP_LINE_RE.match(line)
+            if not match:
+                continue
             # `starknet = "X.Y.Z"` is only an approximate hint for Scarb toolchains.
             # We keep it as best-effort fallback behind explicit `.tool-versions`.
             version = match.group(1).strip()
             if version and version not in seen:
                 seen.add(version)
                 versions.append(version)
+            break
 
     return versions
 
@@ -295,9 +307,11 @@ def _extract_build_error(proc: subprocess.CompletedProcess[str]) -> str:
 def find_scarb_projects(repo_dir: Path) -> list[Path]:
     roots: list[Path] = []
     top = repo_dir / "Scarb.toml"
-    if top.exists():
+    if top.is_file():
         roots.append(repo_dir)
     for path in repo_dir.rglob("Scarb.toml"):
+        if not path.is_file():
+            continue
         parent = path.parent
         if parent == repo_dir:
             continue
@@ -703,10 +717,19 @@ def analyze_repo(
                 continue
 
             projects_built += 1
+            metadata_remaining = deadline_at - time.monotonic()
+            if metadata_remaining <= 0:
+                projects_failed += 1
+                errors.append(
+                    f"{_safe_repo_rel(project, repo_dir)}: per-project metadata deadline exceeded ({project_deadline_s:.0f}s)"
+                )
+                continue
+            metadata_calls = 2 if chosen_ignore_cairo else 1
+            metadata_timeout = min(scarb_timeout_s, max(10.0, metadata_remaining / metadata_calls))
             target_dirs = _resolve_target_dirs(
                 project,
                 repo_dir,
-                scarb_timeout_s,
+                metadata_timeout,
                 errors,
                 allow_metadata=True,
                 scarb_prefix=chosen_prefix,
