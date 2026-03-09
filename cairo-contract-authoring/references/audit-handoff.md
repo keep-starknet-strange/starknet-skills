@@ -48,4 +48,4 @@ Use build mode only on trusted code, or run in an isolated environment.
 ## 5. Re-run and Freeze Evidence
 
 - Re-run local audit until findings are expected.
-- Keep generated `*.md` + `*.jsonl` outputs as PR evidence artifacts.
+- Keep generated `*.md`, `*.json`, and `*.jsonl` outputs as PR evidence artifacts.

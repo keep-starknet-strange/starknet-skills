@@ -275,43 +275,56 @@ def main() -> int:
             else (output_dir / f"{stem}.findings.jsonl")
         )
 
-    summary, findings = _scan_local(repo_root, repo_slug, ref, excluded_markers)
-    class_counts = Counter(str(row["class_id"]) for row in findings)
-
-    sierra_payload: dict[str, object] | None = None
-    if args.sierra_confirm:
-        signal = analyze_repo(
-            spec=RepoSpec(slug=repo_slug, ref=None),
-            repo_dir=repo_root,
-            ref=ref,
-            allow_build=args.allow_build,
-            detector_class_counts={repo_slug: class_counts},
-            scarb_timeout_s=args.scarb_timeout_seconds,
+    resolved_outputs: list[tuple[str, Path]] = [("json", out_json), ("md", out_md)]
+    if out_jsonl is not None:
+        resolved_outputs.append(("findings_jsonl", out_jsonl))
+    by_path: dict[Path, list[str]] = {}
+    for label, path in resolved_outputs:
+        by_path.setdefault(path, []).append(label)
+    duplicates = {path: labels for path, labels in by_path.items() if len(labels) > 1}
+    if duplicates:
+        detail = "; ".join(
+            f"{path.as_posix()}: {', '.join(labels)}" for path, labels in duplicates.items()
         )
-        sierra_payload = {
-            "projects_total": signal.projects_total,
-            "projects_built": signal.projects_built,
-            "projects_failed": signal.projects_failed,
-            "artifacts": signal.artifacts,
-            "artifact_breakdown": signal.artifact_breakdown,
-            "marker_counts": signal.marker_counts,
-            "function_signals": signal.function_signals,
-            "signal_flags": signal.signal_flags,
-            "confirmation": signal.confirmation,
-            "errors": signal.errors,
-        }
-
-    generated_at_iso = generated_at.isoformat()
-    payload: dict[str, object] = {
-        "scan_id": args.scan_id,
-        "generated_at": generated_at_iso,
-        "summary": summary,
-        "class_counts": dict(class_counts),
-        "findings": findings,
-        "sierra_confirmation": sierra_payload,
-    }
+        parser.error(f"output paths must be distinct ({detail})")
 
     try:
+        summary, findings = _scan_local(repo_root, repo_slug, ref, excluded_markers)
+        class_counts = Counter(str(row["class_id"]) for row in findings)
+
+        sierra_payload: dict[str, object] | None = None
+        if args.sierra_confirm:
+            signal = analyze_repo(
+                spec=RepoSpec(slug=repo_slug, ref=None),
+                repo_dir=repo_root,
+                ref=ref,
+                allow_build=args.allow_build,
+                detector_class_counts={repo_slug: class_counts},
+                scarb_timeout_s=args.scarb_timeout_seconds,
+            )
+            sierra_payload = {
+                "projects_total": signal.projects_total,
+                "projects_built": signal.projects_built,
+                "projects_failed": signal.projects_failed,
+                "artifacts": signal.artifacts,
+                "artifact_breakdown": signal.artifact_breakdown,
+                "marker_counts": signal.marker_counts,
+                "function_signals": signal.function_signals,
+                "signal_flags": signal.signal_flags,
+                "confirmation": signal.confirmation,
+                "errors": signal.errors,
+            }
+
+        generated_at_iso = generated_at.isoformat()
+        payload: dict[str, object] = {
+            "scan_id": args.scan_id,
+            "generated_at": generated_at_iso,
+            "summary": summary,
+            "class_counts": dict(class_counts),
+            "findings": findings,
+            "sierra_confirmation": sierra_payload,
+        }
+
         out_json.parent.mkdir(parents=True, exist_ok=True)
         out_md.parent.mkdir(parents=True, exist_ok=True)
 
@@ -333,32 +346,32 @@ def main() -> int:
             with out_jsonl.open("w", encoding="utf-8") as handle:
                 for row in findings:
                     handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+
+        print(
+            json.dumps(
+                {
+                    "scan_id": args.scan_id,
+                    "repo_root": repo_root.as_posix(),
+                    "findings": len(findings),
+                    "class_counts": dict(class_counts),
+                    "output_json": out_json.as_posix(),
+                    "output_md": out_md.as_posix(),
+                    "output_findings_jsonl": out_jsonl.as_posix() if out_jsonl else None,
+                },
+                ensure_ascii=True,
+            )
+        )
+
+        if args.fail_on_findings and findings:
+            print(
+                f"audit gate: {len(findings)} finding(s) detected - exit 2 (see {out_json.as_posix()})",
+                file=sys.stderr,
+            )
+            return 2
+        return 0
     finally:
         if lock_path:
             lock_path.unlink(missing_ok=True)
-
-    print(
-        json.dumps(
-            {
-                "scan_id": args.scan_id,
-                "repo_root": repo_root.as_posix(),
-                "findings": len(findings),
-                "class_counts": dict(class_counts),
-                "output_json": out_json.as_posix(),
-                "output_md": out_md.as_posix(),
-                "output_findings_jsonl": out_jsonl.as_posix() if out_jsonl else None,
-            },
-            ensure_ascii=True,
-        )
-    )
-
-    if args.fail_on_findings and findings:
-        print(
-            f"audit gate: {len(findings)} finding(s) detected - exit 2 (see {out_json.as_posix()})",
-            file=sys.stderr,
-        )
-        return 2
-    return 0
 
 
 if __name__ == "__main__":
