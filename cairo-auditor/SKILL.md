@@ -31,6 +31,13 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 - `deep`: default + adversarial exploit-path pass.
 - `targeted`: explicit file set, same validation gate, faster iteration.
 
+## Quick Start
+
+1. Open [workflows/default.md](workflows/default.md) for standard audits, or [workflows/deep.md](workflows/deep.md) for adversarial mode.
+2. Load [agents/vector-scan.md](agents/vector-scan.md) and [references/judging.md](references/judging.md).
+3. Select attack-vector partitions from [references/attack-vectors/attack-vectors-1.md](references/attack-vectors/attack-vectors-1.md) through [attack-vectors-4.md](references/attack-vectors/attack-vectors-4.md).
+4. Format output using [references/report-formatting.md](references/report-formatting.md), then validate against [references/vulnerability-db/README.md](references/vulnerability-db/README.md).
+
 ## Orchestration (4 Turns)
 
 ### Turn 1: Discover
@@ -42,26 +49,26 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 ### Turn 2: Prepare
 
 1. Load specialist instructions and references:
-   - `agents/vector-scan.md`
-   - `references/judging.md`
-   - `references/report-formatting.md`
+   - [agents/vector-scan.md](agents/vector-scan.md)
+   - [references/judging.md](references/judging.md)
+   - [references/report-formatting.md](references/report-formatting.md)
 2. Build four specialist bundles. Each bundle includes:
    - full in-scope Cairo code,
    - one vector partition:
-     - `references/attack-vectors/attack-vectors-1.md`
-     - `references/attack-vectors/attack-vectors-2.md`
-     - `references/attack-vectors/attack-vectors-3.md`
-     - `references/attack-vectors/attack-vectors-4.md`
+     - [references/attack-vectors/attack-vectors-1.md](references/attack-vectors/attack-vectors-1.md)
+     - [references/attack-vectors/attack-vectors-2.md](references/attack-vectors/attack-vectors-2.md)
+     - [references/attack-vectors/attack-vectors-3.md](references/attack-vectors/attack-vectors-3.md)
+     - [references/attack-vectors/attack-vectors-4.md](references/attack-vectors/attack-vectors-4.md)
 3. Record line counts per bundle for parallel chunk-reading instructions.
 
 ### Turn 3: Spawn
 
 1. Spawn 4 parallel vector specialists (one per bundle) following `agents/vector-scan.md`.
-2. In `deep` mode, spawn `agents/adversarial.md` in parallel.
+2. In `deep` mode, spawn [agents/adversarial.md](agents/adversarial.md) in parallel.
 3. Each specialist must:
    - triage vectors (`Skip/Borderline/Survive`),
-   - apply FP gate from `references/judging.md`,
-   - output only findings formatted by `references/report-formatting.md`.
+   - apply FP gate from [references/judging.md](references/judging.md),
+   - output only findings formatted by [references/report-formatting.md](references/report-formatting.md).
 
 ### Turn 4: Report
 
