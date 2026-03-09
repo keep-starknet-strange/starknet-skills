@@ -104,7 +104,7 @@ Skills are authored from audit-backed source material, then checked against dete
 
 Current workflow status:
 - `quality.yml` is the required per-PR gate
-- `full-evals.yml` runs on schedule/workflow dispatch and auto-triggers for PRs touching `SKILL.md`, `references/**`, `evals/**`, or `scripts/quality/**`
+- `full-evals.yml` runs on schedule/workflow dispatch and auto-triggers for PRs touching `SKILL.md`, `references/**`, `evals/**`, `scripts/quality/**`, or `.github/workflows/**`
 - external triage trends live under [`evals/scorecards/`](evals/scorecards)
 
 ## Website

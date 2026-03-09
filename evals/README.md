@@ -21,7 +21,7 @@ For changes affecting security detection behavior:
 ## CI Tiers
 
 - Per-PR (`quality.yml`): schema validation, manifest uniqueness checks, and held-out leakage policy checks.
-- Full tier (`full-evals.yml`): parity checks + held-out leakage guard + deterministic benchmarks; run on schedule, workflow-dispatch, or automatically for pull requests that touch `SKILL.md`, `references/**`, `evals/**`, or `scripts/quality/**`.
+- Full tier (`full-evals.yml`): parity checks + held-out leakage guard + deterministic benchmarks; run on schedule, workflow-dispatch, or automatically for pull requests that touch `SKILL.md`, `references/**`, `evals/**`, `scripts/quality/**`, or `.github/workflows/**`.
 - LLM held-out tier (`full-evals.yml`): runs with GitHub Models via `GITHUB_TOKEN` and `permissions: models: read`, enforcing precision/recall gates on a separate held-out case pack.
   - The workflow probes GitHub Models first; if model access is not available for the repo/org token, the LLM tier is skipped and deterministic gates still run.
 - External triage tier (`full-evals.yml`): scores human-labeled external findings (`tp`/`fp`) and emits release scorecards + trend markdown.
