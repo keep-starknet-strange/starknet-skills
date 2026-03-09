@@ -174,14 +174,18 @@ PY
 Each finding must include:
 
 - `class_id`
-- `severity`
+- `category` (`security_bug` | `design_tradeoff` | `quality_smell`)
 - `confidence`
+- `needs_poc` (`true` | `false`)
+- `actionability` (`actionable` | `low_confidence` | `suppressed`)
 - `entry_point`
 - `attack_path`
 - `guard_analysis`
 - `affected_files`
 - `recommended_fix`
 - `required_tests`
+
+Do not auto-assign `high/critical` severity in scanner output. Severity is manual signoff metadata only.
 
 ## Evidence Priority
 

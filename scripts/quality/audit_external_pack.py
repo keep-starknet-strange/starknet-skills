@@ -194,11 +194,11 @@ def _render_bundle(
     lines.append("")
     lines.append("## Stage-1 Actionable Findings")
     lines.append("")
-    lines.append("| File | Class | Severity | Score |")
-    lines.append("| --- | --- | --- | ---: |")
+    lines.append("| File | Class | Category | Needs PoC | Score |")
+    lines.append("| --- | --- | --- | --- | ---: |")
     for finding in actionable_findings:
         lines.append(
-            f"| `{finding['file']}` | `{finding['class_id']}` | {finding.get('severity', 'medium')} | {finding.get('confidence_score', 100)} |"
+            f"| `{finding['file']}` | `{finding['class_id']}` | {finding.get('category', 'security_bug')} | {finding.get('needs_poc', False)} | {finding.get('confidence_score', 100)} |"
         )
     lines.append("")
     lines.append("## In-Scope Source (Production Files)")

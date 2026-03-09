@@ -21,6 +21,8 @@
   - enforces precision/recall + per-class recall thresholds
 - `score_external_triage.py`
   - computes precision/recall from manually labeled external findings
+  - also emits category-aware KPIs: `security_precision`, `design_actionability_rate`, `quality_debt_count`
+  - `security_precision` counts only signoff-ready security rows (dual reviewer signoff + `needs_poc=false`, unless explicitly overridden by `security_countable=true`)
   - emits release scorecard + trend table
   - tracks labeled coverage against full findings and emits unlabeled backlog queue
 - `check_manual_gold_recall.py`
@@ -43,6 +45,8 @@
   - emits JSON/JSONL/markdown artifacts
   - emits native CSV artifacts (repo summary, findings, manual triage sheet)
   - applies deterministic confidence scoring + strict suppression metadata for faster triage
+  - emits category-first findings (`security_bug`, `design_tradeoff`, `quality_smell`) + `needs_poc`, not auto severity labels
+  - reserves severity for manual signoff (`manual_severity`) in triage workflows
   - isolates per-repo failures so one repo does not abort the full scan
 - `audit_external_pack.py`
   - one-shot external benchmark runner with curated repo packs
@@ -190,6 +194,11 @@ python scripts/quality/scan_external_repos.py \
   --output-findings-jsonl evals/reports/data/external-scan.findings.jsonl \
   --write-csv
 ```
+
+Manual triage CSV columns now include:
+
+- scanner fields: `category`, `needs_poc`, `confidence_score`, `actionability`, `gate_status`
+- reviewer fields: `triage_category`, `reviewer_1`, `reviewer_2`, `security_countable`, `manual_severity`, `manual_verdict`, `manual_notes`
 
 By default, the script writes:
 

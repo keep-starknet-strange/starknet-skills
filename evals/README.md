@@ -147,6 +147,12 @@ python scripts/quality/score_external_triage.py \
   --min-labeled-coverage 0.90
 ```
 
+`score_external_triage.py` keeps the CI gate on overall precision/recall, and additionally reports:
+
+- `security_precision` (countable `security_bug` rows only: `triage_category=security_bug`, `needs_poc=false`, dual reviewer signoff, or explicit `security_countable=true`)
+- `design_actionability_rate`
+- `quality_debt_count`
+
 Run one-shot external pack benchmark (first-time friendly):
 
 ```bash
@@ -163,6 +169,8 @@ Run one-shot external pack benchmark (first-time friendly):
 - `<scan-id>.repo-summary.csv`
 - `<scan-id>.findings.csv`
 - `<scan-id>.manual-triage.csv`
+
+The manual triage CSV is category-first (`category`, `needs_poc`) and includes manual signoff columns (`triage_category`, `reviewer_1`, `reviewer_2`, `security_countable`, `manual_severity`).
 
 `audit deep` produces the same base artifacts plus:
 

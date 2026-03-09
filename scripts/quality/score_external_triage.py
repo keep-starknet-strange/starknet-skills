@@ -23,12 +23,26 @@ class LabelRow:
     human_outcome: str  # tp | fp
     confidence: str
     reviewer: str
+    reviewer_1: str
+    reviewer_2: str
     reviewed_at: str
     rationale: str
+    triage_category: str  # security_bug | design_tradeoff | quality_smell
+    needs_poc: bool
+    security_countable: bool | None
+    manual_severity: str
 
     @property
     def finding_key(self) -> tuple[str, str, str, str]:
         return (self.repo, self.ref, self.file, self.class_id)
+
+    @property
+    def is_security_countable(self) -> bool:
+        if self.security_countable is not None:
+            return self.security_countable
+        if self.triage_category != "security_bug" or self.needs_poc:
+            return False
+        return bool(self.reviewer_1.strip()) and bool(self.reviewer_2.strip())
 
 
 @dataclass(frozen=True)
@@ -77,6 +91,31 @@ def load_labels(path: Path) -> list[LabelRow]:
         if human_outcome not in {"tp", "fp"}:
             raise ValueError(f"{path}:{line_no}: human_outcome must be tp|fp")
         predicted_detect = bool(raw["predicted_detect"])
+        triage_category = str(raw.get("triage_category", "security_bug")).lower()
+        if triage_category not in {"security_bug", "design_tradeoff", "quality_smell"}:
+            raise ValueError(
+                f"{path}:{line_no}: triage_category must be security_bug|design_tradeoff|quality_smell"
+            )
+        raw_needs_poc = raw.get("needs_poc", False)
+        if isinstance(raw_needs_poc, bool):
+            needs_poc = raw_needs_poc
+        else:
+            needs_poc = str(raw_needs_poc).strip().lower() in {"1", "true", "yes", "y"}
+        reviewer_primary = str(raw.get("reviewer_1", raw["reviewer"])).strip()
+        reviewer_secondary = str(raw.get("reviewer_2", "")).strip()
+        security_countable_raw = raw.get("security_countable")
+        if security_countable_raw is None:
+            security_countable = None
+        elif isinstance(security_countable_raw, bool):
+            security_countable = security_countable_raw
+        else:
+            lowered = str(security_countable_raw).strip().lower()
+            if lowered not in {"1", "0", "true", "false", "yes", "no", "y", "n"}:
+                raise ValueError(f"{path}:{line_no}: invalid security_countable value")
+            security_countable = lowered in {"1", "true", "yes", "y"}
+        manual_severity = str(raw.get("manual_severity", "")).strip().lower()
+        if manual_severity and manual_severity not in {"critical", "high", "medium", "low", "info"}:
+            raise ValueError(f"{path}:{line_no}: invalid manual_severity value")
         rows.append(
             LabelRow(
                 finding_id=finding_id,
@@ -90,8 +129,14 @@ def load_labels(path: Path) -> list[LabelRow]:
                 human_outcome=human_outcome,
                 confidence=str(raw["confidence"]).lower(),
                 reviewer=str(raw["reviewer"]),
+                reviewer_1=reviewer_primary,
+                reviewer_2=reviewer_secondary,
                 reviewed_at=str(raw["reviewed_at"]),
                 rationale=str(raw["rationale"]),
+                triage_category=triage_category,
+                needs_poc=needs_poc,
+                security_countable=security_countable,
+                manual_severity=manual_severity,
             )
         )
     return rows
@@ -165,6 +210,41 @@ def score(rows: list[LabelRow]) -> dict[str, int]:
     return totals
 
 
+def _category_kpis(rows: list[LabelRow]) -> dict[str, object]:
+    security_rows = [row for row in rows if row.is_security_countable]
+    security_totals = score(security_rows)
+    security_precision = precision(security_totals["tp"], security_totals["fp"])
+    if not security_rows:
+        security_precision = None
+
+    design_rows = [row for row in rows if row.triage_category == "design_tradeoff"]
+    design_totals = score(design_rows)
+    design_actionability_rate = precision(design_totals["tp"], design_totals["fp"])
+    if not design_rows:
+        design_actionability_rate = None
+
+    quality_debt_count = sum(
+        1
+        for row in rows
+        if row.triage_category == "quality_smell" and row.human_outcome == "tp"
+    )
+
+    return {
+        "security_precision": security_precision,
+        "security_countable_total": len(security_rows),
+        "security_countable_tp": security_totals["tp"],
+        "security_countable_fp": security_totals["fp"],
+        "design_actionability_rate": design_actionability_rate,
+        "design_labeled_total": len(design_rows),
+        "design_tp": design_totals["tp"],
+        "design_fp": design_totals["fp"],
+        "quality_debt_count": quality_debt_count,
+        "quality_labeled_total": sum(
+            1 for row in rows if row.triage_category == "quality_smell"
+        ),
+    }
+
+
 def render_release_md(
     *,
     release: str,
@@ -176,6 +256,7 @@ def render_release_md(
     labeled_in_scan: int | None,
     total_findings: int | None,
     unlabeled_rows: list[FindingRow],
+    kpis: dict[str, object],
 ) -> str:
     tp = totals["tp"]
     fp = totals["fp"]
@@ -206,6 +287,38 @@ def render_release_md(
     lines.append(f"| FN | {fn} |")
     lines.append(f"| TN | {tn} |")
     lines.append("")
+    lines.append("## Category KPIs")
+    lines.append("")
+    security_precision = kpis.get("security_precision")
+    design_actionability_rate = kpis.get("design_actionability_rate")
+    lines.append(
+        f"- security_precision: {security_precision:.3f}"
+        if isinstance(security_precision, float)
+        else "- security_precision: n/a (no countable security rows)"
+    )
+    lines.append(
+        f"- design_actionability_rate: {design_actionability_rate:.3f}"
+        if isinstance(design_actionability_rate, float)
+        else "- design_actionability_rate: n/a (no design_tradeoff rows)"
+    )
+    lines.append(f"- quality_debt_count: {kpis.get('quality_debt_count', 0)}")
+    lines.append("")
+    lines.append("| KPI | Value |")
+    lines.append("| --- | ---: |")
+    lines.append(
+        "| security_countable_total | {value} |".format(
+            value=int(kpis.get("security_countable_total", 0))
+        )
+    )
+    lines.append(
+        "| design_labeled_total | {value} |".format(value=int(kpis.get("design_labeled_total", 0)))
+    )
+    lines.append(
+        "| quality_labeled_total | {value} |".format(
+            value=int(kpis.get("quality_labeled_total", 0))
+        )
+    )
+    lines.append("")
     if findings_path is not None and labeled_in_scan is not None and total_findings is not None:
         unlabeled = len(unlabeled_rows)
         coverage = 1.0 if total_findings == 0 else labeled_in_scan / total_findings
@@ -228,12 +341,12 @@ def render_release_md(
             lines.append("")
     lines.append("## Labeled Findings")
     lines.append("")
-    lines.append("| Finding | Class | Repo | Outcome | Confidence | Notes |")
-    lines.append("| --- | --- | --- | --- | --- | --- |")
+    lines.append("| Finding | Class | Repo | Category | Needs PoC | Security Countable | Outcome | Confidence | Notes |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- |")
     for row in sorted(rows, key=lambda item: item.finding_id):
         note = row.rationale.replace("|", "/")
         lines.append(
-            f"| {row.finding_id} | {row.class_id} | `{row.repo}` | {row.human_outcome} | {row.confidence} | {note} |"
+            f"| {row.finding_id} | {row.class_id} | `{row.repo}` | {row.triage_category} | {row.needs_poc} | {row.is_security_countable} | {row.human_outcome} | {row.confidence} | {note} |"
         )
     lines.append("")
     return "\n".join(lines)
@@ -329,6 +442,7 @@ def main() -> int:
 
     rows = load_labels(label_path)
     totals = score(rows)
+    kpis = _category_kpis(rows)
 
     tp = totals["tp"]
     fp = totals["fp"]
@@ -362,6 +476,7 @@ def main() -> int:
         labeled_in_scan=labeled_in_scan,
         total_findings=total_findings,
         unlabeled_rows=unlabeled_rows,
+        kpis=kpis,
     )
     output_md.parent.mkdir(parents=True, exist_ok=True)
     output_md.write_text(markdown + "\n", encoding="utf-8")
@@ -373,6 +488,7 @@ def main() -> int:
         "totals": totals,
         "precision": p,
         "recall": r,
+        "kpis": kpis,
         "labels_distinct_total": len({row.finding_key for row in rows}),
         "labeled_in_scan": labeled_in_scan,
         "findings_distinct_total": total_findings,

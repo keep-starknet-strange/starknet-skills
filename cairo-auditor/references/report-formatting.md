@@ -8,7 +8,7 @@ Use this exact structure for each finding.
 
 `Location: {file}:{line}`
 
-`Class: {class_id} | Confidence: [{score}] | Severity: {severity}`
+`Class: {class_id} | Category: {category} | Confidence: [{score}] | Needs PoC: {needs_poc} | Actionability: {actionability}`
 
 `Description:`
 
@@ -37,6 +37,7 @@ Use this exact structure for each finding.
 
 - Findings with confidence `<75` can be reported, but omit the `Fix` diff block.
 - Findings that fail FP gate must be dropped and not reported.
+- Severity labels (`high/critical`) are manual signoff-only metadata and should not be auto-assigned by deterministic scanners.
 
 ## Deduplication Rule
 

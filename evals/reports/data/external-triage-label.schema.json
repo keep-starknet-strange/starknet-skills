@@ -76,6 +76,38 @@
     "rationale": {
       "type": "string",
       "minLength": 1
+    },
+    "triage_category": {
+      "type": "string",
+      "enum": [
+        "security_bug",
+        "design_tradeoff",
+        "quality_smell"
+      ]
+    },
+    "needs_poc": {
+      "type": "boolean"
+    },
+    "reviewer_1": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reviewer_2": {
+      "type": "string",
+      "minLength": 1
+    },
+    "security_countable": {
+      "type": "boolean"
+    },
+    "manual_severity": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ]
     }
   },
   "additionalProperties": false

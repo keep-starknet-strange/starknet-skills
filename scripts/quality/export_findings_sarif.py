@@ -10,12 +10,18 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-SEVERITY_TO_LEVEL = {
-    "critical": "error",
-    "high": "error",
-    "medium": "warning",
-    "low": "note",
-    "info": "note",
+CATEGORY_TO_LEVEL = {
+    "security_bug": "error",
+    "design_tradeoff": "warning",
+    "quality_smell": "note",
+}
+
+LEGACY_SEVERITY_TO_CATEGORY = {
+    "critical": "security_bug",
+    "high": "security_bug",
+    "medium": "security_bug",
+    "low": "design_tradeoff",
+    "info": "quality_smell",
 }
 
 DEFAULT_RULE_HELP = {
@@ -29,7 +35,7 @@ DEFAULT_RULE_HELP = {
     "CONSTRUCTOR_DEAD_PARAM": "Constructor parameters should be used or removed to avoid misleading security surface.",
     "IRREVOCABLE_ADMIN": "Privileged roles should provide explicit rotation/recovery paths unless immutability is intentional.",
     "ONE_SHOT_REGISTRATION": "One-time registry/initializer slots should have recovery or migration mechanisms.",
-    "FEES_RECIPIENT_ZERO_DOS": "Fee recipient addresses should be validated to prevent settlement DOS.",
+    "FEES_RECIPIENT_ZERO_DOS": "Fee recipient addresses should be validated to avoid fee-loss misconfiguration or payout-path disruption.",
     "NO_ACCESS_CONTROL_MUTATION": "State-changing privileged mutations should enforce role/caller checks.",
     "CEI_VIOLATION_ERC1155": "Apply CEI ordering for ERC1155 callbacks; update critical state before external interactions.",
 }
@@ -42,7 +48,8 @@ class Finding:
     file: str
     class_id: str
     scope: str
-    severity: str
+    category: str
+    needs_poc: bool
     confidence_score: int
     confidence_tier: str
     actionability: str
@@ -91,9 +98,18 @@ def _coerce_finding(raw: dict, *, source: str) -> Finding:
     if missing:
         raise ValueError(f"{source}: missing required keys {missing}")
 
-    severity = str(raw.get("severity", "medium")).lower()
-    if severity not in SEVERITY_TO_LEVEL:
-        severity = "medium"
+    raw_category = str(raw.get("category", "")).lower().strip()
+    if raw_category in CATEGORY_TO_LEVEL:
+        category = raw_category
+    else:
+        legacy_severity = str(raw.get("severity", "medium")).lower().strip()
+        category = LEGACY_SEVERITY_TO_CATEGORY.get(legacy_severity, "security_bug")
+
+    raw_needs_poc = raw.get("needs_poc", False)
+    if isinstance(raw_needs_poc, bool):
+        needs_poc = raw_needs_poc
+    else:
+        needs_poc = str(raw_needs_poc).strip().lower() in {"1", "true", "yes", "y"}
 
     score_raw = raw.get("confidence_score", 100)
     try:
@@ -107,7 +123,8 @@ def _coerce_finding(raw: dict, *, source: str) -> Finding:
         file=str(raw.get("file", "")),
         class_id=str(raw.get("class_id", "UNKNOWN")),
         scope=str(raw.get("scope", "prod_scan")),
-        severity=severity,
+        category=category,
+        needs_poc=needs_poc,
         confidence_score=score,
         confidence_tier=str(raw.get("confidence_tier", "unscored")),
         actionability=str(raw.get("actionability", "unscored")),
@@ -144,15 +161,16 @@ def _build_sarif(*, findings: list[Finding], root_uri: str, run_name: str, infor
                     )
                 },
                 "defaultConfiguration": {
-                    "level": SEVERITY_TO_LEVEL.get(finding.severity, "warning"),
+                    "level": CATEGORY_TO_LEVEL.get(finding.category, "warning"),
                 },
             }
 
-        level = SEVERITY_TO_LEVEL.get(finding.severity, "warning")
+        level = CATEGORY_TO_LEVEL.get(finding.category, "warning")
         message = (
             f"{finding.class_id} in {finding.file} "
-            f"(severity={finding.severity}, score={finding.confidence_score}, "
-            f"actionability={finding.actionability}, gate={finding.gate_status})"
+            f"(category={finding.category}, needs_poc={finding.needs_poc}, "
+            f"score={finding.confidence_score}, actionability={finding.actionability}, "
+            f"gate={finding.gate_status})"
         )
 
         result: dict = {
@@ -173,7 +191,8 @@ def _build_sarif(*, findings: list[Finding], root_uri: str, run_name: str, infor
                 "repo": finding.repo,
                 "ref": finding.ref,
                 "scope": finding.scope,
-                "severity": finding.severity,
+                "category": finding.category,
+                "needs_poc": finding.needs_poc,
                 "confidence_score": finding.confidence_score,
                 "confidence_tier": finding.confidence_tier,
                 "actionability": finding.actionability,

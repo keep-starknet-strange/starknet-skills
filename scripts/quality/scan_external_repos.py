@@ -28,7 +28,8 @@ class RepoSpec:
 
 @dataclass(frozen=True)
 class ConfidenceAssessment:
-    severity: str
+    category: str
+    needs_poc: bool
     score: int
     tier: str
     deductions: tuple[tuple[str, int], ...]
@@ -40,35 +41,35 @@ class ConfidenceAssessment:
 REPO_SLUG_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 REF_RE = re.compile(r"^[A-Za-z0-9._/@+-]{1,200}$")
 
-SEVERITY_BY_CLASS: dict[str, str] = {
-    "AA-SELF-CALL-SESSION": "high",
-    "UNCHECKED_FEE_BOUND": "medium",
-    "SHUTDOWN_OVERRIDE_PRECEDENCE": "medium",
-    "SYSCALL_SELECTOR_FALLBACK_ASSUMPTION": "medium",
-    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": "high",
-    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": "high",
-    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": "medium",
-    "CONSTRUCTOR_DEAD_PARAM": "low",
-    "IRREVOCABLE_ADMIN": "low",
-    "ONE_SHOT_REGISTRATION": "low",
-    "FEES_RECIPIENT_ZERO_DOS": "high",
-    "NO_ACCESS_CONTROL_MUTATION": "high",
-    "CEI_VIOLATION_ERC1155": "high",
-    "PRECISION_LOSS": "high",
-    "UNSAFE_ADMIN_TRANSFER": "high",
-    "STALE_STATE_WRITE": "high",
-    "UNEXPECTED_ACCESS_CONTROL": "medium",
-    "MISSING_FEE_BOUNDS": "medium",
-    "OVERLY_RESTRICTIVE_VALIDATION": "low",
-    "UNBOUNDED_LOOP": "low",
-    "COMMENTED_OUT_ACCESS_CONTROL": "high",
-    "UNVALIDATED_ORACLE_PRICES": "high",
-    "WRONG_PARAMETER_USAGE": "high",
-    "SILENT_NO_OP": "high",
-    "UNPROTECTED_INITIALIZER": "high",
-    "UNSAFE_TYPE_CONVERSION": "high",
-    "INCORRECT_LIST_REMOVAL": "medium",
-    "STALE_SNAPSHOT_READ": "medium",
+CATEGORY_BY_CLASS: dict[str, str] = {
+    "AA-SELF-CALL-SESSION": "security_bug",
+    "UNCHECKED_FEE_BOUND": "security_bug",
+    "SHUTDOWN_OVERRIDE_PRECEDENCE": "security_bug",
+    "SYSCALL_SELECTOR_FALLBACK_ASSUMPTION": "security_bug",
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": "security_bug",
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": "security_bug",
+    "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": "security_bug",
+    "CONSTRUCTOR_DEAD_PARAM": "quality_smell",
+    "IRREVOCABLE_ADMIN": "design_tradeoff",
+    "ONE_SHOT_REGISTRATION": "design_tradeoff",
+    "FEES_RECIPIENT_ZERO_DOS": "design_tradeoff",
+    "NO_ACCESS_CONTROL_MUTATION": "security_bug",
+    "CEI_VIOLATION_ERC1155": "security_bug",
+    "PRECISION_LOSS": "security_bug",
+    "UNSAFE_ADMIN_TRANSFER": "security_bug",
+    "STALE_STATE_WRITE": "security_bug",
+    "UNEXPECTED_ACCESS_CONTROL": "security_bug",
+    "MISSING_FEE_BOUNDS": "security_bug",
+    "OVERLY_RESTRICTIVE_VALIDATION": "design_tradeoff",
+    "UNBOUNDED_LOOP": "design_tradeoff",
+    "COMMENTED_OUT_ACCESS_CONTROL": "security_bug",
+    "UNVALIDATED_ORACLE_PRICES": "security_bug",
+    "WRONG_PARAMETER_USAGE": "security_bug",
+    "SILENT_NO_OP": "security_bug",
+    "UNPROTECTED_INITIALIZER": "security_bug",
+    "UNSAFE_TYPE_CONVERSION": "security_bug",
+    "INCORRECT_LIST_REMOVAL": "security_bug",
+    "STALE_SNAPSHOT_READ": "design_tradeoff",
 }
 
 PRIVILEGED_PATH_CLASSES = {
@@ -93,6 +94,12 @@ PARTIAL_PATH_CLASSES = {
     "UNBOUNDED_LOOP",
     "OVERLY_RESTRICTIVE_VALIDATION",
     "STALE_SNAPSHOT_READ",
+}
+
+NEEDS_POC_CLASSES = PARTIAL_PATH_CLASSES | {
+    "IRREVOCABLE_ADMIN",
+    "ONE_SHOT_REGISTRATION",
+    "FEES_RECIPIENT_ZERO_DOS",
 }
 
 FRAMEWORK_HINT_CLASSES = {
@@ -267,7 +274,8 @@ def _confidence_tier(score: int) -> str:
 
 def assess_finding(*, class_id: str, code: str) -> ConfidenceAssessment:
     code_l = code.lower()
-    severity = SEVERITY_BY_CLASS.get(class_id, "medium")
+    category = CATEGORY_BY_CLASS.get(class_id, "security_bug")
+    needs_poc = class_id in NEEDS_POC_CLASSES
     deductions: list[tuple[str, int]] = []
     gate_status = "pass"
     gate_reason = ""
@@ -301,7 +309,8 @@ def assess_finding(*, class_id: str, code: str) -> ConfidenceAssessment:
         actionability = "low_confidence"
 
     return ConfidenceAssessment(
-        severity=severity,
+        category=category,
+        needs_poc=needs_poc,
         score=score,
         tier=tier,
         deductions=tuple(deductions),
@@ -348,7 +357,8 @@ def scan_repo(
                         "class_id": class_id,
                         "scope": "prod_scan",
                         "predicted_detect": True,
-                        "severity": assessment.severity,
+                        "category": assessment.category,
+                        "needs_poc": assessment.needs_poc,
                         "confidence_score": assessment.score,
                         "confidence_tier": assessment.tier,
                         "confidence_deductions": [
@@ -447,18 +457,19 @@ def render_markdown(
     if findings:
         lines.append("## Findings")
         lines.append("")
-        lines.append("| Repo | File | Class | Severity | Score | Tier | Actionability | Gate |")
-        lines.append("| --- | --- | --- | --- | ---: | --- | --- | --- |")
+        lines.append("| Repo | File | Class | Category | Needs PoC | Score | Tier | Actionability | Gate |")
+        lines.append("| --- | --- | --- | --- | --- | ---: | --- | --- | --- |")
         for row in findings:
             gate = str(row.get("gate_status", "pass"))
             gate_reason = str(row.get("gate_reason", ""))
             gate_display = gate if not gate_reason else f"{gate} ({gate_reason})"
             lines.append(
-                "| `{repo}` | `{file}` | `{class_id}` | {severity} | {score} | {tier} | {actionability} | {gate} |".format(
+                "| `{repo}` | `{file}` | `{class_id}` | {category} | {needs_poc} | {score} | {tier} | {actionability} | {gate} |".format(
                     repo=row["repo"],
                     file=row["file"],
                     class_id=row["class_id"],
-                    severity=row.get("severity", "medium"),
+                    category=row.get("category", "security_bug"),
+                    needs_poc=row.get("needs_poc", False),
                     score=row.get("confidence_score", 100),
                     tier=row.get("confidence_tier", "high"),
                     actionability=row.get("actionability", "actionable"),
@@ -502,7 +513,8 @@ def write_findings_csv(path: Path, findings: list[dict[str, object]]) -> None:
         "file",
         "class_id",
         "scope",
-        "severity",
+        "category",
+        "needs_poc",
         "confidence_score",
         "confidence_tier",
         "actionability",
@@ -526,13 +538,19 @@ def write_manual_triage_csv(path: Path, findings: list[dict[str, object]], *, id
         "class_id",
         "scope",
         "predicted_detect",
-        "severity",
+        "category",
+        "needs_poc",
         "confidence_score",
         "confidence_tier",
         "actionability",
         "gate_status",
         "gate_reason",
         "manual_verdict",
+        "triage_category",
+        "reviewer_1",
+        "reviewer_2",
+        "security_countable",
+        "manual_severity",
         "manual_notes",
     ]
     rows_sorted = sorted(
@@ -551,6 +569,11 @@ def write_manual_triage_csv(path: Path, findings: list[dict[str, object]], *, id
             out = {key: _csv_safe(row.get(key, "")) for key in fieldnames}
             out["finding_id"] = _csv_safe(f"{id_prefix}-{i:03d}")
             out["manual_verdict"] = ""
+            out["triage_category"] = _csv_safe(row.get("category", "security_bug"))
+            out["reviewer_1"] = ""
+            out["reviewer_2"] = ""
+            out["security_countable"] = ""
+            out["manual_severity"] = ""
             out["manual_notes"] = ""
             writer.writerow(out)
 
