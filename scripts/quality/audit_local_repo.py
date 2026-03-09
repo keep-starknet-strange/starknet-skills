@@ -388,13 +388,24 @@ def main() -> int:
                 "errors": signal.errors,
             }
 
-            confirmation_index = {
-                (str(item.get("file", "")), str(item.get("class_id", ""))): item
+            confirmation_index_by_id = {
+                str(item.get("finding_id", "")).strip(): item
                 for item in signal.finding_confirmations
+                if str(item.get("finding_id", "")).strip()
             }
+            confirmation_index_by_key: dict[tuple[str, str], list[dict[str, object]]] = {}
+            for item in signal.finding_confirmations:
+                key = (str(item.get("file", "")), str(item.get("class_id", "")))
+                confirmation_index_by_key.setdefault(key, []).append(item)
+
             enriched_findings: list[dict[str, object]] = []
-            for row in findings:
-                item = confirmation_index.get((str(row.get("file", "")), str(row.get("class_id", ""))))
+            for idx, row in enumerate(findings):
+                local_finding_id = f"local-{idx + 1}"
+                item = confirmation_index_by_id.get(local_finding_id)
+                if item is None:
+                    key = (str(row.get("file", "")), str(row.get("class_id", "")))
+                    candidates = confirmation_index_by_key.get(key, [])
+                    item = candidates.pop(0) if candidates else None
                 merged = dict(row)
                 merged["ir_confirmation"] = str(item.get("ir_confirmation", "unknown")) if item else "unknown"
                 merged["signal_quality"] = str(item.get("signal_quality", "low")) if item else "low"

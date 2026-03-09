@@ -70,6 +70,7 @@ Unified CLI (recommended):
 
 Optional defaults file:
 
+
 ```bash
 cp .starkskills.toml.example .starkskills.toml
 ```
