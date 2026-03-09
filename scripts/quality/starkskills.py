@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -54,12 +55,19 @@ def _cfg(cfg: dict[str, Any], section: str, key: str, default: Any) -> Any:
     return default
 
 
-def _run(cmd: list[str], *, cwd: Path, timeout: float | None = None) -> CommandResult:
+def _run(
+    cmd: list[str],
+    *,
+    cwd: Path,
+    timeout: float | None = None,
+    input_text: str | None = None,
+) -> CommandResult:
     proc = subprocess.run(
         cmd,
         cwd=cwd,
         text=True,
         capture_output=True,
+        input=input_text,
         timeout=timeout,
         check=False,
     )
@@ -176,11 +184,16 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                 "-H",
                 "Content-Type: application/json",
                 "-H",
-                f"Authorization: Bearer {token}",
+                "@-",
                 "-d",
                 '{"model":"openai/gpt-4o-mini","messages":[{"role":"user","content":"ping"}],"max_tokens":1}',
             ]
-            probe = _run(cmd, cwd=REPO_ROOT, timeout=20)
+            probe = _run(
+                cmd,
+                cwd=REPO_ROOT,
+                timeout=20,
+                input_text=f"Authorization: Bearer {token}\n",
+            )
             code = (probe.stdout or "").strip()
             ok_codes = {"200", "201"}
             rows.append({
@@ -246,7 +259,17 @@ def cmd_audit_local(args: argparse.Namespace) -> int:
     if result.returncode not in {0, 2}:
         return result.returncode
 
-    payload = _extract_last_json(result.stdout)
+    try:
+        payload = _extract_last_json(result.stdout)
+    except ValueError as exc:
+        tail = result.stdout[-2000:] if result.stdout else ""
+        print(
+            f"ERROR: could not parse JSON summary from local audit output: {exc}",
+            file=sys.stderr,
+        )
+        if tail:
+            print(f"---- stdout tail ----\n{tail}", file=sys.stderr)
+        return 1
     sarif_path: Path | None = None
     if args.format in {"sarif", "both"}:
         out_json = Path(str(payload.get("output_json", "")))
@@ -280,7 +303,11 @@ def cmd_audit_local(args: argparse.Namespace) -> int:
 def _run_pack_backend(args: argparse.Namespace, *, force_stage2: bool | None) -> tuple[int, dict[str, Any]]:
     cfg, cfg_path = _load_config(args.config)
     output_dir = _resolve_path(args.output_dir, REPO_ROOT / str(_cfg(cfg, "defaults", "output_dir", "evals/reports/data")))
-    workdir = _resolve_path(args.workdir, Path(str(_cfg(cfg, "defaults", "workdir", "/tmp/starknet-skills-external-scan"))))
+    default_workdir = Path(tempfile.gettempdir()) / "starknet-skills-external-scan"
+    workdir = _resolve_path(
+        args.workdir,
+        Path(str(_cfg(cfg, "defaults", "workdir", default_workdir.as_posix()))),
+    )
 
     cmd = [
         sys.executable,
@@ -331,7 +358,17 @@ def _run_pack_backend(args: argparse.Namespace, *, force_stage2: bool | None) ->
         print(result.stderr.strip(), file=sys.stderr)
     if result.returncode != 0:
         return result.returncode, {}
-    payload = _extract_last_json(result.stdout)
+    try:
+        payload = _extract_last_json(result.stdout)
+    except ValueError as exc:
+        tail = result.stdout[-2000:] if result.stdout else ""
+        print(
+            f"ERROR: could not parse JSON summary from external audit output: {exc}",
+            file=sys.stderr,
+        )
+        if tail:
+            print(f"---- stdout tail ----\n{tail}", file=sys.stderr)
+        return 1, {}
     return 0, payload
 
 

@@ -154,7 +154,11 @@ def _run_scan(
 def _load_reference(repo_root: Path, rel: str) -> str:
     path = (repo_root / rel).resolve()
     if not path.is_file():
-        raise FileNotFoundError(f"required stage-2 reference missing: {path}")
+        raise FileNotFoundError(
+            f"required stage-2 reference missing: {path}. "
+            "Ensure cairo-auditor references are present (for example: "
+            "`git submodule update --init --recursive`)."
+        )
     return path.read_text(encoding="utf-8")
 
 
@@ -225,6 +229,7 @@ def _prepare_stage2(
     excluded_markers: tuple[str, ...],
     bundle_max_files: int,
     bundle_max_bytes: int,
+    bundle_max_chars: int,
 ) -> None:
     findings = [row for row in payload.get("findings", []) if isinstance(row, dict)]
     actionable = [row for row in findings if row.get("actionability") == "actionable"]
@@ -299,6 +304,7 @@ def _prepare_stage2(
                 f"clone directory missing for actionable repo: {repo_slug} "
                 f"({repo_clone_dir.as_posix()})"
             )
+            print(f"WARNING: {warning}", file=sys.stderr)
             cast_warnings = manifest.get("warnings")
             if isinstance(cast_warnings, list):
                 cast_warnings.append(warning)
@@ -343,13 +349,21 @@ def _prepare_stage2(
             total_bytes += file_size
 
         included_sources: list[tuple[str, str]] = []
+        embedded_bytes = 0
+        embedded_chars = 0
+        truncated_by_chars = False
         for path in selected_files:
             rel = path.relative_to(repo_clone_dir).as_posix()
             try:
                 code = path.read_text(encoding="utf-8")
             except UnicodeDecodeError:
                 code = path.read_text(encoding="utf-8", errors="ignore")
+            if (embedded_chars + len(code)) > bundle_max_chars:
+                truncated_by_chars = True
+                break
             included_sources.append((rel, code))
+            embedded_chars += len(code)
+            embedded_bytes += len(code.encode("utf-8"))
 
         repo_bundle_dir = stage2_dir / repo_slug.replace("/", "__")
         repo_bundle_dir.mkdir(parents=True, exist_ok=True)
@@ -363,7 +377,11 @@ def _prepare_stage2(
             truncation_notes.append(
                 f"Source list truncated by byte-size cap (`--bundle-max-bytes={bundle_max_bytes}`)."
             )
-        if not selected_files and prod_files:
+        if truncated_by_chars:
+            truncation_notes.append(
+                f"Source list truncated by character cap (`--bundle-max-chars={bundle_max_chars}`)."
+            )
+        if not included_sources and prod_files:
             truncation_notes.append(
                 "No files were included under current limits; increase bundle caps for full context."
             )
@@ -421,11 +439,13 @@ def _prepare_stage2(
                 "clone_dir": repo_clone_dir.as_posix(),
                 "bundle_dir": repo_bundle_dir.as_posix(),
                 "prod_files_total": len(prod_files),
-                "prod_files_included": len(selected_files),
-                "bundle_bytes_included": total_bytes,
+                "prod_files_included": len(included_sources),
+                "bundle_bytes_included": embedded_bytes,
+                "bundle_chars_included": embedded_chars,
                 "truncated": bool(truncation_notes),
                 "truncated_by_count": truncated_by_count,
                 "truncated_by_bytes": truncated_by_bytes,
+                "truncated_by_chars": truncated_by_chars,
                 "actionable_findings": len(repo_findings),
                 "bundles": bundle_entries,
             }
@@ -482,6 +502,12 @@ def main() -> int:
         default=800_000,
         help="Maximum cumulative source bytes embedded per Stage-2 bundle.",
     )
+    parser.add_argument(
+        "--bundle-max-chars",
+        type=int,
+        default=900_000,
+        help="Maximum cumulative source characters embedded per Stage-2 bundle.",
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[2]
@@ -524,6 +550,7 @@ def main() -> int:
             excluded_markers=excluded_markers,
             bundle_max_files=args.bundle_max_files,
             bundle_max_bytes=args.bundle_max_bytes,
+            bundle_max_chars=args.bundle_max_chars,
         )
 
     findings = [row for row in payload.get("findings", []) if isinstance(row, dict)]

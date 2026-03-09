@@ -59,7 +59,10 @@ def _load_findings_from_jsonl(path: Path) -> list[Finding]:
 
 
 def _load_findings_from_scan_json(path: Path) -> list[Finding]:
-    raw = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{path}: invalid JSON: {exc}") from exc
     rows = raw.get("findings", [])
     if not isinstance(rows, list):
         raise ValueError(f"{path}: expected findings list")
