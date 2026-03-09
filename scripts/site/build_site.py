@@ -515,16 +515,15 @@ def verify_link(label: str, href: str, meta: str) -> str:
     )
 
 
-def scorecard_metric(label: str, value: int | float | None, perfect: bool = False) -> str:
+def scorecard_metric(label: str, value: int | float | None) -> str:
     metric_value = fmt_metric(value)
-    ok = '<span class="metric-ok" aria-hidden="true"></span>' if perfect else ""
     data_value = ""
     if isinstance(value, (int, float)):
         data_value = f' data-value="{value}"'
     return (
         '<article class="score-metric reveal">'
         f'<p>{e(label)}</p>'
-        f'<strong class="count-up"{data_value}>{e(metric_value)}</strong>{ok}'
+        f'<strong class="count-up"{data_value}>{e(metric_value)}</strong>'
         "</article>"
     )
 
@@ -649,8 +648,6 @@ def build_index_html(data: dict, domain: str | None) -> str:
     scorecard_html = ""
     scorecard_nav = ""
     if scorecard:
-        perfect_precision = scorecard.get("precision") == 1.0
-        perfect_recall = scorecard.get("recall") == 1.0
         scorecard_nav = '<a href="#scorecard">scorecard</a>'
         scorecard_html = (
             '<section class="section section-score reveal" id="scorecard">'
@@ -660,10 +657,10 @@ def build_index_html(data: dict, domain: str | None) -> str:
             '</div>'
             '<div class="score-grid">'
             f'{scorecard_metric("cases", scorecard.get("cases"))}'
-            f'{scorecard_metric("precision", scorecard.get("precision"), perfect_precision)}'
-            f'{scorecard_metric("recall", scorecard.get("recall"), perfect_recall)}'
+            f'{scorecard_metric("precision", scorecard.get("precision"))}'
+            f'{scorecard_metric("recall", scorecard.get("recall"))}'
             '</div>'
-            '<p class="section-note">Real-world benchmark snapshot from the repo.</p>'
+            '<p class="section-note">Benchmark snapshot from repo data. Informational only; not a security guarantee.</p>'
             '</section>'
         )
 

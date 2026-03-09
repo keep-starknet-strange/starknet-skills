@@ -14,7 +14,7 @@
   <img alt="smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-2ea043" />
 </p>
 
-<p align="center"><strong>Audit-grade Cairo/Starknet skills for agents</strong></p>
+<p align="center"><strong>Cairo/Starknet skills for agents</strong></p>
 
 Cairo/Starknet skill modules for agent reliability: security review, contract authoring, testing, optimization, toolchain, account abstraction, and network facts.
 
