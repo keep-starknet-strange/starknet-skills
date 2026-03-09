@@ -27,10 +27,11 @@ Use this entrypoint for deployment/release sequencing; load command details from
 ## Quick Start
 
 1. Pin tool versions.
-2. Build deterministic artifacts.
-3. Declare before deploy.
-4. Verify deployment outputs and provenance.
-5. Store release evidence.
+2. Run local audit gate before declare/deploy.
+3. Build deterministic artifacts.
+4. Declare before deploy.
+5. Verify deployment outputs and provenance.
+6. Store release evidence.
 
 ## Workflow
 
