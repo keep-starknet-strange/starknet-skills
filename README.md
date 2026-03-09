@@ -86,7 +86,7 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cai
 | [cairo-optimization](cairo-optimization/SKILL.md) | Correct optimization targets without trace/Sierra context |
 | [cairo-toolchain](cairo-toolchain/SKILL.md) | Current Scarb/snforge/sncast workflows |
 | [account-abstraction](account-abstraction/SKILL.md) | Session-key/self-call pitfalls and validation flow |
-| [starknet-network-facts](starknet-network-facts/SKILL.md) | Reliable network semantics and fee/timing assumptions |
+| [starknet-network-facts](starknet-network-facts/SKILL.md) | Network semantics hallucinations and fee/timing assumptions |
 
 Recommended sequence for new contracts: `cairo-contract-authoring` -> `cairo-testing` -> `cairo-auditor`.
 
