@@ -1,7 +1,7 @@
 # Default Workflow
 
-1. Discover in-scope `.cairo` files under source directories.
-2. Exclude tests, mocks, generated output, and vendored dependencies.
-3. Run vector scans against vulnerability-db patterns.
-4. Deduplicate by root cause.
-5. Emit prioritized report with required regression tests.
+1. Discover in-scope Cairo files.
+2. Prepare 4 specialist bundles (full code + one attack-vector partition each).
+3. Run 4 vector specialists in parallel.
+4. Apply judging FP gate and merge/dedupe by root cause.
+5. Emit prioritized findings + required regression tests.

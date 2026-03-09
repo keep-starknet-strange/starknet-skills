@@ -27,14 +27,15 @@ class RepoSignal:
 
 
 MARKERS: dict[str, tuple[str, ...]] = {
-    "external_call": ("call_contract_syscall", "library_call", "replace_class_syscall"),
+    "external_call": ("call_contract_syscall", "library_call"),
+    "replace_class_syscall": ("replace_class_syscall",),
     "state_write": ("storage_write_syscall",),
     "state_read": ("storage_read_syscall",),
     "event_emit": ("emit_event_syscall",),
 }
 
 
-def run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+def run_unchecked(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         cmd,
         cwd=cwd,
@@ -81,7 +82,7 @@ def collect_sierra_artifacts(project_root: Path) -> list[Path]:
     return sorted({p.resolve() for p in artifacts if p.is_file()})
 
 
-def analyze_repo(spec: RepoSpec, repo_dir: Path, ref: str) -> RepoSignal:
+def analyze_repo(spec: RepoSpec, repo_dir: Path, ref: str, allow_build: bool) -> RepoSignal:
     scarb_projects = find_scarb_projects(repo_dir)
     marker_counts: Counter[str] = Counter()
     errors: list[str] = []
@@ -90,13 +91,14 @@ def analyze_repo(spec: RepoSpec, repo_dir: Path, ref: str) -> RepoSignal:
     artifact_count = 0
 
     for project in scarb_projects:
-        proc = run(["scarb", "build"], cwd=project)
-        if proc.returncode != 0:
-            projects_failed += 1
-            msg = proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else "scarb build failed"
-            errors.append(f"{project.relative_to(repo_dir).as_posix()}: {msg[:280]}")
-            continue
-        projects_built += 1
+        if allow_build:
+            proc = run_unchecked(["scarb", "build"], cwd=project)
+            if proc.returncode != 0:
+                projects_failed += 1
+                msg = proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else "scarb build failed"
+                errors.append(f"{project.relative_to(repo_dir).as_posix()}: {msg[:280]}")
+                continue
+            projects_built += 1
         artifacts = collect_sierra_artifacts(project)
         artifact_count += len(artifacts)
         for artifact in artifacts:
@@ -106,7 +108,7 @@ def analyze_repo(spec: RepoSpec, repo_dir: Path, ref: str) -> RepoSignal:
     flags = {
         "has_external_call_markers": marker_counts["external_call"] > 0,
         "has_state_write_markers": marker_counts["state_write"] > 0,
-        "has_upgrade_markers": marker_counts["external_call"] > 0 and marker_counts["external_call"] >= marker_counts["state_read"],
+        "has_upgrade_markers": marker_counts["replace_class_syscall"] > 0,
         "cei_parallel_signal": marker_counts["external_call"] > 0 and marker_counts["state_write"] > 0,
     }
 
@@ -142,11 +144,13 @@ def render_markdown(
     rows: list[RepoSignal],
     detector_hits: dict[str, int],
     detector_findings: str,
+    allow_build: bool,
 ) -> str:
     lines: list[str] = []
     lines.append(f"# Sierra Parallel Signal ({scan_id})")
     lines.append("")
     lines.append(f"Generated: {generated_at}")
+    lines.append(f"Build mode: {'enabled (unsafe for untrusted repos)' if allow_build else 'disabled (safe mode)'}")
     if detector_findings:
         lines.append(f"Detector findings compared: `{detector_findings}`")
     lines.append("")
@@ -177,9 +181,15 @@ def main() -> int:
     parser.add_argument("--repos", nargs="*", default=[])
     parser.add_argument("--repos-file", default="")
     parser.add_argument("--workdir", default="/tmp/starknet-skills-sierra-scan")
+    parser.add_argument("--git-host", default="https://github.com")
     parser.add_argument("--detector-findings-jsonl", default="")
     parser.add_argument("--output-json", required=True)
     parser.add_argument("--output-md", required=True)
+    parser.add_argument(
+        "--allow-build",
+        action="store_true",
+        help="Run `scarb build` inside cloned repos (unsafe for untrusted repos).",
+    )
     args = parser.parse_args()
 
     repo_specs: list[RepoSpec] = []
@@ -200,8 +210,8 @@ def main() -> int:
     rows: list[RepoSignal] = []
     for spec in repo_specs:
         try:
-            repo_dir, ref = clone_repo(spec, workdir)
-            rows.append(analyze_repo(spec, repo_dir, ref))
+            repo_dir, ref = clone_repo(spec, workdir, args.git_host)
+            rows.append(analyze_repo(spec, repo_dir, ref, args.allow_build))
         except Exception as exc:
             rows.append(
                 RepoSignal(
@@ -230,6 +240,8 @@ def main() -> int:
     payload = {
         "scan_id": args.scan_id,
         "generated_at": generated_at,
+        "git_host": args.git_host,
+        "allow_build": args.allow_build,
         "detector_findings_jsonl": args.detector_findings_jsonl,
         "repos": [
             {
@@ -259,6 +271,7 @@ def main() -> int:
         rows=rows,
         detector_hits=detector_hits,
         detector_findings=args.detector_findings_jsonl,
+        allow_build=args.allow_build,
     )
     out_md.parent.mkdir(parents=True, exist_ok=True)
     out_md.write_text(markdown, encoding="utf-8")

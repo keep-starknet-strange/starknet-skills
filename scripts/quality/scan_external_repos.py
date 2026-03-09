@@ -7,6 +7,7 @@ import json
 import shutil
 import subprocess
 import sys
+import urllib.parse
 from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -35,22 +36,35 @@ def parse_repo_spec(raw: str) -> RepoSpec:
     return RepoSpec(slug=slug, ref=ref or None)
 
 
-def run(cmd: list[str], cwd: Path | None = None) -> str:
-    proc = subprocess.run(
-        cmd,
-        cwd=cwd,
-        check=True,
-        text=True,
-        capture_output=True,
-    )
+def run(cmd: list[str], cwd: Path | None = None, timeout: float = 300) -> str:
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=cwd,
+            check=True,
+            text=True,
+            capture_output=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        cwd_str = cwd.as_posix() if cwd else "."
+        cmd_str = " ".join(cmd)
+        raise RuntimeError(f"command timed out after {timeout}s in {cwd_str}: {cmd_str}") from exc
     return proc.stdout.strip()
 
 
-def clone_repo(spec: RepoSpec, workdir: Path) -> tuple[Path, str]:
+def repo_git_url(spec: RepoSpec, git_host: str) -> str:
+    host = git_host.strip().rstrip("/")
+    if not host:
+        raise ValueError("git_host cannot be empty")
+    return urllib.parse.urljoin(f"{host}/", f"{spec.slug}.git")
+
+
+def clone_repo(spec: RepoSpec, workdir: Path, git_host: str) -> tuple[Path, str]:
     repo_dir = workdir / spec.slug.replace("/", "__")
     if repo_dir.exists():
         shutil.rmtree(repo_dir)
-    url = f"https://github.com/{spec.slug}.git"
+    url = repo_git_url(spec, git_host)
     clone_cmd = ["git", "clone", "--depth", "1", url, str(repo_dir)]
     run(clone_cmd)
     if spec.ref:
@@ -67,7 +81,7 @@ def iter_cairo_files(repo_dir: Path) -> list[Path]:
 def is_excluded(path: Path, excluded_markers: tuple[str, ...]) -> bool:
     parts = [p.lower() for p in path.as_posix().split("/")]
     for marker in excluded_markers:
-        if any(part == marker or part.startswith(marker) for part in parts):
+        if any(part == marker for part in parts):
             return True
     return False
 
@@ -77,6 +91,7 @@ def scan_repo(
     spec: RepoSpec,
     repo_dir: Path,
     resolved_ref: str,
+    git_host: str,
     detector_map: dict[str, Callable[[str], bool]],
     excluded_markers: tuple[str, ...],
 ) -> tuple[dict[str, object], list[dict[str, object]]]:
@@ -89,6 +104,10 @@ def scan_repo(
         try:
             code = file_path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
+            print(
+                f"WARNING: utf-8 decode fallback for {spec.slug}:{rel}; using errors='ignore'",
+                file=sys.stderr,
+            )
             code = file_path.read_text(encoding="utf-8", errors="ignore")
         for class_id, detector in detector_map.items():
             if detector(code):
@@ -104,7 +123,7 @@ def scan_repo(
 
     repo_summary = {
         "repo": spec.slug,
-        "url": f"https://github.com/{spec.slug}.git",
+        "url": repo_git_url(spec, git_host),
         "ref": resolved_ref,
         "all_cairo_files": len(all_files),
         "prod_cairo_files": len(prod_files),
@@ -186,8 +205,9 @@ def main() -> int:
     parser.add_argument("--output-md", default="")
     parser.add_argument("--output-findings-jsonl", default="")
     parser.add_argument("--workdir", default="/tmp/starknet-skills-external-scan")
-    parser.add_argument("--exclude", default="test,tests,mock,mocks,example,examples")
+    parser.add_argument("--exclude", default="test,tests,mock,mocks,example,examples,preset,presets,fixture,fixtures,vendor,vendors")
     parser.add_argument("--detectors", default="")
+    parser.add_argument("--git-host", default="https://github.com")
     args = parser.parse_args()
 
     repo_specs: list[RepoSpec] = []
@@ -220,11 +240,12 @@ def main() -> int:
 
     for spec in repo_specs:
         try:
-            repo_dir, resolved_ref = clone_repo(spec, workdir)
+            repo_dir, resolved_ref = clone_repo(spec, workdir, args.git_host)
             summary, repo_findings = scan_repo(
                 spec=spec,
                 repo_dir=repo_dir,
                 resolved_ref=resolved_ref,
+                git_host=args.git_host,
                 detector_map=detector_map,
                 excluded_markers=excluded_markers,
             )

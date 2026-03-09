@@ -356,10 +356,6 @@ def detect_irrevocable_admin(code: str) -> bool:
     if constructor_sig is None or body is None:
         return False
 
-    # Ownable component generally exposes ownership rotation through generated impls.
-    if "ownablecomponent" in lower or "ownablemixinimpl" in lower:
-        return False
-
     params = re.findall(r"([a-z_][a-z0-9_]*)\s*:\s*contractaddress", constructor_sig)
     if not params:
         return False
@@ -375,6 +371,17 @@ def detect_irrevocable_admin(code: str) -> bool:
             seeded_admin = True
             break
     if not seeded_admin:
+        return False
+
+    owner_only_params = all("owner" in p for p in admin_params)
+    has_ownable_rotation_surface = (
+        "ownablemixinimpl" in lower
+        or "transfer_ownership" in lower
+        or "renounce_ownership" in lower
+    )
+    # Treat canonical owner-only ownable setups as revocable, but do not suppress
+    # contracts that also seed dedicated admin/governor/upgrade roles.
+    if owner_only_params and has_ownable_rotation_surface:
         return False
 
     rotation_name_tokens = ("admin", "owner", "governor", "upgrade")
@@ -432,9 +439,16 @@ def detect_one_shot_registration(code: str) -> bool:
 
         for field in written_fields:
             has_write_once_guard = bool(
-                re.search(rf"self\.{field}\.read\(\)[^;\n]{{0,120}}is_non_zero", fn_body)
-                or re.search(rf"self\.{field}\.read\(\)[^;\n]{{0,120}}!=\s*0", fn_body)
-                or re.search(rf"self\.{field}\.read\(\)[^;\n]{{0,140}}(already|registered|not_zero)", fn_body)
+                re.search(rf"assert!?\([^)]*self\.{field}\.read\(\)\.is_zero\(\)", fn_body)
+                or re.search(rf"assert!?\([^)]*!\s*self\.{field}\.read\(\)\.is_non_zero\(\)", fn_body)
+                or re.search(
+                    rf"if\s*\([^)]*self\.{field}\.read\(\)\.is_non_zero\(\)\s*\)\s*\{{[\s\S]{{0,180}}(panic|assert|revert)",
+                    fn_body,
+                )
+                or re.search(
+                    rf"if\s*\([^)]*self\.{field}\.read\(\)\s*!=\s*0\s*\)\s*\{{[\s\S]{{0,180}}(panic|assert|revert)",
+                    fn_body,
+                )
             )
             if not has_write_once_guard:
                 continue
@@ -615,8 +629,10 @@ def detect_no_access_control_mutation(code: str) -> bool:
         "access_control.assert_only_role",
         "has_role(",
         "get_caller_address() ==",
+        "get_caller_address() !=",
         "get_caller_address()!=",
         "assert!(get_caller_address() ==",
+        "assert!(get_caller_address() !=",
         "assert!(get_caller_address()!=",
         "caller == self.",
         "caller != self.",
@@ -649,6 +665,10 @@ def detect_no_access_control_mutation(code: str) -> bool:
             continue
         has_access_guard = any(marker in body for marker in access_markers) or bool(
             re.search(r"assert!?\([^)]*get_caller_address\(\)\s*(==|!=)", body)
+            or re.search(
+                r"let\s+[a-z_][a-z0-9_]*\s*=\s*(?:starknet::)?get_caller_address\(\)[\s\S]{0,220}assert!?\([^)]*(==|!=)\s*self\.",
+                body,
+            )
         )
         if has_access_guard:
             continue
@@ -679,7 +699,6 @@ def detect_cei_violation_erc1155(code: str) -> bool:
             continue
 
         transfer_pos = min(interaction_positions)
-        before = body[:transfer_pos]
         after = body[transfer_pos:]
         state_markers = (
             ".write(",
@@ -692,8 +711,9 @@ def detect_cei_violation_erc1155(code: str) -> bool:
             "state =",
         )
         has_state_update_after = any(marker in after for marker in state_markers)
-        has_state_update_before = any(marker in before for marker in state_markers)
-        if has_state_update_after and not has_state_update_before:
+        # Any state mutation after the interaction is a CEI hazard, even when
+        # earlier state writes are present.
+        if has_state_update_after:
             return True
     return False
 

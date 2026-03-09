@@ -177,6 +177,7 @@ jobs:
             --min-recall 0.90
 
       - name: Sierra parallel signal (auxiliary)
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         continue-on-error: true
         run: |
           mkdir -p "${RUNNER_TEMP}/scorecards"

@@ -17,6 +17,7 @@ class GoldRow:
     ref: str
     file: str
     class_id: str
+    expected_detect: bool
 
     @property
     def key(self) -> tuple[str, str, str, str]:
@@ -26,6 +27,7 @@ class GoldRow:
 def load_gold(path: Path) -> list[GoldRow]:
     rows: list[GoldRow] = []
     seen_ids: set[str] = set()
+    seen_keys: set[tuple[str, str, str, str]] = set()
     for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
@@ -34,21 +36,25 @@ def load_gold(path: Path) -> list[GoldRow]:
         missing = sorted(required - set(raw.keys()))
         if missing:
             raise ValueError(f"{path}:{line_no}: missing keys: {missing}")
-        if not bool(raw["expected_detect"]):
-            continue
+        expected_detect = raw["expected_detect"]
+        if not isinstance(expected_detect, bool):
+            raise ValueError(f"{path}:{line_no}: expected_detect must be boolean")
         finding_id = str(raw["finding_id"])
         if finding_id in seen_ids:
             raise ValueError(f"{path}:{line_no}: duplicate finding_id: {finding_id}")
         seen_ids.add(finding_id)
-        rows.append(
-            GoldRow(
-                finding_id=finding_id,
-                repo=str(raw["repo"]),
-                ref=str(raw["ref"]),
-                file=str(raw["file"]),
-                class_id=str(raw["class_id"]),
-            )
+        row = GoldRow(
+            finding_id=finding_id,
+            repo=str(raw["repo"]),
+            ref=str(raw["ref"]),
+            file=str(raw["file"]),
+            class_id=str(raw["class_id"]),
+            expected_detect=expected_detect,
         )
+        if row.key in seen_keys:
+            raise ValueError(f"{path}:{line_no}: duplicate gold match key: {row.key}")
+        seen_keys.add(row.key)
+        rows.append(row)
     return rows
 
 
@@ -62,8 +68,12 @@ def load_findings(path: Path) -> set[tuple[str, str, str, str]]:
         missing = sorted(required - set(raw.keys()))
         if missing:
             raise ValueError(f"{path}:{line_no}: missing keys: {missing}")
-        if "predicted_detect" in raw and not bool(raw["predicted_detect"]):
-            continue
+        if "predicted_detect" in raw:
+            predicted_detect = raw["predicted_detect"]
+            if not isinstance(predicted_detect, bool):
+                raise ValueError(f"{path}:{line_no}: predicted_detect must be boolean")
+            if not predicted_detect:
+                continue
         keys.add((str(raw["repo"]), str(raw["ref"]), str(raw["file"]), str(raw["class_id"])))
     return keys
 
@@ -72,23 +82,30 @@ def recall(matched: int, total: int) -> float:
     return 1.0 if total == 0 else matched / total
 
 
+def precision(tp: int, fp: int) -> float:
+    return 1.0 if (tp + fp) == 0 else tp / (tp + fp)
+
+
 def render_markdown(
     *,
     generated_at: str,
     gold_path: Path,
     findings_path: Path,
-    rows: list[GoldRow],
+    positive_rows: list[GoldRow],
+    negative_rows: list[GoldRow],
     matched_rows: list[GoldRow],
     missing_rows: list[GoldRow],
+    false_positive_rows: list[GoldRow],
 ) -> str:
-    total = len(rows)
+    total = len(positive_rows)
     matched = len(matched_rows)
     missing = len(missing_rows)
     overall_recall = recall(matched, total)
+    overall_precision = precision(matched, len(false_positive_rows))
 
     per_class_total: dict[str, int] = defaultdict(int)
     per_class_matched: dict[str, int] = defaultdict(int)
-    for row in rows:
+    for row in positive_rows:
         per_class_total[row.class_id] += 1
     for row in matched_rows:
         per_class_matched[row.class_id] += 1
@@ -103,8 +120,11 @@ def render_markdown(
     lines.append("## Overall")
     lines.append("")
     lines.append(f"- Gold positives: {total}")
+    lines.append(f"- Gold negatives: {len(negative_rows)}")
     lines.append(f"- Matched: {matched}")
     lines.append(f"- Missing: {missing}")
+    lines.append(f"- False positives (gold negatives hit): {len(false_positive_rows)}")
+    lines.append(f"- Precision (gold-scope): {overall_precision:.3f}")
     lines.append(f"- Recall: {overall_recall:.3f}")
     lines.append("")
     lines.append("## Per Class Recall")
@@ -126,6 +146,16 @@ def render_markdown(
                 f"| {row.finding_id} | {row.class_id} | `{row.repo}` | `{row.file}` | `{row.ref[:12]}` |"
             )
         lines.append("")
+    if false_positive_rows:
+        lines.append("## False Positives Against Gold Negatives")
+        lines.append("")
+        lines.append("| Finding | Class | Repo | File | Ref |")
+        lines.append("| --- | --- | --- | --- | --- |")
+        for row in sorted(false_positive_rows, key=lambda r: r.finding_id):
+            lines.append(
+                f"| {row.finding_id} | {row.class_id} | `{row.repo}` | `{row.file}` | `{row.ref[:12]}` |"
+            )
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -135,6 +165,7 @@ def main() -> int:
     parser.add_argument("--findings", required=True, help="Findings JSONL (detector output)")
     parser.add_argument("--output-md", required=True, help="Markdown output")
     parser.add_argument("--output-json", required=True, help="JSON output")
+    parser.add_argument("--min-precision", type=float, default=0.0)
     parser.add_argument("--min-recall", type=float, default=0.9)
     parser.add_argument("--min-class-recall", type=float, default=0.8)
     args = parser.parse_args()
@@ -146,17 +177,21 @@ def main() -> int:
 
     gold_rows = load_gold(gold_path)
     finding_keys = load_findings(findings_path)
-    matched_rows = [row for row in gold_rows if row.key in finding_keys]
-    missing_rows = [row for row in gold_rows if row.key not in finding_keys]
+    positive_rows = [row for row in gold_rows if row.expected_detect]
+    negative_rows = [row for row in gold_rows if not row.expected_detect]
+    matched_rows = [row for row in positive_rows if row.key in finding_keys]
+    missing_rows = [row for row in positive_rows if row.key not in finding_keys]
+    false_positive_rows = [row for row in negative_rows if row.key in finding_keys]
 
     per_class_total: dict[str, int] = defaultdict(int)
     per_class_matched: dict[str, int] = defaultdict(int)
-    for row in gold_rows:
+    for row in positive_rows:
         per_class_total[row.class_id] += 1
     for row in matched_rows:
         per_class_matched[row.class_id] += 1
 
-    overall_recall = recall(len(matched_rows), len(gold_rows))
+    overall_recall = recall(len(matched_rows), len(positive_rows))
+    overall_precision = precision(len(matched_rows), len(false_positive_rows))
     class_violations: list[tuple[str, float]] = []
     for class_id, total in sorted(per_class_total.items()):
         class_recall = recall(per_class_matched.get(class_id, 0), total)
@@ -168,9 +203,11 @@ def main() -> int:
         generated_at=generated_at,
         gold_path=gold_path,
         findings_path=findings_path,
-        rows=gold_rows,
+        positive_rows=positive_rows,
+        negative_rows=negative_rows,
         matched_rows=matched_rows,
         missing_rows=missing_rows,
+        false_positive_rows=false_positive_rows,
     )
     out_md.parent.mkdir(parents=True, exist_ok=True)
     out_md.write_text(markdown + "\n", encoding="utf-8")
@@ -178,9 +215,14 @@ def main() -> int:
     summary = {
         "generated_at": generated_at,
         "gold_count": len(gold_rows),
+        "gold_positive_count": len(positive_rows),
+        "gold_negative_count": len(negative_rows),
         "matched_count": len(matched_rows),
         "missing_count": len(missing_rows),
+        "false_positive_count": len(false_positive_rows),
+        "overall_precision": overall_precision,
         "overall_recall": overall_recall,
+        "min_precision": args.min_precision,
         "min_recall": args.min_recall,
         "min_class_recall": args.min_class_recall,
         "class_recall": {
@@ -197,6 +239,8 @@ def main() -> int:
             {
                 "gold": len(gold_rows),
                 "matched": len(matched_rows),
+                "false_positive_count": len(false_positive_rows),
+                "overall_precision": round(overall_precision, 6),
                 "overall_recall": round(overall_recall, 6),
                 "output_md": out_md.as_posix(),
                 "output_json": out_json.as_posix(),
@@ -205,6 +249,11 @@ def main() -> int:
         )
     )
 
+    if overall_precision < args.min_precision:
+        print(
+            f"FAILED: manual gold precision={overall_precision:.3f} < min_precision={args.min_precision:.3f}"
+        )
+        return 1
     if overall_recall < args.min_recall:
         print(
             f"FAILED: manual gold recall={overall_recall:.3f} < min_recall={args.min_recall:.3f}"

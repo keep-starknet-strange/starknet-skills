@@ -1,97 +1,95 @@
 ---
 name: cairo-auditor
-description: Runs a security audit workflow for Cairo/Starknet contracts with pre-merge and pre-release vulnerability discovery, triage, and remediation planning.
+description: Systematic Cairo/Starknet security audit workflow with deterministic preflight, parallel vector specialists, adversarial reasoning, and strict false-positive gating.
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 ---
 
 # Cairo Auditor
 
-Workflow skill for systematic Cairo contract security review.
-
 ## When to Use
 
-- Reviewing contract changes before merge.
-- Performing release-gate security checks.
-- Triaging suspicious Cairo/Starknet patterns from code review or incidents.
+- Security review for Cairo/Starknet contracts before merge.
+- Release-gate audits for account/session/upgrade critical paths.
+- Triage of suspicious findings from CI, reviewers, or external reports.
 
 ## When NOT to Use
 
-- Writing new contract features from scratch.
-- Deployment-only tasks.
-- SDK or protocol operation guides.
+- Feature implementation tasks.
+- Deployment-only ops.
+- SDK/tutorial requests.
 
 ## Rationalizations to Reject
 
-- "Tests pass so this is safe."
-- "This pattern is standard in EVM so it is safe in Cairo."
-- "The edge case is impossible in production."
-- "We can skip replay/domain checks because signatures are temporary."
+- "Tests passed, so it is secure."
+- "This is normal in EVM, so Cairo is the same."
+- "It needs admin privileges, so it is not a vulnerability."
+- "We can ignore replay or nonce edges for now."
 
 ## Modes
 
-- `default`: whole-package review using scoped file discovery.
-- `deep`: default + adversarial reasoning pass + strict false-positive gate.
-- `targeted`: explicit file-path review for fast PR iteration.
+- `default`: full in-scope scan with four specialist vector passes.
+- `deep`: default + adversarial exploit-path pass.
+- `targeted`: explicit file set, same validation gate, faster iteration.
 
-## Quick Start
+## Orchestration (4 Turns)
 
-1. Select mode (`default`, `deep`, or `targeted`).
-2. Discover in-scope Cairo files and exclude tests/mocks/vendor code.
-3. Run vectorized scan and false-positive gate.
-4. Emit prioritized findings and required regression tests.
+### Turn 1: Discover
 
-## Workflow
+1. Determine mode (`default`, `deep`, `targeted`).
+2. Discover in-scope `.cairo` files and exclude tests/mocks/examples/vendor.
+3. Run deterministic preflight context checks:
+   - identify risky upgrade/auth/session/external-call surfaces quickly,
+   - record likely classes before deep analysis.
 
-Detailed workflows:
+### Turn 2: Prepare
 
-- [default workflow](workflows/default.md)
-- [deep workflow](workflows/deep.md)
+1. Read specialist instructions:
+   - `agents/vector-scan.md`
+   - `references/judging.md`
+2. Create 4 specialist bundles, each with:
+   - full in-scope Cairo file set,
+   - one attack-vector partition:
+     - `references/attack-vectors/attack-vectors-1.md`
+     - `references/attack-vectors/attack-vectors-2.md`
+     - `references/attack-vectors/attack-vectors-3.md`
+     - `references/attack-vectors/attack-vectors-4.md`
 
-1. Discover in-scope Cairo files.
-2. Run vectorized scans using vulnerability patterns in `references/vulnerability-db/`.
-3. Correlate with historical findings in `../datasets/normalized/findings/`.
-4. Prefer distilled classes from `../datasets/distilled/vuln-cards/` when available.
-5. Merge and deduplicate findings by root cause.
-6. Run false-positive verification gate.
-7. Emit prioritized report with remediation guidance and test requirements.
+### Turn 3: Spawn
+
+1. Run 4 parallel vector specialists (one per bundle).
+2. In `deep` mode, run `agents/adversarial.md` in parallel as an additional pass.
+3. Each specialist must produce findings that pass `references/judging.md`.
+
+### Turn 4: Report
+
+1. Merge specialist outputs.
+2. Deduplicate by root cause (keep higher-confidence variant).
+3. Sort by confidence/severity.
+4. Emit only actionable findings and required regression tests.
 
 ## Reporting Contract
 
-Each finding must include:
+Each finding should include:
 
-- `finding_id`
-- `source_audit_id`
-- `project`
-- `auditor`
-- `date`
-- `severity_original`
-- `severity_normalized`
-- `status`
-- `contracts`
-- `functions`
-- `root_cause`
-- `exploit_path`
-- `trigger_condition`
-- `vulnerable_snippet`
-- `fixed_snippet`
-- `recommendation`
-- `test_that_catches_it`
-- `false_positive_lookalikes`
-- `tags`
-- `source_pages`
+- `class_id`
+- `severity`
 - `confidence`
-- `evidence_strength`
-- `reproducibility`
-- `notes`
+- `entry_point`
+- `attack_path`
+- `guard_analysis`
+- `affected_files`
+- `recommended_fix`
+- `required_tests`
 
-## Evidence Sources
+## Evidence Priority
 
-- module references index: [references index](references/README.md)
-- canonical patterns: `references/vulnerability-db/`
-- audit-derived records: `../datasets/normalized/findings/`
-- distilled security cards: `../datasets/distilled/vuln-cards/`
-- evaluator regressions: `../evals/cases/`
+1. `references/vulnerability-db/`
+2. `references/attack-vectors/`
+3. `../datasets/normalized/findings/`
+4. `../datasets/distilled/vuln-cards/`
+5. `../evals/cases/`
 
 ## Output Rule
 
-Only report actionable findings with confidence >= medium unless `deep` mode is requested.
+- Report only findings that pass the FP gate.
+- Below-threshold confidence findings can be listed as low-confidence notes (no fix block).
