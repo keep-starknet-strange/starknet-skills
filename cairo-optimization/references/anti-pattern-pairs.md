@@ -29,6 +29,7 @@ let is_odd = (value & 1) == 1;
 Secure/optimized pattern:
 
 ```cairo
+use core::num::traits::DivRem;
 let (_half, rem) = DivRem::div_rem(value, 2);
 let is_odd = rem == 1;
 ```

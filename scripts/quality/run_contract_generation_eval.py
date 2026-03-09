@@ -409,7 +409,7 @@ def run_static_rules(*, case: GenerationCase, fixture: Path) -> list[str]:
             errors.append(f"must_match_file_missing:{rule.path}:{rule.description}")
             continue
         text = target.read_text(encoding="utf-8")
-        if re.search(rule.pattern, text, flags=re.MULTILINE) is None:
+        if re.search(rule.pattern, text) is None:
             errors.append(f"must_match_failed:{rule.path}:{rule.description}")
 
     for rule in case.must_not_match:
@@ -421,7 +421,7 @@ def run_static_rules(*, case: GenerationCase, fixture: Path) -> list[str]:
             # Missing file means forbidden pattern cannot be present.
             continue
         text = target.read_text(encoding="utf-8")
-        if re.search(rule.pattern, text, flags=re.MULTILINE) is not None:
+        if re.search(rule.pattern, text) is not None:
             errors.append(f"must_not_match_failed:{rule.path}:{rule.description}")
 
     return errors
@@ -527,7 +527,7 @@ def evaluate_case(
     with tempfile.TemporaryDirectory(prefix=f"contract-gen-{case.case_id}-") as tmp_dir:
         tmp_root = Path(tmp_dir).resolve()
         tmp_fixture = tmp_root / "fixture"
-        shutil.copytree(fixture, tmp_fixture)
+        shutil.copytree(fixture, tmp_fixture, ignore=shutil.ignore_patterns("target"))
 
         target = resolve_under_root(tmp_fixture, case.target_file)
         if target is None:
