@@ -66,6 +66,9 @@ python scripts/quality/audit_local_repo.py \
   --allow-build
 ```
 
+Warning: `--allow-build` may execute repository build steps/tooling.
+Use build mode only on trusted code, or run in an isolated environment.
+
 Reports are written under `<repo-root>/evals/reports/local/` by default (`.md`, `.json`).
 Add `--write-findings-jsonl` to emit `.findings.jsonl`.
 

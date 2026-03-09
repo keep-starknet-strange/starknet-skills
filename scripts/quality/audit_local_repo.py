@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -36,15 +37,17 @@ def _git_head(repo_root: Path) -> str:
 
 
 def _slug(value: str) -> str:
-    lowered = value.strip().lower()
+    raw = value.strip()
+    lowered = raw.lower()
     safe = []
     for ch in lowered:
         if ch.isalnum() or ch in ("-", "_"):
             safe.append(ch)
         else:
             safe.append("-")
-    slug = "".join(safe).strip("-")
-    return slug or "local-cairo-audit"
+    slug = "".join(safe).strip("-") or "local-cairo-audit"
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:8]
+    return f"{slug}-{digest}"
 
 
 def _resolve_path(raw: str, base: Path) -> Path:
@@ -207,8 +210,8 @@ def main() -> int:
     repo_slug = repo_root.name
     ref = _git_head(repo_root)
     excluded_markers = tuple(s.strip().lower() for s in args.exclude.split(",") if s.strip())
-    generated_at = datetime.now(UTC).replace(microsecond=0)
-    stamp = generated_at.strftime("%Y%m%dT%H%M%SZ")
+    generated_at = datetime.now(UTC)
+    stamp = generated_at.strftime("%Y%m%dT%H%M%S%fZ")
     safe_scan_id = _slug(args.scan_id)
 
     output_dir = _resolve_path(args.output_dir, repo_root)
@@ -223,6 +226,7 @@ def main() -> int:
             else (output_dir / f"{safe_scan_id}-{stamp}.findings.jsonl")
         )
 
+    # Only create output_dir when at least one output path falls back to it.
     uses_output_dir = (not args.output_json) or (not args.output_md) or (write_findings_jsonl and not args.output_findings_jsonl)
     if uses_output_dir:
         output_dir.mkdir(parents=True, exist_ok=True)
