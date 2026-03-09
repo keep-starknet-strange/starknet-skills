@@ -460,6 +460,7 @@ def _resolve_target_dirs(
     allow_metadata: bool,
     scarb_prefix: list[str],
     scarb_env: dict[str, str] | None = None,
+    metadata_ignore_cairo_version: bool = False,
 ) -> set[Path]:
     target_dirs: set[Path] = set()
     fallback = (project_root / "target").resolve()
@@ -468,8 +469,11 @@ def _resolve_target_dirs(
     if not allow_metadata:
         return target_dirs
 
+    metadata_cmd = [*scarb_prefix, "metadata", "--format-version", "1", "--no-deps"]
+    if metadata_ignore_cairo_version:
+        metadata_cmd.append("--ignore-cairo-version")
     proc = run_unchecked(
-        [*scarb_prefix, "metadata", "--format-version", "1", "--no-deps"],
+        metadata_cmd,
         cwd=project_root,
         timeout_s=timeout_s,
         extra_env=scarb_env,
@@ -605,6 +609,7 @@ def analyze_repo(
             proc: subprocess.CompletedProcess[str] | None = None
             chosen_prefix: list[str] = ["scarb"]
             chosen_env: dict[str, str] = {}
+            chosen_ignore_cairo = False
             for label, scarb_prefix, scarb_env in _candidate_scarb_invocations(project, repo_dir):
                 for ignore_cairo in (False, True):
                     build_cmd = [*scarb_prefix, "build"]
@@ -630,6 +635,7 @@ def analyze_repo(
                         build_ok = True
                         chosen_prefix = scarb_prefix
                         chosen_env = scarb_env
+                        chosen_ignore_cairo = ignore_cairo
                         break
                 if build_ok:
                     break
@@ -649,6 +655,7 @@ def analyze_repo(
                 allow_metadata=True,
                 scarb_prefix=chosen_prefix,
                 scarb_env=chosen_env,
+                metadata_ignore_cairo_version=chosen_ignore_cairo,
             )
         else:
             target_dirs = _resolve_target_dirs(
@@ -659,6 +666,7 @@ def analyze_repo(
                 allow_metadata=False,
                 scarb_prefix=["scarb"],
                 scarb_env=None,
+                metadata_ignore_cairo_version=False,
             )
 
         artifacts = collect_sierra_artifacts(target_dirs)
@@ -840,12 +848,14 @@ def render_markdown(
         for row in attempts:
             lines.append(f"- `{row.repo}`:")
             for attempt in row.build_attempts:
+                error = str(attempt.get("error", "")).strip()
                 lines.append(
                     "  - "
                     + f"{attempt.get('project', '.')}: "
                     + f"{attempt.get('toolchain', 'scarb')} "
                     + f"(ignore_cairo_version={attempt.get('ignore_cairo_version', 'false')}) -> "
                     + f"{attempt.get('status', 'unknown')}"
+                    + (f" | error: {error}" if error else "")
                 )
         lines.append("")
     return "\n".join(lines) + "\n"
