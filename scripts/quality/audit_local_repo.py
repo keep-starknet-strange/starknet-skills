@@ -81,8 +81,24 @@ def _next_available_stem(
     )
 
 
+def _write_text_output(path: Path, content: str, *, overwrite: bool) -> None:
+    mode = "w" if overwrite else "x"
+    with path.open(mode, encoding="utf-8") as handle:
+        handle.write(content)
+
+
 def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tuple[str, ...]) -> tuple[dict[str, object], list[dict[str, object]]]:
-    all_files = sorted(repo_root.rglob("*.cairo"))
+    repo_resolved = repo_root.resolve()
+    all_files: list[Path] = []
+    for path in sorted(repo_root.rglob("*.cairo")):
+        if path.is_symlink():
+            continue
+        resolved = path.resolve()
+        try:
+            resolved.relative_to(repo_resolved)
+        except ValueError:
+            continue
+        all_files.append(path)
     prod_files = [p for p in all_files if not is_excluded(p, excluded_markers)]
 
     findings: list[dict[str, object]] = []
@@ -270,11 +286,14 @@ def main() -> int:
 
     out_json = _resolve_path(args.output_json, repo_root) if args.output_json else (output_dir / f"{stem}.json")
     out_md = _resolve_path(args.output_md, repo_root) if args.output_md else (output_dir / f"{stem}.md")
+    json_explicit = bool(args.output_json)
+    md_explicit = bool(args.output_md)
+    jsonl_explicit = bool(args.output_findings_jsonl)
     out_jsonl: Path | None = None
     if write_findings_jsonl:
         out_jsonl = (
             _resolve_path(args.output_findings_jsonl, repo_root)
-            if args.output_findings_jsonl
+            if jsonl_explicit
             else (output_dir / f"{stem}.findings.jsonl")
         )
 
@@ -293,6 +312,11 @@ def main() -> int:
             lock_path.unlink(missing_ok=True)
             lock_path = None
         parser.error(f"output paths must be distinct ({detail})")
+    if out_jsonl is not None and jsonl_explicit and out_jsonl.exists():
+        if lock_path:
+            lock_path.unlink(missing_ok=True)
+            lock_path = None
+        parser.error(f"explicit findings JSONL path already exists: {out_jsonl.as_posix()}")
 
     try:
         summary, findings = _scan_local(repo_root, repo_slug, ref, excluded_markers)
@@ -330,12 +354,28 @@ def main() -> int:
             "findings": findings,
             "sierra_confirmation": sierra_payload,
         }
+        sierra_gate_findings = 0
+        sierra_gate_reasons: list[str] = []
+        if sierra_payload:
+            confirmation = sierra_payload.get("confirmation", {})
+            if isinstance(confirmation, dict):
+                if bool(confirmation.get("upgrade_ir_missing")):
+                    sierra_gate_findings += 1
+                    sierra_gate_reasons.append("upgrade_ir_missing")
+                if bool(confirmation.get("cei_ir_missing")):
+                    sierra_gate_findings += 1
+                    sierra_gate_reasons.append("cei_ir_missing")
 
         out_json.parent.mkdir(parents=True, exist_ok=True)
         out_md.parent.mkdir(parents=True, exist_ok=True)
 
-        out_json.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
-        out_md.write_text(
+        _write_text_output(
+            out_json,
+            json.dumps(payload, indent=2, ensure_ascii=True) + "\n",
+            overwrite=json_explicit,
+        )
+        _write_text_output(
+            out_md,
             _render_markdown(
                 scan_id=args.scan_id,
                 generated_at=generated_at_iso,
@@ -344,12 +384,12 @@ def main() -> int:
                 findings=findings,
                 sierra=sierra_payload,
             ),
-            encoding="utf-8",
+            overwrite=md_explicit,
         )
 
         if out_jsonl:
             out_jsonl.parent.mkdir(parents=True, exist_ok=True)
-            with out_jsonl.open("w", encoding="utf-8") as handle:
+            with out_jsonl.open("x", encoding="utf-8") as handle:
                 for row in findings:
                     handle.write(json.dumps(row, ensure_ascii=True) + "\n")
 
@@ -363,18 +403,24 @@ def main() -> int:
                     "output_json": out_json.as_posix(),
                     "output_md": out_md.as_posix(),
                     "output_findings_jsonl": out_jsonl.as_posix() if out_jsonl else None,
+                    "sierra_gate_findings": sierra_gate_findings,
+                    "sierra_gate_reasons": sierra_gate_reasons,
                 },
                 ensure_ascii=True,
             )
         )
 
-        if args.fail_on_findings and findings:
+        if args.fail_on_findings and (findings or sierra_gate_findings):
             print(
-                f"audit gate: {len(findings)} finding(s) detected - exit 2 (see {out_json.as_posix()})",
+                "audit gate: "
+                + f"{len(findings)} source finding(s), {sierra_gate_findings} Sierra gap finding(s) "
+                + f"detected - exit 2 (see {out_json.as_posix()})",
                 file=sys.stderr,
             )
             return 2
         return 0
+    except FileExistsError as exc:
+        parser.error(f"output path already exists: {Path(exc.filename or '').as_posix()}")
     finally:
         if lock_path:
             lock_path.unlink(missing_ok=True)
