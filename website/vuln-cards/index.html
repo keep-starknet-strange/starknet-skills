@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>starkskills | vuln cards</title>
+  <meta name="description" content="Distilled vulnerability cards from Starknet audit findings." />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/site.css" />
+  <link rel="icon" href="https://starkskills.org/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="canonical" href="https://starkskills.org/vuln-cards/" />
+  <meta property="og:url" content="https://starkskills.org/vuln-cards/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="starkskills | vuln cards" />
+  <meta property="og:description" content="Distilled vulnerability cards from Starknet audit findings." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="starkskills | vuln cards" />
+  <meta name="twitter:description" content="Distilled vulnerability cards from Starknet audit findings." />
+  <meta property="og:image" content="https://starkskills.org/assets/og-card.png" />
+  <meta name="twitter:image" content="https://starkskills.org/assets/og-card.png" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../">starkskills</a>
+    <nav class="site-nav" aria-label="Secondary navigation">
+      <a href="../#skills">skills</a>
+      <a href="../#verify">verify</a>
+      <a href="../">home</a>
+    </nav>
+    <a class="nav-icon" href="https://github.com/keep-starknet-strange/starknet-skills/tree/main/datasets/distilled/vuln-cards" target="_blank" rel="noreferrer" aria-label="Open vulnerability cards directory">gh</a>
+  </header>
+
+  <main class="shell">
+    <section class="hero reveal">
+      <pre class="ascii-logo ascii-logo--small" aria-label="STARKSKILLS">███████╗████████╗ █████╗ ██████╗ ██╗  ██╗███████╗██╗  ██╗██╗██╗     ██╗     ███████╗
+██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██║ ██╔╝██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝
+███████╗   ██║   ███████║██████╔╝█████╔╝ ███████╗█████╔╝ ██║██║     ██║     ███████╗
+╚════██║   ██║   ██╔══██║██╔══██╗██╔═██╗ ╚════██║██╔═██╗ ██║██║     ██║     ╚════██║
+███████║   ██║   ██║  ██║██║  ██║██║  ██╗███████║██║  ██╗██║███████╗███████╗███████║
+╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚══════╝</pre>
+      <h1>Vuln cards.</h1>
+      <p class="hero-copy">Distilled classes from normalized findings.</p>
+      <div class="stats-bar">
+        <span class="stat-pill">3 cards</span>
+        <span class="stat-pill">217 findings</span>
+        <span class="stat-pill">24 audits</span>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">Index</p>
+          <h2>Browse</h2>
+        </div>
+        <a href="https://github.com/keep-starknet-strange/starknet-skills/tree/main/datasets/distilled/vuln-cards" target="_blank" rel="noreferrer">repo dir</a>
+      </div>
+      <div class="vuln-grid">
+        <article class="vuln-card reveal"><div class="vuln-head"><h3><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/SHUTDOWN_OVERRIDE_PRECEDENCE.md" target="_blank" rel="noreferrer">SHUTDOWN_OVERRIDE_PRECEDENCE</a></h3><div><span class="pill">high: 1</span></div></div><p class="meta-label">Trigger</p><p>Use when contracts combine inferred operational mode and manually forced override mode.</p><p class="meta-label">Detection</p><p>If both inferred and forced-mode paths exist, assert forced-mode check dominates all early returns.</p><p class="meta-label">Findings</p><div><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=CSC-VESU-001" target="_blank" rel="noreferrer">CSC-VESU-001</a></div></article>
+<article class="vuln-card reveal"><div class="vuln-head"><h3><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/SYSCALL_SELECTOR_FALLBACK_ASSUMPTION.md" target="_blank" rel="noreferrer">SYSCALL_SELECTOR_FALLBACK_ASSUMPTION</a></h3><div><span class="pill">info: 2</span></div></div><p class="meta-label">Trigger</p><p>Use when helper functions issue syscall then fallback to alternate selector on error.</p><p class="meta-label">Detection</p><p>Flag selector-fallback blocks that retry alternate selector within same transaction path.</p><p class="meta-label">Findings</p><div><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=ERIM-NOSTRA-I01" target="_blank" rel="noreferrer">ERIM-NOSTRA-I01</a><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=ERIM-NOSTRA-I02" target="_blank" rel="noreferrer">ERIM-NOSTRA-I02</a></div></article>
+<article class="vuln-card reveal"><div class="vuln-head"><h3><a href="https://github.com/keep-starknet-strange/starknet-skills/blob/main/datasets/distilled/vuln-cards/UNCHECKED_FEE_BOUND.md" target="_blank" rel="noreferrer">UNCHECKED_FEE_BOUND</a></h3><div><span class="pill">low: 1</span></div></div><p class="meta-label">Trigger</p><p>Use when fees are accepted as constructor or config parameters.</p><p class="meta-label">Detection</p><p>Find external/configurable fee input and verify explicit bound assertions in the same call path.</p><p class="meta-label">Findings</p><div><a class="finding-link" href="https://github.com/keep-starknet-strange/starknet-skills/search?q=ERIM-NOSTRA-L02" target="_blank" rel="noreferrer">ERIM-NOSTRA-L02</a></div></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="../">Home</a>
+      <a href="https://github.com/keep-starknet-strange/starknet-skills" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="../data/site-data.json">site-data.json</a>
+    </div>
+    <div class="fingerprint">$ fingerprint b02465710ac58b8b</div>
+  </footer>
+
+  <script>
+(() => {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const setCopied = (button) => {
+    const previous = button.textContent;
+    button.textContent = 'copied';
+    button.classList.add('is-copied');
+    window.setTimeout(() => {
+      button.textContent = previous;
+      button.classList.remove('is-copied');
+    }, 2000);
+  };
+
+  document.addEventListener('click', async (event) => {
+    const copyButton = event.target.closest('.copy-button');
+    if (copyButton) {
+      const text = copyButton.getAttribute('data-copy');
+      if (text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(copyButton);
+        } catch (_error) {
+          copyButton.textContent = 'failed';
+          window.setTimeout(() => {
+            copyButton.textContent = copyButton.classList.contains('icon-button') ? 'cp' : 'copy';
+          }, 1500);
+        }
+      }
+      return;
+    }
+
+    const card = event.target.closest('.module-card[data-href]');
+    if (card && !event.target.closest('a, button')) {
+      const href = card.getAttribute('data-href');
+      if (href) {
+        window.open(href, '_blank', 'noopener,noreferrer');
+      }
+    }
+  });
+
+  if (prefersReducedMotion) {
+    document.querySelectorAll('.reveal').forEach((element) => element.classList.add('is-visible'));
+    return;
+  }
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible');
+      revealObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach((element) => revealObserver.observe(element));
+
+  const countObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const element = entry.target;
+      const target = Number(element.getAttribute('data-value'));
+      if (!Number.isFinite(target)) {
+        countObserver.unobserve(element);
+        return;
+      }
+      const decimals = String(target).includes('.') ? 1 : 0;
+      const duration = 450;
+      const start = performance.now();
+      const tick = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const value = target * progress;
+        element.textContent = value.toFixed(decimals);
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          element.textContent = target.toFixed(decimals);
+        }
+      };
+      requestAnimationFrame(tick);
+      countObserver.unobserve(element);
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.count-up[data-value]').forEach((element) => countObserver.observe(element));
+})();
+</script>
+</body>
+</html>

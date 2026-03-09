@@ -6,18 +6,25 @@ import argparse
 import datetime as dt
 import hashlib
 import json
+import re
 from pathlib import Path
 
 REQUIRED_SEED_KEYS = {
     "audit_id",
     "project",
     "auditor",
-    "date",
     "source_url",
     "source_type",
     "raw_path",
     "extracted_path",
+    "source_sha256",
+    "license",
+    "usage_rights",
+    "redaction_status",
+    "extractor_version",
 }
+DATE_RE = re.compile(r"^\d{4}(-\d{2}(-\d{2})?)?$")
+SHA256_RE = re.compile(r"^[a-f0-9]{64}$")
 
 
 def sha256_file(path: Path) -> str:
@@ -64,9 +71,31 @@ def validate_seed_rows(rows: object) -> list[dict]:
             value = row.get(key)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"seed row {idx} has empty/invalid {key}")
+        date_value = row.get("date")
+        if date_value is not None and (
+            not isinstance(date_value, str) or not date_value.strip()
+        ):
+            raise ValueError(f"seed row {idx} has empty/invalid date")
+        if isinstance(date_value, str) and DATE_RE.fullmatch(date_value) is None:
+            raise ValueError(f"seed row {idx} has invalid date format: {date_value}")
         if not row["source_url"].startswith("https://"):
             raise ValueError(
                 f"seed row {idx} source_url must use https://: {row['source_url']}"
+            )
+        if SHA256_RE.fullmatch(row["source_sha256"]) is None:
+            raise ValueError(f"seed row {idx} invalid source_sha256")
+        if row["usage_rights"] not in {
+            "public_redistributable",
+            "public_reference_only",
+            "restricted_no_redistribution",
+            "unknown",
+        }:
+            raise ValueError(
+                f"seed row {idx} invalid usage_rights: {row['usage_rights']}"
+            )
+        if row["redaction_status"] not in {"none", "partial", "required", "unknown"}:
+            raise ValueError(
+                f"seed row {idx} invalid redaction_status: {row['redaction_status']}"
             )
         normalized.append(row)
     return normalized

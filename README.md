@@ -1,51 +1,111 @@
 # starknet-skills
 
-Production-grade skills for high-quality Cairo and Starknet security engineering.
+<p align="center">
+  <img alt="starknet-skills hero" src="assets/readme-hero.png" width="100%" />
+</p>
 
-This repository is focused on reasoning quality, audit rigor, and deterministic quality gates.
-Operational SDK and protocol execution playbooks belong in `starknet-agentic` / `starkzap`.
+<p align="center">
+  <a href="https://github.com/keep-starknet-strange/starknet-skills/actions/workflows/quality.yml">
+    <img alt="quality gate" src="https://img.shields.io/github/actions/workflow/status/keep-starknet-strange/starknet-skills/quality.yml?branch=main&label=quality%20gate&color=2ea043" />
+  </a>
+  <img alt="modules" src="https://img.shields.io/badge/modules-7-0f172a" />
+  <img alt="audits" src="https://img.shields.io/badge/audits-24-0f172a" />
+  <img alt="smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-2ea043" />
+</p>
 
-## Scope Boundary
+Cairo/Starknet skill modules for agent reliability: security review, authoring, testing, optimization, toolchain, account abstraction, and network facts.
 
-- In scope: Cairo correctness, security review patterns, Starknet architectural facts, testing and hardening workflows.
-- Out of scope: runtime tool execution guides (MCP tool usage, SDK call recipes, protocol operation runbooks).
+> Reasoning + security knowledge layer. For operational tooling see [starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic) and [starkzap](https://github.com/keep-starknet-strange/starkzap).
+
+## How It Works
+
+Each skill is plain markdown. Point an agent at the URL and it gets domain-specific context.
+
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+```
 
 ## Install & Use
 
-1. Marketplace install (recommended):
-   - `/plugin marketplace add keep-starknet-strange/starknet-skills`
-   - `/plugin menu` and install `starknet-skills`
-2. Direct skill loading (fallback):
-   - [raw SKILL.md](https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md)
-3. Let the router activate only the needed module skill for the task.
+### Router URL
 
-## Modules
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+```
 
-- `cairo-auditor/` — flagship workflow skill for Cairo security review.
-- `cairo-contract-authoring/` — contract structure and implementation patterns.
-- `cairo-testing/` — Starknet Foundry testing and fuzzing workflows.
-- `cairo-optimization/` — performance and low-level Cairo optimization rules.
-- `cairo-toolchain/` — build/declare/deploy/verification and release operations.
-- `account-abstraction/` — Starknet account abstraction and account-security semantics.
-- `starknet-network-facts/` — network-level constraints and chain behavior guardrails.
-- `openzeppelin-cairo/` — OpenZeppelin Cairo composition and hardening patterns.
+### Claude Code Plugin
 
-## Data + Evals
+```bash
+/plugin marketplace add keep-starknet-strange/starknet-skills
+/plugin install starknet-skills
+```
 
-- `datasets/` stores the full audit-to-skills pipeline (`ingest -> segment -> normalize -> distill`).
-- `evals/` stores held-out evaluation cases and scorecards.
+### Local clone
 
-Do not merge skill changes without updating or passing the corresponding evaluation set.
+```bash
+git clone https://github.com/keep-starknet-strange/starknet-skills.git
+```
 
-## Governance
+## Skills
 
-- Contribution guide: `CONTRIBUTING.md`
-- Security policy: `SECURITY.md`
-- Code of conduct: `CODE_OF_CONDUCT.md`
-- Skill contract validator: `python scripts/quality/validate_skills.py`
-- Marketplace metadata validator: `python scripts/quality/validate_marketplace.py`
-- Baseline parity check: `python scripts/quality/parity_check.py`
+| Module | What LLMs Get Wrong |
+| --- | --- |
+| [cairo-auditor](cairo-auditor/SKILL.md) | Miss Starknet upgrade/account edge cases and weak FP gates |
+| [cairo-contract-authoring](cairo-contract-authoring/SKILL.md) | Applies Solidity structure directly to Cairo components |
+| [cairo-testing](cairo-testing/SKILL.md) | Stops at unit tests, skips invariants and adversarial checks |
+| [cairo-optimization](cairo-optimization/SKILL.md) | Optimizes wrong paths without trace/Sierra context |
+| [cairo-toolchain](cairo-toolchain/SKILL.md) | Uses stale Scarb/sncast/snforge workflows |
+| [account-abstraction](account-abstraction/SKILL.md) | Misses session/self-call and validation pitfalls |
+| [starknet-network-facts](starknet-network-facts/SKILL.md) | Hallucinates network semantics and fee/timing assumptions |
+
+## Data Pipeline
+
+```text
+ingest -> segment -> normalize -> distill -> skillize
+  24        26         217          9          7
+audits   corpora    findings     assets     skills
+```
+
+- Ingest: [`datasets/manifests/audits.jsonl`](datasets/manifests/audits.jsonl)
+- Normalize: [`datasets/normalized/findings/`](datasets/normalized/findings)
+- Distill: vuln cards + fix patterns + test recipes in [`datasets/distilled/`](datasets/distilled)
+- Skillize: module skills + router [`SKILL.md`](SKILL.md)
+
+## Benchmarks
+
+Deterministic benchmark scorecards are **smoke/regression gates**, not final proof of auditor quality.
+
+- Deterministic smoke:
+  - [v0.2.0-cairo-auditor-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-benchmark.md)
+  - [v0.2.0-cairo-auditor-realworld-benchmark.md](evals/scorecards/v0.2.0-cairo-auditor-realworld-benchmark.md)
+- Human-labeled external triage:
+  - [v0.2.0-cairo-auditor-external-triage.md](evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
+  - [cairo-auditor-external-trend.md](evals/scorecards/cairo-auditor-external-trend.md)
+- Manual gold recall:
+  - [v0.2.0-cairo-auditor-manual-19-gold-recall.md](evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.md)
+- Contract-skill benchmark:
+  - [v0.4.0-contract-skill-benchmark.md](evals/scorecards/v0.4.0-contract-skill-benchmark.md)
+  - [contract-skill-benchmark-trend.md](evals/scorecards/contract-skill-benchmark-trend.md)
+
+Evaluation policy: [evals/README.md](evals/README.md)
+
+## Website
+
+- Site: [starkskills.org](https://starkskills.org)
+- Source: [website/](website/)
+- Generator: [scripts/site/build_site.py](scripts/site/build_site.py)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and [THIRD_PARTY.md](THIRD_PARTY.md).
+
+Core local gates:
+- `python3 scripts/quality/validate_skills.py`
+- `python3 scripts/quality/validate_marketplace.py`
+- `python3 scripts/quality/parity_check.py`
 
 ## License
 
-MIT (see `LICENSE`).
+MIT
