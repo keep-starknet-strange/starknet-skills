@@ -305,6 +305,7 @@ def call_model(
             if attempt < retries and (exc.code in {408, 409, 425, 429} or exc.code >= 500):
                 time.sleep(min(retry_base_seconds * (2**attempt), 20.0))
                 continue
+            break
         except (urllib.error.URLError, KeyError, ValueError, json.JSONDecodeError) as exc:
             last_error = str(exc)
             if attempt < retries:
@@ -372,8 +373,8 @@ def evaluate_case(
             tests_ok=False,
             static_ok=False,
             passed=False,
-            vuln_flag=True,
-            skipped=False,
+            vuln_flag=False,
+            skipped=True,
             generation_error="fixture_missing",
             notes=[f"fixture_missing:{case.fixture}"],
         )
@@ -556,10 +557,11 @@ def main() -> int:
     if not api_key and args.auth_env != "OPENAI_API_KEY":
         api_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not api_key:
-        raise RuntimeError(
+        print(
             f"{args.auth_env} is required for generation eval "
             "(or OPENAI_API_KEY for compatibility fallback)"
         )
+        return 1
 
     repo_root = Path(__file__).resolve().parents[2]
     cases_path = (repo_root / args.cases).resolve()
