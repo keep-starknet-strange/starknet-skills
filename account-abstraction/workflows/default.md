@@ -15,3 +15,7 @@
 4. Replay resistance
 - Check nonce monotonicity and domain-separated signature hashing.
 - Add regression tests for previously fixed replay vectors.
+
+5. Final security pass
+- Run `cairo-auditor` against touched account files.
+- Fix or explicitly triage findings, then preserve outcomes with regression tests.
