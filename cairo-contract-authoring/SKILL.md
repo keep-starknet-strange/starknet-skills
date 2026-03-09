@@ -43,7 +43,8 @@ Use this as the entrypoint for implementation decisions; load references only as
 - Use anti-pattern/secure-pattern pairs to keep authoring behavior explicit and reviewable.
 - If any of these rules fail in fixture benchmarks, update both:
   - skill/reference text, and
-  - deterministic cases in `../evals/cases/contract_skill_benchmark.jsonl`.
+  - deterministic cases in `../evals/cases/contract_skill_benchmark.jsonl`, and
+  - generation cases in `../evals/cases/contract_skill_generation_eval.jsonl`.
 
 ## Workflow
 

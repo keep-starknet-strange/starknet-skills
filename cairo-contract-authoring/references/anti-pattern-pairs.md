@@ -48,6 +48,7 @@ use starknet::get_block_timestamp;
 
 #[external(v0)]
 fn execute_upgrade(ref self: ContractState) {
+    assert_only_owner(@self);
     let now = get_block_timestamp();
     let eta = self.executable_after.read();
     assert!(now >= eta, "timelock");

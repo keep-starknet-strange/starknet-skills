@@ -53,6 +53,8 @@ while i != n {
 }
 ```
 
+Safety note: use `i != n` only when `i` starts at `0` (or another value `<= n`), increments in unit steps (`i += 1`), and `n` is a trusted or validated bound. Otherwise overshoot can create non-terminating loops.
+
 ## 4) Repeated `.len()` in Loop Conditions
 
 Anti-pattern:
