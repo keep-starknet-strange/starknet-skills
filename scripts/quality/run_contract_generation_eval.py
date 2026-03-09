@@ -394,6 +394,7 @@ def call_model(
             if attempt < retries:
                 time.sleep(min(retry_base_seconds * (2**attempt), 20.0))
                 continue
+            break
 
     return "", f"model_call_failed:{last_error[:240]}"
 
