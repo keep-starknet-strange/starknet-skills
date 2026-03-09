@@ -60,7 +60,7 @@ def main() -> int:
     parser.add_argument("--repo-root", default=".")
     parser.add_argument(
         "--config",
-        default="cairo-auditor/references/semgrep/cairo-auditor-rules.yaml",
+        default="cairo-auditor/references/semgrep/rules",
         help="Semgrep rules config.",
     )
     parser.add_argument("--output-json", required=True)

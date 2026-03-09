@@ -102,6 +102,9 @@ jobs:
             --cases evals/cases/cairo_auditor_realworld_benchmark.jsonl
           python scripts/quality/check_attack_vector_coverage.py \
             --min-vectors 120
+          python scripts/quality/check_semgrep_vector_coverage.py \
+            --core-min 1 \
+            --core-max 80
 
       - name: Held-out leakage guard
         run: python scripts/audit-pipeline/check_no_heldout_leak.py

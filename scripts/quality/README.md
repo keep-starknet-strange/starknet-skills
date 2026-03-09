@@ -5,6 +5,7 @@
 - `parity_check.py`: required repository parity and local tool checks.
 - `check_vulndb_parity.py`: enforces benchmark/detector class parity with `cairo-auditor/references/vulnerability-db/`.
 - `check_attack_vector_coverage.py`: enforces minimum attack-vector corpus size and unique vector IDs.
+- `check_semgrep_vector_coverage.py`: enforces Semgrep `attack_vectors_core` metadata covers core vectors `1..80`.
 
 ## Cairo Auditor Benchmarks
 
@@ -78,7 +79,7 @@
   - optional Caracal adapter for Sierra-level auxiliary analysis
   - fail-open by default when Caracal is unavailable
 - `run_semgrep_cairo.py`
-  - optional Semgrep adapter using `cairo-auditor/references/semgrep/cairo-auditor-rules.yaml`
+  - optional Semgrep adapter using `cairo-auditor/references/semgrep/rules/`
   - fail-open by default when Semgrep is unavailable
 
 ## Quick Start

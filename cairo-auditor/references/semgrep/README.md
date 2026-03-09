@@ -14,6 +14,17 @@ Important:
 
 Runner:
 - `scripts/quality/run_semgrep_cairo.py`
+- `scripts/quality/check_semgrep_vector_coverage.py`
 
 Default config:
-- `cairo-auditor/references/semgrep/cairo-auditor-rules.yaml`
+- `cairo-auditor/references/semgrep/rules/`
+
+Rule packs:
+- `rules/access-upgrade.yaml`
+- `rules/external-calls.yaml`
+- `rules/math-economic.yaml`
+- `rules/storage-trust.yaml`
+
+Coverage contract:
+- `attack_vectors_core` metadata in Semgrep rules must cover core vectors `1..80`.
+- CI enforces this via `scripts/quality/check_semgrep_vector_coverage.py`.
