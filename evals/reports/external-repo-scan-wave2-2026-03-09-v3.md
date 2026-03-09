@@ -1,6 +1,6 @@
 # External Repo Detector Sweep (external-repo-scan-wave2-2026-03-09-v3)
 
-Generated: 2026-03-09T00:54:42+00:00
+Generated: 2026-03-09T01:00:56+00:00
 
 Machine-readable artifact:
 
@@ -44,6 +44,7 @@ By class:
 By repo:
 
 - `OpenZeppelin/cairo-contracts`: 3
+- `atomiqlabs/atomiq-contracts-starknet`: 0
 - `dojoengine/dojo`: 3
 - `karnotxyz/starknet_bridge`: 3
 - `keep-starknet-strange/piltover`: 3

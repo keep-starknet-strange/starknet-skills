@@ -197,8 +197,9 @@ def render_markdown(
     lines.append("")
     lines.append("By repo:")
     lines.append("")
-    for repo, count in sorted(repo_counts.items()):
-        lines.append(f"- `{repo}`: {count}")
+    for row in sorted(repo_summaries, key=lambda item: str(item["repo"])):
+        repo = str(row["repo"])
+        lines.append(f"- `{repo}`: {repo_counts.get(repo, 0)}")
     lines.append("")
     if findings:
         lines.append("## Findings")

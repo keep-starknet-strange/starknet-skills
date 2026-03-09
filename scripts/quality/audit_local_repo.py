@@ -14,6 +14,13 @@ from scan_external_repos import RepoSpec, is_excluded
 from sierra_parallel_signal import analyze_repo
 
 
+def _existing_dir(value: str) -> Path:
+    path = Path(value).resolve()
+    if not path.exists() or not path.is_dir():
+        raise argparse.ArgumentTypeError(f"directory does not exist: {path}")
+    return path
+
+
 def _git_head(repo_root: Path) -> str:
     proc = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -127,7 +134,7 @@ def _render_markdown(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Scan a local Cairo repo with deterministic detectors and optional Sierra confirmation.")
-    parser.add_argument("--repo-root", default=".")
+    parser.add_argument("--repo-root", type=_existing_dir, default=Path(".").resolve())
     parser.add_argument("--scan-id", default="local-cairo-audit")
     parser.add_argument("--exclude", default="test,tests,mock,mocks,example,examples,preset,presets,fixture,fixtures,vendor,vendors")
     parser.add_argument("--output-json", required=True)
@@ -147,9 +154,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    repo_root = Path(args.repo_root).resolve()
-    if not repo_root.exists():
-        raise ValueError(f"repo root does not exist: {repo_root}")
+    repo_root = args.repo_root
 
     repo_slug = repo_root.name
     ref = _git_head(repo_root)

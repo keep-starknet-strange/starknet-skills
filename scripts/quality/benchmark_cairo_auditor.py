@@ -356,6 +356,7 @@ def detect_constructor_dead_param(code: str) -> bool:
 
 def detect_irrevocable_admin(code: str) -> bool:
     lower = code.lower()
+    lower_no_comments = _strip_line_comments(lower)
     constructor_sig, body = _extract_fn_signature_and_body(lower, "constructor")
     if constructor_sig is None or body is None:
         return False
@@ -379,9 +380,9 @@ def detect_irrevocable_admin(code: str) -> bool:
 
     owner_only_params = all("owner" in p for p in admin_params)
     has_ownable_rotation_surface = (
-        "ownablemixinimpl" in lower
-        or "transfer_ownership" in lower
-        or "renounce_ownership" in lower
+        "ownablemixinimpl" in lower_no_comments
+        or "transfer_ownership" in lower_no_comments
+        or "renounce_ownership" in lower_no_comments
     )
     # Treat canonical owner-only ownable setups as revocable, but do not suppress
     # contracts that also seed dedicated admin/governor/upgrade roles.

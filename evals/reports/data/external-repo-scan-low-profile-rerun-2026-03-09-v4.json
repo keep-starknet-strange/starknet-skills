@@ -1,6 +1,6 @@
 {
   "scan_id": "external-repo-scan-low-profile-rerun-2026-03-09-v4",
-  "generated_at": "2026-03-09T00:54:44+00:00",
+  "generated_at": "2026-03-09T01:00:55+00:00",
   "scanner": {
     "tool": "scripts/quality/scan_external_repos.py",
     "detectors_source": "scripts/quality/benchmark_cairo_auditor.py",

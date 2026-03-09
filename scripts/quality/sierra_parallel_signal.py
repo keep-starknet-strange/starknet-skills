@@ -49,14 +49,22 @@ CEI_CLASSES = {
 
 
 def run_unchecked(cmd: list[str], cwd: Path, timeout_s: float = 300) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        cmd,
-        cwd=cwd,
-        text=True,
-        capture_output=True,
-        check=False,
-        timeout=timeout_s,
-    )
+    try:
+        return subprocess.run(
+            cmd,
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_s,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(
+            args=cmd,
+            returncode=124,
+            stdout="",
+            stderr=f"command timed out after {timeout_s:.0f}s: {' '.join(cmd)}",
+        )
 
 
 def find_scarb_projects(repo_dir: Path) -> list[Path]:

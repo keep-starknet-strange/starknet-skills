@@ -1,6 +1,6 @@
 # External Repo Detector Sweep (external-repo-scan-low-profile-rerun-2026-03-09-v4)
 
-Generated: 2026-03-09T00:54:44+00:00
+Generated: 2026-03-09T01:00:55+00:00
 
 Machine-readable artifact:
 
@@ -46,6 +46,7 @@ By class:
 By repo:
 
 - `ForgeYields/starknet_vault_kit`: 20
+- `StarkVote/starkvote`: 0
 - `cavos-labs/argus`: 6
 - `fatlabsxyz/tongo`: 2
 - `kiroshi-market/kiroshi-protocol`: 3

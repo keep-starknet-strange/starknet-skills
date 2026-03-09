@@ -64,6 +64,9 @@ python scripts/quality/audit_local_repo.py \
   --output-md /tmp/local-audit-sierra.md
 ```
 
+Warning: `--allow-build` may execute repository build steps/tooling.
+Use build mode only on trusted code, or run in an isolated environment.
+
 ## Contract-Skill Benchmarks
 
 - `benchmark_contract_skills.py`
