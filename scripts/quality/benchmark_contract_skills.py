@@ -12,15 +12,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from contract_benchmark_policy import MIN_REPORTABLE_CASES
-ALLOWED_SECURITY_CLASSES: set[str] = {
-    "auth",
-    "input_validation",
-    "optimization_arithmetic",
-    "optimization_loops",
-    "timelock",
-    "upgrade_safety",
-}
+from contract_benchmark_policy import ALLOWED_SECURITY_CLASSES, MIN_REPORTABLE_CASES
 
 
 @dataclass
