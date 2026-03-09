@@ -147,6 +147,26 @@ python scripts/quality/score_external_triage.py \
   --min-labeled-coverage 0.90
 ```
 
+Run one-shot external pack benchmark (first-time friendly):
+
+```bash
+python scripts/quality/audit_external_pack.py \
+  --pack less-known \
+  --scan-id community-less-known \
+  --output-dir evals/reports/data
+```
+
+This command produces:
+
+- `<scan-id>.json`
+- `<scan-id>.md`
+- `<scan-id>.findings.jsonl`
+- `<scan-id>.repo-summary.csv`
+- `<scan-id>.findings.csv`
+- `<scan-id>.manual-triage.csv`
+- `<scan-id>.stage2-manifest.json`
+- `<scan-id>.stage2-runbook.md`
+
 Run manual-19 gold recall check:
 
 ```bash

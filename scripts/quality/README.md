@@ -32,7 +32,13 @@
 - `scan_external_repos.py`
   - clones configured repos and scans production-scoped `.cairo` files
   - emits JSON/JSONL/markdown artifacts
+  - emits native CSV artifacts (repo summary, findings, manual triage sheet)
+  - applies deterministic confidence scoring + strict suppression metadata for faster triage
   - isolates per-repo failures so one repo does not abort the full scan
+- `audit_external_pack.py`
+  - one-shot external benchmark runner with curated repo packs
+  - default outputs include JSON/JSONL/markdown + all CSV artifacts
+  - optionally prepares Stage-2 specialist bundles (4 vector partitions per repo)
 - `compare_scan_artifacts.py`
   - compares two scan JSON artifacts
   - outputs class/file deltas and added/removed findings
@@ -122,6 +128,27 @@ python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/your/cairo-repo \
   --scan-id local-audit-jsonl \
   --write-findings-jsonl
+```
+
+Run one-shot external pack audit (deterministic Stage-1 + Stage-2 bundle prep):
+
+```bash
+python scripts/quality/audit_external_pack.py \
+  --pack less-known \
+  --scan-id community-less-known \
+  --output-dir evals/reports/data
+```
+
+Run direct external scan with native CSV outputs:
+
+```bash
+python scripts/quality/scan_external_repos.py \
+  --scan-id external-scan \
+  --repos-file evals/packs/less-known.txt \
+  --output-json evals/reports/data/external-scan.json \
+  --output-md evals/reports/data/external-scan.md \
+  --output-findings-jsonl evals/reports/data/external-scan.findings.jsonl \
+  --write-csv
 ```
 
 By default, the script writes:

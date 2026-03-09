@@ -1,0 +1,8 @@
+# Less-known community Cairo repositories for external benchmark sweeps.
+# Format: owner/repo[@ref]
+
+sambarnes/cairo-multisig
+StarkLinkVRF/VRF-StarkNet
+astraly-labs/astraly-contracts
+CarmineOptions/konoha
+tohrnii/flashloan-starknet
