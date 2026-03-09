@@ -240,7 +240,9 @@ def summarize_log(prefix: str, text: str, max_lines: int = 4) -> str:
 def extract_cairo_code(raw_text: str) -> str:
     blocks = re.findall(r"```(?:cairo)?\s*([\s\S]*?)```", raw_text, flags=re.IGNORECASE)
     if blocks:
-        return blocks[0].strip() + "\n"
+        # Prefer the largest fenced block when multiple are present.
+        largest = max(blocks, key=len)
+        return largest.strip() + "\n"
     return raw_text.strip() + "\n"
 
 
@@ -603,6 +605,8 @@ def main() -> int:
     skipped = sum(1 for row in results if row.skipped)
     evaluated_rows = [row for row in results if not row.skipped]
     evaluated = len(evaluated_rows)
+    generated_rows = [row for row in evaluated_rows if not row.generation_error]
+    generated = len(generated_rows)
 
     passed_count = sum(1 for row in evaluated_rows if row.passed)
     vuln_count = sum(1 for row in evaluated_rows if row.vuln_flag)
@@ -610,8 +614,8 @@ def main() -> int:
     test_failures = sum(1 for row in evaluated_rows if row.build_ok and not row.tests_ok)
     generation_failures = sum(1 for row in evaluated_rows if bool(row.generation_error))
 
-    pass_rate = (passed_count / evaluated) if evaluated else 0.0
-    vuln_rate = (vuln_count / evaluated) if evaluated else 0.0
+    pass_rate = (passed_count / generated) if generated else 0.0
+    vuln_rate = (vuln_count / generated) if generated else 0.0
 
     generated_at = datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -628,6 +632,7 @@ def main() -> int:
         "totals": {
             "total": total,
             "evaluated": evaluated,
+            "generated": generated,
             "skipped": skipped,
             "passed": passed_count,
             "vulnerable": vuln_count,
