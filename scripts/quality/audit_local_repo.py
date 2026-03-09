@@ -194,12 +194,28 @@ def _render_markdown(
     if findings:
         lines.append("## Findings")
         lines.append("")
-        lines.append("| File | Class |")
-        lines.append("| --- | --- |")
+        include_sierra_cols = any("ir_confirmation" in row for row in findings)
+        if include_sierra_cols:
+            lines.append("| File | Class | IR | Quality | Source |")
+            lines.append("| --- | --- | --- | --- | --- |")
+        else:
+            lines.append("| File | Class |")
+            lines.append("| --- | --- |")
         for row in findings[:250]:
-            lines.append(f"| `{row['file']}` | `{row['class_id']}` |")
+            if include_sierra_cols:
+                lines.append(
+                    "| "
+                    + f"`{row['file']}` | `{row['class_id']}` | "
+                    + f"{row.get('ir_confirmation', 'unknown')} | {row.get('signal_quality', 'low')} | "
+                    + f"{row.get('artifact_source', 'none')} |"
+                )
+            else:
+                lines.append(f"| `{row['file']}` | `{row['class_id']}` |")
         if len(findings) > 250:
-            lines.append(f"| ... | ... ({len(findings) - 250} more) |")
+            if include_sierra_cols:
+                lines.append(f"| ... | ... ({len(findings) - 250} more) | ... | ... | ... |")
+            else:
+                lines.append(f"| ... | ... ({len(findings) - 250} more) |")
         lines.append("")
 
     return "\n".join(lines) + "\n"
@@ -340,12 +356,22 @@ def main() -> int:
 
         sierra_payload: dict[str, object] | None = None
         if args.sierra_confirm:
+            local_findings_for_sierra = [
+                {
+                    "finding_id": f"local-{idx + 1}",
+                    "file": str(row.get("file", "")),
+                    "class_id": str(row.get("class_id", "")),
+                    "scope": str(row.get("scope", "")),
+                }
+                for idx, row in enumerate(findings)
+            ]
             signal = analyze_repo(
                 spec=RepoSpec(slug=repo_slug, ref=None),
                 repo_dir=repo_root,
                 ref=ref,
                 allow_build=args.allow_build,
                 detector_class_counts={repo_slug: class_counts},
+                detector_findings_by_repo={repo_slug: local_findings_for_sierra},
                 scarb_timeout_s=args.scarb_timeout_seconds,
             )
             sierra_payload = {
@@ -358,8 +384,24 @@ def main() -> int:
                 "function_signals": signal.function_signals,
                 "signal_flags": signal.signal_flags,
                 "confirmation": signal.confirmation,
+                "finding_confirmations": signal.finding_confirmations,
                 "errors": signal.errors,
             }
+
+            confirmation_index = {
+                (str(item.get("file", "")), str(item.get("class_id", ""))): item
+                for item in signal.finding_confirmations
+            }
+            enriched_findings: list[dict[str, object]] = []
+            for row in findings:
+                item = confirmation_index.get((str(row.get("file", "")), str(row.get("class_id", ""))))
+                merged = dict(row)
+                merged["ir_confirmation"] = str(item.get("ir_confirmation", "unknown")) if item else "unknown"
+                merged["signal_quality"] = str(item.get("signal_quality", "low")) if item else "low"
+                merged["artifact_source"] = str(item.get("artifact_source", "none")) if item else "none"
+                merged["evidence_kind"] = str(item.get("evidence_kind", "no_sierra")) if item else "no_sierra"
+                enriched_findings.append(merged)
+            findings = enriched_findings
 
         generated_at_iso = generated_at.isoformat()
         payload: dict[str, object] = {

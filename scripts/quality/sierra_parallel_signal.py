@@ -35,6 +35,7 @@ class RepoSignal:
     signal_flags: dict[str, bool | None]
     analysis_status: str
     confirmation: dict[str, object]
+    finding_confirmations: list[dict[str, object]]
     errors: list[str]
     build_attempts: list[dict[str, str]]
 
@@ -53,6 +54,12 @@ UPGRADE_CLASSES = {
 }
 CEI_CLASSES = {
     "CEI_VIOLATION_ERC1155",
+}
+
+CLASS_TO_SIERRA_SIGNAL: dict[str, str] = {
+    "IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK": "upgrade_replace_class",
+    "UPGRADE_CLASS_HASH_WITHOUT_NONZERO_GUARD": "upgrade_replace_class",
+    "CEI_VIOLATION_ERC1155": "cei_external_then_write",
 }
 
 STARKNET_DEP_LINE_RE = re.compile(r'^starknet\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)"\s*$')
@@ -628,12 +635,130 @@ def _build_confirmation(
     }
 
 
+def _best_artifact_source(artifact_breakdown: Counter[str]) -> str:
+    if artifact_breakdown.get("sierra_json", 0) > 0:
+        return "sierra_json"
+    if artifact_breakdown.get("contract_class", 0) > 0:
+        return "contract_class"
+    if artifact_breakdown.get("sierra_text", 0) > 0:
+        return "sierra_text"
+    if artifact_breakdown.get("starknet_artifacts", 0) > 0:
+        return "contract_class"
+    return "none"
+
+
+def _source_quality(source: str) -> str:
+    if source == "sierra_json":
+        return "high"
+    if source == "contract_class":
+        return "medium"
+    if source == "sierra_text":
+        return "low"
+    return "low"
+
+
+def _build_finding_confirmations(
+    *,
+    finding_rows: list[dict[str, object]],
+    analysis_status: str,
+    artifacts: int,
+    artifact_breakdown: Counter[str],
+    marker_counts: Counter[str],
+    function_signals: Counter[str],
+) -> list[dict[str, object]]:
+    results: list[dict[str, object]] = []
+    default_source = _best_artifact_source(artifact_breakdown)
+    default_quality = _source_quality(default_source)
+
+    for row in finding_rows:
+        class_id = str(row.get("class_id", "")).strip()
+        signal_kind = CLASS_TO_SIERRA_SIGNAL.get(class_id, "")
+        if not signal_kind:
+            ir_confirmation = "unknown"
+            signal_quality = default_quality if analysis_status == "completed" and artifacts > 0 else "low"
+            artifact_source = default_source if analysis_status == "completed" and artifacts > 0 else "none"
+            evidence_kind = "class_not_mapped"
+        elif analysis_status != "completed" or artifacts <= 0:
+            ir_confirmation = "unknown"
+            signal_quality = "low"
+            artifact_source = "none"
+            evidence_kind = "no_analyzable_artifacts"
+        elif signal_kind == "upgrade_replace_class":
+            has_replace_marker = marker_counts["replace_class_syscall"] > 0
+            has_upgrade_functions = (
+                artifact_breakdown.get("sierra_json", 0) > 0
+                and function_signals.get("functions_with_upgrade", 0) > 0
+            )
+            if has_upgrade_functions:
+                ir_confirmation = "confirmed"
+                signal_quality = "high"
+                artifact_source = "sierra_json"
+                evidence_kind = "replace_class_function_signal"
+            elif has_replace_marker:
+                ir_confirmation = "confirmed"
+                artifact_source = default_source
+                signal_quality = _source_quality(artifact_source)
+                evidence_kind = "replace_class_marker_signal"
+            else:
+                if artifact_breakdown.get("sierra_json", 0) > 0:
+                    ir_confirmation = "missing"
+                    signal_quality = "high"
+                    artifact_source = "sierra_json"
+                    evidence_kind = "replace_class_absent_under_high_signal"
+                else:
+                    ir_confirmation = "unknown"
+                    signal_quality = default_quality
+                    artifact_source = default_source
+                    evidence_kind = "insufficient_upgrade_signal"
+        elif signal_kind == "cei_external_then_write":
+            has_fn_order_signal = (
+                artifact_breakdown.get("sierra_json", 0) > 0
+                and function_signals.get("functions_external_then_write", 0) > 0
+            )
+            if has_fn_order_signal:
+                ir_confirmation = "confirmed"
+                signal_quality = "high"
+                artifact_source = "sierra_json"
+                evidence_kind = "external_then_write_function_signal"
+            elif artifact_breakdown.get("sierra_json", 0) > 0:
+                ir_confirmation = "missing"
+                signal_quality = "high"
+                artifact_source = "sierra_json"
+                evidence_kind = "no_external_then_write_under_high_signal"
+            else:
+                ir_confirmation = "unknown"
+                signal_quality = default_quality
+                artifact_source = default_source
+                evidence_kind = "insufficient_cei_signal"
+        else:
+            ir_confirmation = "unknown"
+            signal_quality = default_quality
+            artifact_source = default_source
+            evidence_kind = "unhandled_signal_kind"
+
+        results.append(
+            {
+                "finding_id": str(row.get("finding_id", "")).strip(),
+                "file": str(row.get("file", "")).strip(),
+                "class_id": class_id,
+                "scope": str(row.get("scope", "")).strip(),
+                "ir_confirmation": ir_confirmation,
+                "signal_quality": signal_quality,
+                "artifact_source": artifact_source,
+                "evidence_kind": evidence_kind,
+            }
+        )
+
+    return results
+
+
 def analyze_repo(
     spec: RepoSpec,
     repo_dir: Path,
     ref: str,
     allow_build: bool,
     detector_class_counts: dict[str, Counter[str]],
+    detector_findings_by_repo: dict[str, list[dict[str, object]]],
     scarb_timeout_s: float,
 ) -> RepoSignal:
     scarb_projects = find_scarb_projects(repo_dir)
@@ -790,6 +915,23 @@ def analyze_repo(
         cei_examples=cei_examples,
         signal_observed=signal_observed,
     )
+    finding_confirmations = _build_finding_confirmations(
+        finding_rows=detector_findings_by_repo.get(spec.slug, []),
+        analysis_status=analysis_status,
+        artifacts=artifact_count,
+        artifact_breakdown=artifact_breakdown,
+        marker_counts=marker_counts,
+        function_signals=function_signals,
+    )
+    confirmation["finding_confirmed"] = sum(
+        1 for item in finding_confirmations if item.get("ir_confirmation") == "confirmed"
+    )
+    confirmation["finding_missing"] = sum(
+        1 for item in finding_confirmations if item.get("ir_confirmation") == "missing"
+    )
+    confirmation["finding_unknown"] = sum(
+        1 for item in finding_confirmations if item.get("ir_confirmation") == "unknown"
+    )
 
     return RepoSignal(
         repo=spec.slug,
@@ -804,14 +946,18 @@ def analyze_repo(
         signal_flags=flags,
         analysis_status=analysis_status,
         confirmation=confirmation,
+        finding_confirmations=finding_confirmations,
         errors=errors,
         build_attempts=build_attempts,
     )
 
 
-def load_detector_summary(path: Path) -> tuple[dict[str, int], dict[str, Counter[str]]]:
+def load_detector_summary(
+    path: Path,
+) -> tuple[dict[str, int], dict[str, Counter[str]], dict[str, list[dict[str, object]]]]:
     per_repo_hits: dict[str, int] = defaultdict(int)
     per_repo_classes: dict[str, Counter[str]] = defaultdict(Counter)
+    per_repo_findings: dict[str, list[dict[str, object]]] = defaultdict(list)
 
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
@@ -824,8 +970,20 @@ def load_detector_summary(path: Path) -> tuple[dict[str, int], dict[str, Counter
         per_repo_hits[repo] += 1
         if class_id:
             per_repo_classes[repo][class_id] += 1
+        per_repo_findings[repo].append(
+            {
+                "finding_id": str(row.get("finding_id", "")).strip(),
+                "file": str(row.get("file", "")).strip(),
+                "class_id": class_id,
+                "scope": str(row.get("scope", "")).strip(),
+            }
+        )
 
-    return dict(per_repo_hits), {repo: counts for repo, counts in per_repo_classes.items()}
+    return (
+        dict(per_repo_hits),
+        {repo: counts for repo, counts in per_repo_classes.items()},
+        {repo: rows for repo, rows in per_repo_findings.items()},
+    )
 
 
 def render_markdown(
@@ -847,8 +1005,10 @@ def render_markdown(
     lines.append("")
     lines.append("Sierra is used here as a confirmation layer for source-level detections (not as a standalone verdict engine).")
     lines.append("")
-    lines.append("| Repo | Projects (built/total) | Artifacts | Status | ReplaceClass | Fn Ext->Write | Detector Hits | Upgrade Oracle | CEI Oracle |")
-    lines.append("| --- | ---: | ---: | --- | ---: | ---: | ---: | --- | --- |")
+    lines.append(
+        "| Repo | Projects (built/total) | Artifacts | Status | ReplaceClass | Fn Ext->Write | Detector Hits | Upgrade Oracle | CEI Oracle | Findings C/M/U |"
+    )
+    lines.append("| --- | ---: | ---: | --- | ---: | ---: | ---: | --- | --- | ---: |")
     for row in rows:
         replace = row.marker_counts.get("replace_class_syscall", 0)
         ext_then_write = row.function_signals.get("functions_external_then_write", 0)
@@ -869,9 +1029,12 @@ def render_markdown(
             cei_oracle = "unknown"
         else:
             cei_oracle = "confirm" if row.confirmation.get("cei_ir_confirmed", False) else "missing"
+        f_confirmed = int(row.confirmation.get("finding_confirmed", 0))
+        f_missing = int(row.confirmation.get("finding_missing", 0))
+        f_unknown = int(row.confirmation.get("finding_unknown", 0))
 
         lines.append(
-            f"| `{row.repo}` | {row.projects_built}/{row.projects_total} | {row.artifacts} | {row.analysis_status} | {replace} | {ext_then_write} | {hits} | {upgrade_oracle} | {cei_oracle} |"
+            f"| `{row.repo}` | {row.projects_built}/{row.projects_total} | {row.artifacts} | {row.analysis_status} | {replace} | {ext_then_write} | {hits} | {upgrade_oracle} | {cei_oracle} | {f_confirmed}/{f_missing}/{f_unknown} |"
         )
 
     lines.append("")
@@ -906,6 +1069,27 @@ def render_markdown(
     ]
     if ceis:
         lines.append("## CEI Function Examples (IR)")
+        lines.append("")
+
+    finding_rows = [
+        (row.repo, item)
+        for row in rows
+        for item in row.finding_confirmations
+    ]
+    if finding_rows:
+        lines.append("## Per-Finding IR Confirmation")
+        lines.append("")
+        lines.append("| Repo | File | Class | IR | Quality | Source | Evidence |")
+        lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+        for repo, item in finding_rows[:500]:
+            lines.append(
+                "| "
+                + f"`{repo}` | `{item.get('file', '')}` | `{item.get('class_id', '')}` | "
+                + f"{item.get('ir_confirmation', 'unknown')} | {item.get('signal_quality', 'low')} | "
+                + f"{item.get('artifact_source', 'none')} | `{item.get('evidence_kind', '')}` |"
+            )
+        if len(finding_rows) > 500:
+            lines.append(f"| ... | ... | ... | ... | ... | ... | ... ({len(finding_rows) - 500} more) |")
         lines.append("")
         for repo, functions in ceis:
             values = ", ".join(f"`{f}`" for f in list(functions)[:5])
@@ -980,8 +1164,11 @@ def main() -> int:
 
     detector_hits: dict[str, int] = {}
     detector_class_counts: dict[str, Counter[str]] = {}
+    detector_findings_by_repo: dict[str, list[dict[str, object]]] = {}
     if args.detector_findings_jsonl:
-        detector_hits, detector_class_counts = load_detector_summary(Path(args.detector_findings_jsonl))
+        detector_hits, detector_class_counts, detector_findings_by_repo = load_detector_summary(
+            Path(args.detector_findings_jsonl)
+        )
 
     rows: list[RepoSignal] = []
     for spec in repo_specs:
@@ -994,6 +1181,7 @@ def main() -> int:
                     ref,
                     args.allow_build,
                     detector_class_counts,
+                    detector_findings_by_repo,
                     args.scarb_timeout_seconds,
                 )
             )
@@ -1025,7 +1213,11 @@ def main() -> int:
                         "cei_ir_confirmed": False,
                         "cei_ir_missing": False,
                         "cei_example_functions": [],
+                        "finding_confirmed": 0,
+                        "finding_missing": 0,
+                        "finding_unknown": 0,
                     },
+                    finding_confirmations=[],
                     errors=[f"clone_or_analysis_failed: {str(exc)[:300]}"],
                     build_attempts=[],
                 )
@@ -1053,6 +1245,7 @@ def main() -> int:
                 "signal_flags": row.signal_flags,
                 "analysis_status": row.analysis_status,
                 "confirmation": row.confirmation,
+                "finding_confirmations": row.finding_confirmations,
                 "errors": row.errors,
                 "build_attempts": row.build_attempts,
                 "detector_hits": detector_hits.get(row.repo, 0),
