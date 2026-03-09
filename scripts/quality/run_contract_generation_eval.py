@@ -44,6 +44,7 @@ class GenerationResult:
     skill_id: str
     security_class: str
     fixture: str
+    build_attempted: bool
     build_ok: bool
     tests_ok: bool
     static_ok: bool
@@ -88,9 +89,15 @@ def parse_args() -> argparse.Namespace:
         required=True,
         help="Output markdown report path",
     )
-    parser.add_argument("--model", default="openai/gpt-4o")
-    parser.add_argument("--api-url", default="https://models.github.ai/inference/chat/completions")
-    parser.add_argument("--auth-env", default="GITHUB_TOKEN")
+    parser.add_argument("--model", default=os.environ.get("GENERATION_EVAL_MODEL", "openai/gpt-4o"))
+    parser.add_argument(
+        "--api-url",
+        default=os.environ.get(
+            "GENERATION_EVAL_API_URL",
+            "https://models.github.ai/inference/chat/completions",
+        ),
+    )
+    parser.add_argument("--auth-env", default=os.environ.get("GENERATION_EVAL_AUTH_ENV", "GITHUB_TOKEN"))
     parser.add_argument("--timeout-seconds", type=int, default=120)
     parser.add_argument("--build-timeout-seconds", type=int, default=240)
     parser.add_argument("--retries", type=int, default=3)
@@ -443,6 +450,7 @@ def evaluate_case(
             skill_id=case.skill_id,
             security_class=case.security_class,
             fixture=case.fixture,
+            build_attempted=False,
             build_ok=False,
             tests_ok=False,
             static_ok=False,
@@ -459,6 +467,7 @@ def evaluate_case(
             skill_id=case.skill_id,
             security_class=case.security_class,
             fixture=case.fixture,
+            build_attempted=False,
             build_ok=False,
             tests_ok=False,
             static_ok=False,
@@ -475,6 +484,7 @@ def evaluate_case(
             skill_id=case.skill_id,
             security_class=case.security_class,
             fixture=case.fixture,
+            build_attempted=False,
             build_ok=False,
             tests_ok=False,
             static_ok=False,
@@ -503,6 +513,7 @@ def evaluate_case(
             skill_id=case.skill_id,
             security_class=case.security_class,
             fixture=case.fixture,
+            build_attempted=False,
             build_ok=False,
             tests_ok=False,
             static_ok=False,
@@ -525,6 +536,7 @@ def evaluate_case(
                 skill_id=case.skill_id,
                 security_class=case.security_class,
                 fixture=case.fixture,
+                build_attempted=False,
                 build_ok=False,
                 tests_ok=False,
                 static_ok=False,
@@ -566,6 +578,7 @@ def evaluate_case(
         skill_id=case.skill_id,
         security_class=case.security_class,
         fixture=case.fixture,
+        build_attempted=case.run_build,
         build_ok=build_ok,
         tests_ok=tests_ok,
         static_ok=static_ok,
@@ -733,6 +746,7 @@ def main() -> int:
                 "skill_id": row.skill_id,
                 "security_class": row.security_class,
                 "fixture": row.fixture,
+                "build_attempted": row.build_attempted,
                 "build_ok": row.build_ok,
                 "tests_ok": row.tests_ok,
                 "static_ok": row.static_ok,
