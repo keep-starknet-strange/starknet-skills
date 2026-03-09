@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import os
 import re
@@ -140,6 +141,10 @@ def _iter_tool_versions_paths(project_root: Path, repo_dir: Path) -> list[Path]:
     paths: list[Path] = []
     current = project_root.resolve()
     repo_resolved = repo_dir.resolve()
+    try:
+        current.relative_to(repo_resolved)
+    except ValueError:
+        return paths
     while True:
         candidate = current / ".tool-versions"
         if candidate.exists():
@@ -204,19 +209,20 @@ def _compatible_installed_versions(requested: str, installed: set[str]) -> list[
     return [raw for _, raw in compatible]
 
 
-def _asdf_installed_scarb_versions() -> set[str]:
+@functools.lru_cache(maxsize=1)
+def _asdf_installed_scarb_versions() -> frozenset[str]:
     asdf_bin = shutil.which("asdf")
     if not asdf_bin:
-        return set()
+        return frozenset()
     proc = run_unchecked([asdf_bin, "list", "scarb"], cwd=Path("."), timeout_s=30)
     if proc.returncode != 0:
-        return set()
+        return frozenset()
     versions: set[str] = set()
     for line in proc.stdout.splitlines():
         cleaned = line.strip().replace("*", "").strip()
         if cleaned:
             versions.add(cleaned)
-    return versions
+    return frozenset(versions)
 
 
 def _candidate_scarb_invocations(project_root: Path, repo_dir: Path) -> list[tuple[str, list[str], dict[str, str]]]:
@@ -593,7 +599,7 @@ def analyze_repo(
     build_attempts: list[dict[str, str]] = []
 
     for project in scarb_projects:
-        target_dirs: set[Path] = {(project / "target").resolve()}
+        target_dirs: set[Path]
         if allow_build:
             build_ok = False
             proc: subprocess.CompletedProcess[str] | None = None
