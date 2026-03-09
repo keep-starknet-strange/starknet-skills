@@ -6,6 +6,7 @@ This script is intended for local verification and scorecard generation.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -68,6 +69,25 @@ def require_exists(path: Path) -> bool:
     return path.exists()
 
 
+def plugin_identifier() -> str:
+    plugin_path = ROOT / ".claude-plugin" / "plugin.json"
+    try:
+        raw = plugin_path.read_text(encoding="utf-8")
+        obj = json.loads(raw)
+    except (OSError, json.JSONDecodeError):
+        return "starknet-skills"
+
+    if isinstance(obj, dict):
+        name = obj.get("name")
+        if isinstance(name, str) and name:
+            return name
+    return "starknet-skills"
+
+
+def is_missing_binary(result: subprocess.CompletedProcess[str]) -> bool:
+    return result.returncode == 127 and "No such file or directory" in (result.stderr or "")
+
+
 def main() -> int:
     results: list[CheckResult] = []
 
@@ -98,6 +118,7 @@ def main() -> int:
     if install_section is None:
         results.append(CheckResult("readme-install-flow", "FAIL", "README missing 'Install & Use' section"))
     else:
+        expected_plugin_identifier = plugin_identifier()
         command_markers = [
             "/plugin marketplace add",
             "/plugin menu",
@@ -106,7 +127,7 @@ def main() -> int:
             "brew install",
         ]
         has_command_marker = any(marker in install_section for marker in command_markers)
-        has_plugin_identifier = "starknet-skills" in install_section
+        has_plugin_identifier = expected_plugin_identifier in install_section
         if has_command_marker and has_plugin_identifier:
             results.append(
                 CheckResult(
@@ -125,9 +146,8 @@ def main() -> int:
             )
 
     # 5) CLI accuracy: snforge flags.
-    try:
-        snforge = run(["snforge", "test", "--help"])
-    except FileNotFoundError:
+    snforge = run(["snforge", "test", "--help"])
+    if is_missing_binary(snforge):
         results.append(CheckResult("snforge-cli-check", "SKIP", "snforge unavailable"))
     else:
         if snforge.returncode != 0:
@@ -157,10 +177,9 @@ def main() -> int:
                 )
 
     # 6) CLI accuracy: sncast account import and verify backends.
-    try:
-        sncast_account = run(["sncast", "account", "--help"])
-        sncast_verify = run(["sncast", "verify", "--help"])
-    except FileNotFoundError:
+    sncast_account = run(["sncast", "account", "--help"])
+    sncast_verify = run(["sncast", "verify", "--help"])
+    if is_missing_binary(sncast_account) or is_missing_binary(sncast_verify):
         results.append(CheckResult("sncast-cli-check", "SKIP", "sncast unavailable"))
     else:
         if sncast_account.returncode != 0 or sncast_verify.returncode != 0:
