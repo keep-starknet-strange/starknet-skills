@@ -72,6 +72,8 @@ SAFE_ENV_KEYS = (
     "ASDF_DATA_DIR",
     "ASDF_CONFIG_FILE",
     "ASDF_CONCURRENCY",
+    "SCARB_CACHE",
+    "SCARB_CONFIG",
 )
 
 
@@ -88,6 +90,15 @@ def _safe_repo_rel(path: Path, repo_dir: Path) -> str:
             return path.name
 
 
+@functools.cache
+def _sandbox_home() -> Path:
+    sandbox = Path(tempfile.mkdtemp(prefix=f"starknet-skills-sierra-home-{os.getpid()}-")).resolve()
+    (sandbox / ".cache").mkdir(parents=True, exist_ok=True)
+    (sandbox / ".config").mkdir(parents=True, exist_ok=True)
+    (sandbox / ".local" / "share").mkdir(parents=True, exist_ok=True)
+    return sandbox
+
+
 def _build_command_env(cwd: Path, extra_env: dict[str, str] | None) -> dict[str, str]:
     env: dict[str, str] = {}
     for key in SAFE_ENV_KEYS:
@@ -95,8 +106,7 @@ def _build_command_env(cwd: Path, extra_env: dict[str, str] | None) -> dict[str,
         if value:
             env[key] = value
     # Isolate build-home from host credentials and avoid polluting cloned repos.
-    sandbox_home = (Path(tempfile.gettempdir()) / "starknet-skills-sierra-home").resolve()
-    sandbox_home.mkdir(parents=True, exist_ok=True)
+    sandbox_home = _sandbox_home()
     env["HOME"] = sandbox_home.as_posix()
     env.setdefault("XDG_CACHE_HOME", (sandbox_home / ".cache").as_posix())
     env.setdefault("XDG_CONFIG_HOME", (sandbox_home / ".config").as_posix())
@@ -104,8 +114,6 @@ def _build_command_env(cwd: Path, extra_env: dict[str, str] | None) -> dict[str,
     host_home = os.environ.get("HOME")
     if "ASDF_DATA_DIR" not in env and host_home:
         env["ASDF_DATA_DIR"] = str((Path(host_home) / ".asdf").resolve())
-    if "ASDF_DIR" not in env and "ASDF_DATA_DIR" in env:
-        env["ASDF_DIR"] = env["ASDF_DATA_DIR"]
     if extra_env:
         env.update(extra_env)
     return env
