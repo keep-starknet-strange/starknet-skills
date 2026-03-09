@@ -246,6 +246,7 @@ jobs:
       - name: Caracal adapter (auxiliary)
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         continue-on-error: true
+        timeout-minutes: 10
         run: |
           mkdir -p "${RUNNER_TEMP}/scorecards"
           python scripts/quality/run_caracal_adapter.py \

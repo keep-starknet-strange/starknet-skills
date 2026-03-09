@@ -69,15 +69,18 @@ rules:
       - pattern-not-regex: "(<=\\s*MAX_|>=\\s*MIN_|is_le\\()"
 
   - id: cairo.erc1155-cei-risk
-    message: "Potential ERC1155 CEI ordering risk (interaction before effects)."
+    message: "Potential ERC1155 CEI ordering risk (triage hint, verify ordering manually)."
     severity: WARNING
     languages: [generic]
+    metadata:
+      confidence: low
+      triage: "manual-ordering-review-required"
     paths:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "safe_transfer_from\\("
-      - pattern-regex: "\\.write\\("
+      - pattern-regex: "safe_transfer_from\\([\\s\\S]{0,360}(order_status|state|fulfilled|claimed|\\.write\\()"
+      - pattern-not-regex: "(order_status|state|fulfilled|claimed|\\.write\\()[\\s\\S]{0,240}safe_transfer_from\\("
 
   - id: cairo.irrevocable-admin
     message: "Constructor seeds owner/admin but no obvious rotation path is present."

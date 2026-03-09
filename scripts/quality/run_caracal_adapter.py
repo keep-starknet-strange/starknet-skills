@@ -135,18 +135,43 @@ def main() -> int:
     attempts: list[dict[str, object]] = []
     success_count = 0
     for artifact in artifacts[: args.max_artifacts]:
-        rendered = args.caracal_args_template.format(
-            artifact=artifact.as_posix(),
-            repo_root=repo_root.as_posix(),
-        )
-        cmd = [caracal_bin] + shlex.split(rendered)
-        proc = subprocess.run(
-            cmd,
-            cwd=repo_root,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
+        try:
+            rendered = args.caracal_args_template.format(
+                artifact=shlex.quote(artifact.as_posix()),
+                repo_root=shlex.quote(repo_root.as_posix()),
+            )
+            cmd = [caracal_bin] + shlex.split(rendered)
+        except (KeyError, ValueError, IndexError, AttributeError) as exc:
+            attempts.append(
+                {
+                    "artifact": artifact.as_posix(),
+                    "exit_code": "template_error",
+                    "stdout_tail": "",
+                    "stderr_tail": str(exc),
+                    "command": [caracal_bin, args.caracal_args_template],
+                }
+            )
+            continue
+        try:
+            proc = subprocess.run(
+                cmd,
+                cwd=repo_root,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=args.scarb_timeout_seconds,
+            )
+        except subprocess.TimeoutExpired as exc:
+            attempts.append(
+                {
+                    "artifact": artifact.as_posix(),
+                    "exit_code": "timeout",
+                    "stdout_tail": (exc.stdout or "")[-1200:] if isinstance(exc.stdout, str) else "",
+                    "stderr_tail": (exc.stderr or "")[-1200:] if isinstance(exc.stderr, str) else "",
+                    "command": cmd,
+                }
+            )
+            continue
         attempts.append(
             {
                 "artifact": artifact.as_posix(),
