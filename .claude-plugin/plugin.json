@@ -1,6 +1,29 @@
 {
   "name": "starknet-skills",
-  "version": "0.1.0",
-  "description": "Cairo/Starknet reasoning and audit-quality skills",
-  "author": "keep-starknet-strange"
+  "version": "0.2.0",
+  "description": "Cairo/Starknet reasoning and audit-quality skills for secure contract authoring, testing, and review.",
+  "author": {
+    "name": "keep-starknet-strange",
+    "url": "https://github.com/keep-starknet-strange"
+  },
+  "homepage": "https://github.com/keep-starknet-strange/starknet-skills",
+  "repository": "https://github.com/keep-starknet-strange/starknet-skills",
+  "license": "MIT",
+  "keywords": [
+    "starknet",
+    "cairo",
+    "smart-contracts",
+    "security",
+    "auditing",
+    "testing"
+  ],
+  "skills": [
+    "./cairo-auditor",
+    "./cairo-contract-authoring",
+    "./cairo-testing",
+    "./cairo-optimization",
+    "./cairo-toolchain",
+    "./account-abstraction",
+    "./starknet-network-facts"
+  ]
 }

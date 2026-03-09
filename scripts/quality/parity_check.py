@@ -6,6 +6,7 @@ This script is intended for local verification and scorecard generation.
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -45,8 +46,46 @@ def has_text(path: Path, needle: str) -> bool:
     return needle in path.read_text(encoding="utf-8")
 
 
+def markdown_section(path: Path, heading: str) -> str | None:
+    content = path.read_text(encoding="utf-8")
+    lines = content.splitlines()
+    start = None
+    for idx, line in enumerate(lines):
+        if line.strip() == heading:
+            start = idx + 1
+            break
+    if start is None:
+        return None
+
+    end = len(lines)
+    for idx in range(start, len(lines)):
+        if lines[idx].startswith("## "):
+            end = idx
+            break
+    return "\n".join(lines[start:end]).strip()
+
+
 def require_exists(path: Path) -> bool:
     return path.exists()
+
+
+def plugin_identifier() -> str:
+    plugin_path = ROOT / ".claude-plugin" / "plugin.json"
+    try:
+        raw = plugin_path.read_text(encoding="utf-8")
+        obj = json.loads(raw)
+    except (OSError, json.JSONDecodeError):
+        return "starknet-skills"
+
+    if isinstance(obj, dict):
+        name = obj.get("name")
+        if isinstance(name, str) and name:
+            return name
+    return "starknet-skills"
+
+
+def is_missing_binary(result: subprocess.CompletedProcess[str]) -> bool:
+    return result.returncode == 127 and "No such file or directory" in (result.stderr or "")
 
 
 def main() -> int:
@@ -67,62 +106,119 @@ def main() -> int:
     else:
         results.append(CheckResult("governance-and-entry-files", "FAIL", f"missing: {', '.join(missing)}"))
 
-    # 3) Install onboarding in README.
-    if has_text(ROOT / "README.md", "## Install & Use"):
-        results.append(CheckResult("readme-install-flow", "PASS", "README includes install/use section"))
+    # 3) Plugin marketplace metadata consistency.
+    market = run([sys.executable, "scripts/quality/validate_marketplace.py"])
+    if market.returncode == 0:
+        results.append(CheckResult("plugin-marketplace-metadata", "PASS", market.stdout.strip()))
     else:
-        results.append(CheckResult("readme-install-flow", "FAIL", "README missing 'Install & Use' section"))
+        results.append(CheckResult("plugin-marketplace-metadata", "FAIL", (market.stderr or market.stdout).strip()))
 
-    # 4) CLI accuracy: snforge flags.
+    # 4) Install onboarding in README.
+    install_section = markdown_section(ROOT / "README.md", "## Install & Use")
+    if install_section is None:
+        results.append(CheckResult("readme-install-flow", "FAIL", "README missing 'Install & Use' section"))
+    else:
+        expected_plugin_identifier = plugin_identifier()
+        command_markers = [
+            "/plugin marketplace add",
+            "/plugin menu",
+        ]
+        has_command_marker = any(marker in install_section for marker in command_markers)
+        has_plugin_identifier = expected_plugin_identifier in install_section
+        if has_command_marker and has_plugin_identifier:
+            results.append(
+                CheckResult(
+                    "readme-install-flow",
+                    "PASS",
+                    "README install section includes concrete commands and plugin identifier",
+                )
+            )
+        else:
+            results.append(
+                CheckResult(
+                    "readme-install-flow",
+                    "FAIL",
+                    "README install section missing concrete install command and/or plugin identifier",
+                )
+            )
+
+    # 5) CLI accuracy: snforge flags.
     snforge = run(["snforge", "test", "--help"])
-    if snforge.returncode != 0:
+    if is_missing_binary(snforge):
         results.append(CheckResult("snforge-cli-check", "SKIP", "snforge unavailable"))
     else:
-        doc = (ROOT / "cairo-testing/references/legacy-full.md").read_text(encoding="utf-8")
-        has_exact = "--exact" in snforge.stdout
-        forbids_filter = "--filter" not in snforge.stdout
-        doc_has_filter = "--filter" in doc
-        if has_exact and forbids_filter and not doc_has_filter:
-            results.append(CheckResult("snforge-cli-check", "PASS", "docs match snforge 0.56 filter/exact behavior"))
-        else:
+        if snforge.returncode != 0:
             results.append(
                 CheckResult(
                     "snforge-cli-check",
                     "FAIL",
-                    f"has_exact={has_exact}, forbids_filter={forbids_filter}, doc_has_filter={doc_has_filter}",
+                    (snforge.stderr or snforge.stdout).strip() or "snforge --help returned non-zero exit code",
                 )
             )
+        else:
+            doc = (ROOT / "cairo-testing/references/legacy-full.md").read_text(encoding="utf-8")
+            has_exact = "--exact" in snforge.stdout
+            forbids_filter = "--filter" not in snforge.stdout
+            doc_has_filter = "--filter" in doc
+            if has_exact and forbids_filter and not doc_has_filter:
+                results.append(
+                    CheckResult("snforge-cli-check", "PASS", "docs match snforge 0.56 filter/exact behavior")
+                )
+            else:
+                results.append(
+                    CheckResult(
+                        "snforge-cli-check",
+                        "FAIL",
+                        f"has_exact={has_exact}, forbids_filter={forbids_filter}, doc_has_filter={doc_has_filter}",
+                    )
+                )
 
-    # 5) CLI accuracy: sncast account import and verify backends.
+    # 6) CLI accuracy: sncast account import and verify backends.
     sncast_account = run(["sncast", "account", "--help"])
     sncast_verify = run(["sncast", "verify", "--help"])
-    if sncast_account.returncode != 0 or sncast_verify.returncode != 0:
+    if is_missing_binary(sncast_account) or is_missing_binary(sncast_verify):
         results.append(CheckResult("sncast-cli-check", "SKIP", "sncast unavailable"))
     else:
-        doc_toolchain = (ROOT / "cairo-toolchain/references/legacy-full.md").read_text(encoding="utf-8")
-        has_import = "import" in sncast_account.stdout
-        no_add_subcmd = " add " not in sncast_account.stdout
-        mentions_import = "sncast account import" in doc_toolchain
-        mentions_add = "sncast account add" in doc_toolchain
-        verifier_ok = "[possible values: walnut, voyager]" in sncast_verify.stdout
-        docs_mention_both = "both Walnut and Voyager" in doc_toolchain
-        uses_json = "sncast --json declare" in doc_toolchain and "jq -r '.class_hash'" in doc_toolchain
-
-        if all([has_import, no_add_subcmd, mentions_import, not mentions_add, verifier_ok, docs_mention_both, uses_json]):
-            results.append(CheckResult("sncast-cli-check", "PASS", "docs match sncast 0.56 account/verify/json patterns"))
-        else:
+        if sncast_account.returncode != 0 or sncast_verify.returncode != 0:
+            stderr = "\n".join(
+                part.strip()
+                for part in [sncast_account.stderr, sncast_verify.stderr, sncast_account.stdout, sncast_verify.stdout]
+                if part and part.strip()
+            )
             results.append(
                 CheckResult(
                     "sncast-cli-check",
                     "FAIL",
-                    (
-                        f"has_import={has_import}, no_add_subcmd={no_add_subcmd}, mentions_import={mentions_import}, "
-                        f"mentions_add={mentions_add}, verifier_ok={verifier_ok}, docs_mention_both={docs_mention_both}, uses_json={uses_json}"
-                    ),
+                    stderr or "sncast account/verify --help returned non-zero exit code",
                 )
             )
+        else:
+            doc_toolchain = (ROOT / "cairo-toolchain/references/legacy-full.md").read_text(encoding="utf-8")
+            has_import = "import" in sncast_account.stdout
+            no_add_subcmd = " add " not in sncast_account.stdout
+            mentions_import = "sncast account import" in doc_toolchain
+            mentions_add = "sncast account add" in doc_toolchain
+            verifier_ok = "[possible values: walnut, voyager]" in sncast_verify.stdout
+            docs_mention_both = "both Walnut and Voyager" in doc_toolchain
+            uses_json = "sncast --json declare" in doc_toolchain and "jq -r '.class_hash'" in doc_toolchain
 
-    # 6) Trail of Bits-style authoring contract (explicit parity signal).
+            if all([has_import, no_add_subcmd, mentions_import, not mentions_add, verifier_ok, docs_mention_both, uses_json]):
+                results.append(
+                    CheckResult("sncast-cli-check", "PASS", "docs match sncast 0.56 account/verify/json patterns")
+                )
+            else:
+                results.append(
+                    CheckResult(
+                        "sncast-cli-check",
+                        "FAIL",
+                        (
+                            f"has_import={has_import}, no_add_subcmd={no_add_subcmd}, mentions_import={mentions_import}, "
+                            f"mentions_add={mentions_add}, verifier_ok={verifier_ok}, docs_mention_both={docs_mention_both}, uses_json={uses_json}"
+                        ),
+                    )
+                )
+
+    # 7) Trail of Bits-style authoring contract (explicit parity signal).
     non_root_skills = sorted(p for p in ROOT.rglob("SKILL.md") if p.parent != ROOT)
     tob_errors: list[str] = []
     for skill in non_root_skills:

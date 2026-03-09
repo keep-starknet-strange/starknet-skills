@@ -36,6 +36,21 @@
       "format": "uri",
       "pattern": "^https://"
     },
+    "vulnerability_pattern": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 200
+    },
+    "target_contract": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 200
+    },
+    "description": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 600
+    },
     "code": {
       "type": "string",
       "minLength": 20

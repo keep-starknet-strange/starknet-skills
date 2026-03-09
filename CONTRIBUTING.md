@@ -26,6 +26,8 @@ Local check before PR:
 
 `python scripts/quality/validate_skills.py`
 
+`python scripts/quality/validate_marketplace.py`
+
 If missing dependencies locally, install:
 
 `python -m pip install pyyaml`
