@@ -8,6 +8,7 @@
 2. Audit gate
 - Manual pre-deploy gate (not auto-enforced by `quality.yml`).
 - Run `python scripts/quality/audit_local_repo.py --repo-root /path/to/repo --scan-id release-gate --sierra-confirm --allow-build --fail-on-findings`.
+- Warning: `--allow-build` may execute repository build steps/tooling. Use only on trusted code, or run in an isolated environment.
 - If findings exist, fix and add regression tests before deployment.
 - For automated enforcement, add this step to your CI pipeline before any declare/deploy job.
 

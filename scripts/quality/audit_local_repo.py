@@ -289,6 +289,9 @@ def main() -> int:
         detail = "; ".join(
             f"{path.as_posix()}: {', '.join(labels)}" for path, labels in duplicates.items()
         )
+        if lock_path:
+            lock_path.unlink(missing_ok=True)
+            lock_path = None
         parser.error(f"output paths must be distinct ({detail})")
 
     try:
