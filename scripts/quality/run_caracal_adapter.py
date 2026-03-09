@@ -181,7 +181,8 @@ def main() -> int:
                 "command": cmd,
             }
         )
-        if proc.returncode == 0:
+        # Many scanners use 0=no findings, 1=findings, >=2=execution error.
+        if proc.returncode in (0, 1):
             success_count += 1
 
     payload["attempts"] = attempts

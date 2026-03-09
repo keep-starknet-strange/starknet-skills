@@ -66,6 +66,12 @@ def main() -> int:
     parser.add_argument("--output-json", required=True)
     parser.add_argument("--output-md", required=True)
     parser.add_argument(
+        "--semgrep-timeout-seconds",
+        type=float,
+        default=240.0,
+        help="Timeout for each Semgrep subprocess invocation.",
+    )
+    parser.add_argument(
         "--strict",
         action="store_true",
         help="Return non-zero on Semgrep execution errors or findings.",
@@ -116,22 +122,30 @@ def main() -> int:
     if version_proc.returncode == 0:
         payload["semgrep_version"] = version_proc.stdout.strip()
 
-    tmp_out = out_json.parent / "semgrep.raw.json"
-    proc = subprocess.run(
-        [
-            semgrep_bin,
-            "--config",
-            config_path.as_posix(),
-            "--json",
-            "--quiet",
-            "--metrics=off",
-            repo_root.as_posix(),
-        ],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    tmp_out.write_text(proc.stdout or "{}", encoding="utf-8")
+    try:
+        proc = subprocess.run(
+            [
+                semgrep_bin,
+                "--config",
+                config_path.as_posix(),
+                "--json",
+                "--quiet",
+                "--metrics=off",
+                repo_root.as_posix(),
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=args.semgrep_timeout_seconds,
+        )
+    except subprocess.TimeoutExpired as exc:
+        payload["status"] = "error"
+        payload["reason"] = "semgrep_timeout"
+        payload["stderr"] = (exc.stderr or "")[-4000:] if isinstance(exc.stderr, str) else ""
+        out_json.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+        out_md.write_text(_render_md(payload), encoding="utf-8")
+        print(json.dumps({"status": payload["status"], "reason": payload["reason"]}, ensure_ascii=True))
+        return 1 if args.strict else 0
 
     if proc.returncode not in (0, 1):
         payload["status"] = "error"

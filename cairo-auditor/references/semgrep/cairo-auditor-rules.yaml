@@ -38,11 +38,16 @@ rules:
     message: "External mutation path appears without explicit access gate."
     severity: WARNING
     languages: [generic]
+    metadata:
+      confidence: low
+      triage: "manual-review-required"
     paths:
       include:
         - "**/*.cairo"
     patterns:
-      - pattern-regex: "#\\[external\\(v0\\)\\][\\s\\S]{0,280}(fn\\s+(set_|update_|register_|pause|unpause|upgrade))"
+      - pattern-regex: "#\\[external\\(v0\\)\\]"
+      - pattern-regex: "fn\\s+(set_|update_|register_|pause|unpause|upgrade)"
+      - pattern-regex: "\\.write\\("
       - pattern-not-regex: "(assert_only_|assert\\(get_caller_address\\(|has_role\\()"
 
   - id: cairo.fees-recipient-zero-dos

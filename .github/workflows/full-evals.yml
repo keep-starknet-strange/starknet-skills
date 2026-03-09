@@ -231,7 +231,7 @@ jobs:
       - name: Sierra parallel signal (auxiliary)
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         continue-on-error: true
-        timeout-minutes: 15
+        timeout-minutes: 25
         run: |
           mkdir -p "${RUNNER_TEMP}/scorecards"
           python scripts/quality/sierra_parallel_signal.py \
@@ -259,6 +259,7 @@ jobs:
       - name: Semgrep Cairo adapter (auxiliary)
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         continue-on-error: true
+        timeout-minutes: 10
         run: |
           mkdir -p "${RUNNER_TEMP}/scorecards"
           python scripts/quality/run_semgrep_cairo.py \

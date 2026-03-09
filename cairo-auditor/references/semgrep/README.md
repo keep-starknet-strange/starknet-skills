@@ -9,6 +9,7 @@ Design goals:
 
 Important:
 - CEI-oriented generic rules are treated as low-confidence triage hints and require manual ordering validation.
+- Access-control mutation generic rules are also low-confidence triage hints and require manual guard-path validation.
 
 Runner:
 - `scripts/quality/run_semgrep_cairo.py`
