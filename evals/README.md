@@ -115,9 +115,9 @@ Run manual-19 gold recall check:
 ```bash
 python scripts/quality/check_manual_gold_recall.py \
   --gold evals/reports/data/manual-19-gold.jsonl \
-  --findings evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.findings.jsonl \
-  --output-md evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.md \
-  --output-json evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.json \
+  --findings evals/reports/data/<scan-id>.findings.jsonl \
+  --output-md evals/scorecards/<release>-cairo-auditor-manual-19-gold-recall.md \
+  --output-json evals/scorecards/<release>-cairo-auditor-manual-19-gold-recall.json \
   --min-recall 0.90 \
   --min-class-recall 0.75
 ```
@@ -136,11 +136,11 @@ Run Sierra confirmation on low-profile external scan set (build mode):
 
 ```bash
 python scripts/quality/sierra_parallel_signal.py \
-  --scan-id sierra-parallel-low-profile-local \
+  --scan-id <sierra-scan-id> \
   --repos-file evals/reports/data/external-repo-scan-low-profile-repos.txt \
-  --detector-findings-jsonl evals/reports/data/external-repo-scan-low-profile-rerun-2026-03-09-v5.findings.jsonl \
+  --detector-findings-jsonl evals/reports/data/<scan-id>.findings.jsonl \
   --allow-build \
   --scarb-timeout-seconds 240 \
-  --output-json /tmp/sierra-parallel-low-profile.json \
-  --output-md /tmp/sierra-parallel-low-profile.md
+  --output-json /path/to/output/sierra-parallel.json \
+  --output-md /path/to/output/sierra-parallel.md
 ```

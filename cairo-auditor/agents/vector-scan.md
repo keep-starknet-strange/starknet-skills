@@ -43,6 +43,8 @@ Only process `Survive` vectors.
 
 Use this one-line structure per vector before final formatted findings:
 
+`Vxx` means the numbered vector from your assigned `attack-vectors-*.md` partition.
+
 `V15 | path: entry() -> helper() -> sink() | guard: none | verdict: CONFIRM [85]`
 
 `V22 | path: set_config() -> write() | guard: assert_only_owner | verdict: DROP (FP gate 3: guarded)`
@@ -55,6 +57,8 @@ Required checks per vector:
 
 Budget:
 
+- These budgets apply to the deep-pass one-liners in this section only.
+- Full finding details are emitted later via `../references/report-formatting.md`.
 - DROP vectors: <=1 line each.
 - CONFIRM vectors: <=3 lines each before final formatted finding block.
 
