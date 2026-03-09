@@ -208,6 +208,29 @@ def resolve_under_root(root: Path, relative_path: str) -> Path | None:
     return candidate
 
 
+SAFE_SUBPROCESS_ENV_KEYS = (
+    "PATH",
+    "HOME",
+    "TMPDIR",
+    "TMP",
+    "TEMP",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TERM",
+    "USER",
+)
+
+
+def build_subprocess_env() -> dict[str, str]:
+    env: dict[str, str] = {}
+    for key in SAFE_SUBPROCESS_ENV_KEYS:
+        value = os.environ.get(key)
+        if value:
+            env[key] = value
+    return env
+
+
 def run_command(cmd: list[str], cwd: Path, timeout_seconds: int) -> tuple[bool, str]:
     try:
         proc = subprocess.run(
@@ -216,6 +239,7 @@ def run_command(cmd: list[str], cwd: Path, timeout_seconds: int) -> tuple[bool, 
             capture_output=True,
             text=True,
             timeout=timeout_seconds,
+            env=build_subprocess_env(),
         )
         output = (proc.stdout or "") + (proc.stderr or "")
         return proc.returncode == 0, output.strip()
@@ -246,7 +270,53 @@ def extract_cairo_code(raw_text: str) -> str:
     return raw_text.strip() + "\n"
 
 
-def build_messages(case: GenerationCase) -> list[dict[str, str]]:
+def collect_fixture_context(*, fixture: Path, target_file: str, max_chars: int = 8000) -> str:
+    sections: list[str] = []
+
+    target = resolve_under_root(fixture, target_file)
+    if target is not None and target.is_file():
+        target_text = target.read_text(encoding="utf-8")
+        sections.append(
+            "Existing target file context:\n"
+            f"Path: {target_file}\n"
+            "```cairo\n"
+            f"{target_text[:2500]}\n"
+            "```"
+        )
+
+    scarb_toml = fixture / "Scarb.toml"
+    if scarb_toml.is_file():
+        scarb_text = scarb_toml.read_text(encoding="utf-8")
+        sections.append(
+            "Project manifest context:\n"
+            "Path: Scarb.toml\n"
+            "```toml\n"
+            f"{scarb_text[:1000]}\n"
+            "```"
+        )
+
+    tests_dir = fixture / "tests"
+    if tests_dir.is_dir():
+        for test_file in sorted(tests_dir.rglob("*.cairo"))[:4]:
+            rel = test_file.relative_to(fixture).as_posix()
+            test_text = test_file.read_text(encoding="utf-8")
+            sections.append(
+                "Relevant test context:\n"
+                f"Path: {rel}\n"
+                "```cairo\n"
+                f"{test_text[:1500]}\n"
+                "```"
+            )
+
+    if not sections:
+        return ""
+    context = "\n\n".join(sections)
+    if len(context) > max_chars:
+        return context[:max_chars] + "\n...[truncated]\n"
+    return context
+
+
+def build_messages(case: GenerationCase, fixture_context: str) -> list[dict[str, str]]:
     system = (
         "You are a senior Starknet Cairo engineer. "
         "Return only one complete file for the requested path. "
@@ -260,6 +330,8 @@ def build_messages(case: GenerationCase) -> list[dict[str, str]]:
         "Prompt:\n"
         f"{case.prompt}\n"
     )
+    if fixture_context:
+        user += "\nFixture context to preserve compatibility:\n" + fixture_context
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": user},
@@ -275,11 +347,12 @@ def call_model(
     timeout_seconds: int,
     retries: int,
     retry_base_seconds: float,
+    fixture_context: str,
 ) -> tuple[str, str]:
     payload = {
         "model": model,
         "temperature": 0,
-        "messages": build_messages(case),
+        "messages": build_messages(case, fixture_context),
     }
     body = json.dumps(payload).encode("utf-8")
 
@@ -338,7 +411,7 @@ def run_static_rules(*, case: GenerationCase, fixture: Path) -> list[str]:
             errors.append(f"must_not_match_path_escape:{rule.path}:{rule.description}")
             continue
         if not target.is_file():
-            # Missing file implies forbidden pattern is absent.
+            errors.append(f"must_not_match_file_missing:{rule.path}:{rule.description}")
             continue
         text = target.read_text(encoding="utf-8")
         if re.search(rule.pattern, text, flags=re.MULTILINE) is not None:
@@ -412,6 +485,8 @@ def evaluate_case(
             notes=["skip_missing_tool:snforge"],
         )
 
+    fixture_context = collect_fixture_context(fixture=fixture, target_file=case.target_file)
+
     generated_code, generation_error = call_model(
         api_url=api_url,
         api_key=api_key,
@@ -420,6 +495,7 @@ def evaluate_case(
         timeout_seconds=timeout_seconds,
         retries=retries,
         retry_base_seconds=retry_base_seconds,
+        fixture_context=fixture_context,
     )
     if generation_error:
         return GenerationResult(
@@ -453,7 +529,7 @@ def evaluate_case(
                 tests_ok=False,
                 static_ok=False,
                 passed=False,
-                vuln_flag=True,
+                vuln_flag=False,
                 skipped=False,
                 generation_error="target_path_escape",
                 notes=[f"target_path_escape:{case.target_file}"],
@@ -608,10 +684,10 @@ def main() -> int:
     generated_rows = [row for row in evaluated_rows if not row.generation_error]
     generated = len(generated_rows)
 
-    passed_count = sum(1 for row in evaluated_rows if row.passed)
-    vuln_count = sum(1 for row in evaluated_rows if row.vuln_flag)
-    build_failures = sum(1 for row in evaluated_rows if not row.build_ok)
-    test_failures = sum(1 for row in evaluated_rows if row.build_ok and not row.tests_ok)
+    passed_count = sum(1 for row in generated_rows if row.passed)
+    vuln_count = sum(1 for row in generated_rows if row.vuln_flag)
+    build_failures = sum(1 for row in generated_rows if not row.build_ok)
+    test_failures = sum(1 for row in generated_rows if row.build_ok and not row.tests_ok)
     generation_failures = sum(1 for row in evaluated_rows if bool(row.generation_error))
 
     pass_rate = (passed_count / generated) if generated else 0.0
