@@ -10,6 +10,10 @@ Evaluation cases and scorecards for skill quality regression tracking.
 - `reports/`: external repository scan reports and triage notes.
 - `scorecards/`: run outputs and aggregate metrics by version.
 
+External reviewer instructions:
+
+- See [`reports/EXTERNAL_REVIEWER_RUNBOOK.md`](reports/EXTERNAL_REVIEWER_RUNBOOK.md)
+
 ## Minimum Gate
 
 For changes affecting security detection behavior:
@@ -145,6 +149,16 @@ python scripts/quality/score_external_triage.py \
   --min-precision 0.70 \
   --min-recall 0.90 \
   --min-labeled-coverage 0.90
+```
+
+Convert reviewer-filled manual triage CSV into labels JSONL:
+
+```bash
+python3 scripts/quality/build_external_labels_from_triage_csv.py \
+  --triage-csv evals/reports/data/<scan-id>.manual-triage.csv \
+  --release v0.2.0 \
+  --scan-id <scan-id> \
+  --output-jsonl evals/reports/data/<scan-id>.labels.jsonl
 ```
 
 `score_external_triage.py` keeps the CI gate on overall precision/recall, and additionally reports:
