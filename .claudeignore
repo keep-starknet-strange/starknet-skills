@@ -1,0 +1,30 @@
+# Raw/extracted audit data (large, read on demand)
+datasets/audits/raw/
+datasets/audits/extracted/
+
+# Eval fixtures and held-out sets
+evals/contracts/
+evals/heldout/
+evals/scorecards/
+evals/reports/
+
+# Website
+website/
+
+# Assets (images)
+assets/
+
+# Python artifacts
+__pycache__/
+*.pyc
+.venv/
+.venv_jsonschema/
+.ruff_cache/
+
+# Lock files and minified
+*.lock
+*.min.js
+*.min.css
+
+# OS
+.DS_Store

@@ -1,19 +1,40 @@
-# Repo Context
+# starknet-skills
 
-This repository is for reasoning-grade Cairo/Starknet skills.
+Cairo/Starknet reasoning skills for agents. 7 modules, evaluation-backed.
 
-## Hard Boundary
+## Key Paths
 
-- Keep operational SDK/protocol usage content out of this repo.
-- Keep this repo focused on correctness, security patterns, and evaluation-backed guidance.
+- Skills: `cairo-auditor/`, `cairo-contract-authoring/`, `cairo-testing/`, `cairo-optimization/`, `cairo-toolchain/`, `account-abstraction/`, `starknet-network-facts/`
+- Each skill: `SKILL.md` (entry) → `references/` + `workflows/`
+- Data: `datasets/audits/` (raw → extracted → normalized → distilled)
+- Evals: `evals/cases/*.jsonl`, `evals/contracts/`, `evals/scorecards/`
 
-## Editing Rules
+## Hard Rules
 
-- Keep root skill modules concise.
-- Move large details to `references/` and `workflows/`.
-- Do not expand scope without accompanying eval updates.
+- No operational SDK content — only correctness, security, eval-backed guidance
+- Detection/remediation changes MUST include eval case updates
+- Skill files require: "When to Use", "When NOT to Use"; security skills also: "Rationalizations to Reject"
+- Keep SKILL.md concise; details go in `references/` and `workflows/`
 
-## Evaluation Rules
+## Commands
 
-- Detection quality changes must add or update evaluation cases.
-- Prefer held-out regressions from `datasets/audits/`.
+```bash
+python scripts/quality/validate_skills.py      # structure check
+python scripts/quality/validate_marketplace.py  # marketplace metadata
+python scripts/quality/parity_check.py          # optional, needs snforge+sncast
+ruff check scripts/                             # Python lint
+```
+
+## Stack
+
+Python 3.12 · Scarb 2.14.0 · Starknet Foundry 0.56.0 · ruff · shellcheck
+
+## Style
+
+- Python: ruff defaults
+- Markdown: YAML frontmatter required (`name`, `description`)
+- JSONL: one JSON object per line, validate against `datasets/schemas/`
+
+## Compact instructions
+
+When compacting, preserve: modified file list, validation command outputs, architectural decisions about skill structure. Drop exploration attempts and file read contents.

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(sudo *)",
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(git checkout -- .)",
+      "Bash(git clean -f*)",
+      "Bash(pip install *--break-system-packages*)",
+      "Edit(~/.bashrc)",
+      "Edit(~/.zshrc)",
+      "Edit(~/.ssh/**)",
+      "Read(~/.ssh/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.git-credentials)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ],
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(python scripts/quality/*)",
+      "Bash(ruff *)",
+      "Bash(shellcheck *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(ls *)",
+      "Bash(pwd)",
+      "Bash(which *)",
+      "Bash(wc *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(jq *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qiE '(^|;[[:space:]]*|&&[[:space:]]*|[|][|][[:space:]]*|[|][[:space:]]*)rm[[:space:]]' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[rR]|--recursive' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[fF]|--force'; then echo 'BLOCKED: rm -rf is not allowed. Use trash or remove files individually.' >&2; exit 2; fi"
+          },
+          {
+            "type": "command",
+            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qE 'git[[:space:]]+push.*(main|master)'; then echo 'BLOCKED: Do not push directly to main/master. Use a feature branch.' >&2; exit 2; fi"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\"' 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
