@@ -140,8 +140,7 @@
         countObserver.unobserve(element);
         return;
       }
-      const parsedDecimals = Number(element.getAttribute('data-decimals') ?? 0);
-      const decimals = Number.isFinite(parsedDecimals) && parsedDecimals >= 0 ? parsedDecimals : 0;
+      const decimals = String(target).includes('.') ? 1 : 0;
       const duration = 450;
       const start = performance.now();
       const tick = (now) => {
