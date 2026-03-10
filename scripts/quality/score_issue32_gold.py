@@ -265,8 +265,25 @@ def _write_trend(
     recall: float,
     generated_at: str,
 ) -> None:
-    rows = [row for row in _parse_trend_rows(path) if row[0] != release]
-    rows.append((release, tp, fp, new, fn, precision, recall, generated_at.split("T", 1)[0]))
+    parsed_rows = _parse_trend_rows(path)
+    existing_row = next((row for row in parsed_rows if row[0] == release), None)
+    release_date = generated_at.split("T", 1)[0]
+    if existing_row is not None:
+        _, tp_prev, fp_prev, new_prev, fn_prev, precision_prev, recall_prev, date_prev = existing_row
+        # Keep the historical date stable for identical metrics to make frozen
+        # benchmark smoke checks deterministic across calendar days.
+        if (
+            tp_prev == tp
+            and fp_prev == fp
+            and new_prev == new
+            and fn_prev == fn
+            and round(precision_prev, 3) == round(precision, 3)
+            and round(recall_prev, 3) == round(recall, 3)
+        ):
+            release_date = date_prev
+
+    rows = [row for row in parsed_rows if row[0] != release]
+    rows.append((release, tp, fp, new, fn, precision, recall, release_date))
     indexed_rows = list(enumerate(rows))
 
     def _trend_sort_key(item: tuple[int, tuple[str, int, int, int, int, float, float, str]]) -> tuple[object, ...]:
