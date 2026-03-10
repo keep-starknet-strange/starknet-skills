@@ -293,7 +293,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                 "curl",
                 "-sS",
                 "-o",
-                "/dev/null",
+                os.devnull,
                 "-w",
                 "%{http_code}",
                 probe_url,
@@ -343,6 +343,12 @@ def cmd_audit_local(args: argparse.Namespace) -> int:
     repo_root = _resolve_path(args.repo_root, Path.cwd())
     output_dir_default = repo_root / str(_cfg(cfg, "local", "output_dir", "evals/reports/local"))
     output_dir = _resolve_path(args.output_dir, output_dir_default)
+    e2e_timeout_raw = (
+        args.e2e_timeout_seconds
+        if args.e2e_timeout_seconds is not None
+        else _cfg(cfg, "local", "e2e_timeout_seconds", None)
+    )
+    e2e_timeout = float(e2e_timeout_raw) if e2e_timeout_raw not in (None, "") else None
 
     cmd = [
         sys.executable,
@@ -381,7 +387,7 @@ def cmd_audit_local(args: argparse.Namespace) -> int:
         result = _run(
             cmd,
             cwd=REPO_ROOT,
-            timeout=float(_cfg(cfg, "defaults", "scan_timeout_seconds", 1200)),
+            timeout=e2e_timeout,
         )
     except RuntimeError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -661,6 +667,12 @@ def build_parser() -> argparse.ArgumentParser:
     local.add_argument("--fail-on-findings", action="store_true")
     local.add_argument("--format", choices=["text", "sarif", "both"], default="text")
     local.add_argument("--sarif-output", default="")
+    local.add_argument(
+        "--e2e-timeout-seconds",
+        type=float,
+        default=None,
+        help="Optional end-to-end timeout for the local audit wrapper subprocess.",
+    )
     local.set_defaults(func=cmd_audit_local)
 
     for mode in ("external", "deep"):
@@ -673,7 +685,7 @@ def build_parser() -> argparse.ArgumentParser:
         )
         p.add_argument("--repos-file", default="")
         p.add_argument("--repos", nargs="*", default=[])
-        p.add_argument("--scan-id", default=f"{mode}-audit")
+        p.add_argument("--scan-id", default="")
         p.add_argument("--output-dir", default="")
         p.add_argument("--workdir", default="")
         p.add_argument("--exclude", default="")

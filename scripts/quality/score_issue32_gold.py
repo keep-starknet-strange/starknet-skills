@@ -41,11 +41,11 @@ class FindingRow:
 
 
 def _precision(tp: int, fp: int) -> float:
-    return 0.0 if (tp + fp) == 0 else tp / (tp + fp)
+    return 1.0 if (tp + fp) == 0 else tp / (tp + fp)
 
 
 def _recall(tp: int, fn: int) -> float:
-    return 0.0 if (tp + fn) == 0 else tp / (tp + fn)
+    return 1.0 if (tp + fn) == 0 else tp / (tp + fn)
 
 
 def load_gold(path: Path) -> list[GoldRow]:

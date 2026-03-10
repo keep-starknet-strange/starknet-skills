@@ -66,7 +66,7 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
    - [agents/vector-scan.md](agents/vector-scan.md)
    - [references/judging.md](references/judging.md)
    - [references/report-formatting.md](references/report-formatting.md)
-2. Build a deterministic bundle workspace and in-scope file list:
+1. Build a deterministic bundle workspace and in-scope file list:
 
    ```bash
    export SCAN_ID="${SCAN_ID:-cairo-audit-$(date +%Y%m%d)}"
@@ -109,7 +109,7 @@ print(f"in-scope files: {len(in_scope)}")
 PY
    ```
 
-3. Build one shared source bundle and four specialist bundles:
+1. Build one shared source bundle and four specialist bundles:
 
    ```bash
    python - <<'PY'
@@ -159,7 +159,7 @@ for i in range(1, 5):
 PY
    ```
 
-4. Record bundle size before spawn:
+1. Record bundle size before spawn:
 
    ```bash
    wc -l "$BUNDLE_ROOT"/audit-agent-*-bundle.md

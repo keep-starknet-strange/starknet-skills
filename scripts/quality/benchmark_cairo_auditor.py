@@ -25,6 +25,14 @@ def _strip_line_comments(text: str) -> str:
     return re.sub(r"//[^\n]*", "", text)
 
 
+def _neutralize_comment_braces(text: str) -> str:
+    return re.sub(
+        r"//[^\n]*",
+        lambda match: match.group(0).replace("{", " ").replace("}", " "),
+        text,
+    )
+
+
 def load_cases(path: Path) -> list[Case]:
     cases: list[Case] = []
     seen_case_ids: set[str] = set()
@@ -817,7 +825,7 @@ def detect_unsafe_admin_transfer(code: str) -> bool:
     # the contract exposes an explicit acceptance path.
     stages_pending_admin = bool(
         re.search(r"\bself\.\w*pending_admin\w*\.write\(\s*new_admin\b", body)
-        or re.search(r"\bpending_admin\b", body)
+        or re.search(r"\bpending_admin\b\s*=\s*new_admin\b", body)
     )
     has_acceptance_path = bool(
         re.search(r"\bfn\s+accept_admin\b", lower) or re.search(r"\bfn\s+claim_admin\b", lower)
@@ -894,7 +902,8 @@ def detect_unbounded_loop(code: str) -> bool:
 
 def detect_commented_out_access_control(code: str) -> bool:
     lower = code.lower()
-    _signature, body = _extract_fn_signature_and_body(lower, "transfer_out")
+    parseable = _neutralize_comment_braces(lower)
+    _signature, body = _extract_fn_signature_and_body(parseable, "transfer_out")
     if body is None:
         return False
     has_commented_guard = bool(
@@ -912,7 +921,8 @@ def detect_commented_out_access_control(code: str) -> bool:
 
 def detect_unvalidated_oracle_prices(code: str) -> bool:
     lower = code.lower()
-    _signature, body = _extract_fn_signature_and_body(lower, "set_prices")
+    parseable = _neutralize_comment_braces(lower)
+    _signature, body = _extract_fn_signature_and_body(parseable, "set_prices")
     if body is None:
         return False
     body_no_comments = _strip_line_comments(body)
@@ -984,10 +994,18 @@ def detect_unprotected_initializer(code: str) -> bool:
             body,
         )
     )
-    if has_access_guard:
+    has_once_guard = bool(
+        re.search(r"\b(already_initialized|is_initialized|only_once)\b", body)
+        or re.search(r"\bself\.\w*initialized\w*\.read\(\)", body)
+        or re.search(r"\bself\.\w*initialized\w*\.write\(\s*(true|1)\b", body)
+        or re.search(
+            r"assert!?\([^)]*\binitialized\b[^)]*(is_zero|is_non_zero|==|!=)",
+            body,
+        )
+    )
+    if has_access_guard or has_once_guard:
         return False
-    # Public initializers that write state without caller gating are risky both
-    # with and without explicit once-guards.
+    # Public initializers that write state without caller or one-time guards are risky.
     return ".write(" in body
 
 
