@@ -105,6 +105,7 @@ jobs:
 
       - name: Issue32 frozen gold smoke
         run: |
+          cp evals/scorecards/cairo-auditor-issue32-trend.md /tmp/issue32-gold-trend.md
           python scripts/quality/score_issue32_gold.py \
             --gold evals/reports/data/issue32-gold.jsonl \
             --findings evals/reports/data/issue32-cairo1-2026-03-09-v3.findings.jsonl \
