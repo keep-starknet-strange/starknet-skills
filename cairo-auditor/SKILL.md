@@ -66,20 +66,22 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
    - [agents/vector-scan.md](agents/vector-scan.md)
    - [references/judging.md](references/judging.md)
    - [references/report-formatting.md](references/report-formatting.md)
+
 1. Build a deterministic bundle workspace and in-scope file list:
 
-   ```bash
-   export SCAN_ID="${SCAN_ID:-cairo-audit-$(date +%Y%m%d)}"
-   export REPO_ROOT="/path/to/repo"
-   export SKILLS_ROOT="${SKILLS_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || true)}"
-   if [ -z "$SKILLS_ROOT" ] || [ ! -f "$SKILLS_ROOT/scripts/quality/scan_external_repos.py" ]; then
-     echo "ERROR: set SKILLS_ROOT to your starknet-skills checkout root (must contain scripts/quality/scan_external_repos.py)." >&2
-     exit 1
-   fi
-   export BUNDLE_ROOT="/tmp/cairo-auditor/${SCAN_ID}"
-   mkdir -p "$BUNDLE_ROOT"
+```bash
+export SCAN_ID="${SCAN_ID:-cairo-audit-$(date +%Y%m%d)}"
+export REPO_ROOT="/path/to/repo"
+export SKILLS_ROOT="${SKILLS_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || true)}"
+if [ -z "$SKILLS_ROOT" ] || [ ! -f "$SKILLS_ROOT/scripts/quality/scan_external_repos.py" ]; then
+  echo "ERROR: set SKILLS_ROOT to your starknet-skills checkout root (must contain scripts/quality/scan_external_repos.py)." >&2
+  exit 1
+fi
+export BUNDLE_ROOT="/tmp/cairo-auditor/${SCAN_ID}"
+mkdir -p "$BUNDLE_ROOT"
 
-   python - <<'PY'
+python - <<'PY'
+
 from pathlib import Path
 import sys
 
@@ -106,13 +108,15 @@ for file_path in iter_cairo_files(repo_root):
 out_path = bundle_root / "in-scope-files.txt"
 out_path.write_text("\n".join(in_scope) + ("\n" if in_scope else ""), encoding="utf-8")
 print(f"in-scope files: {len(in_scope)}")
+
 PY
-   ```
+```
 
 1. Build one shared source bundle and four specialist bundles:
 
-   ```bash
-   python - <<'PY'
+```bash
+python - <<'PY'
+
 from pathlib import Path
 import re
 import os
@@ -156,14 +160,15 @@ for i in range(1, 5):
     chunks.append(source_bundle.read_text(encoding="utf-8").rstrip())
     out = bundle_root / f"audit-agent-{i}-bundle.md"
     out.write_text("\n\n".join(chunk for chunk in chunks if chunk) + "\n", encoding="utf-8")
+
 PY
-   ```
+```
 
 1. Record bundle size before spawn:
 
-   ```bash
-   wc -l "$BUNDLE_ROOT"/audit-agent-*-bundle.md
-   ```
+```bash
+wc -l "$BUNDLE_ROOT"/audit-agent-*-bundle.md
+```
 
 ### Turn 3: Spawn
 
