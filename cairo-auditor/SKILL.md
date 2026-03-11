@@ -1,10 +1,11 @@
 ---
 name: cairo-auditor
-description: Systematic Cairo/Starknet security audit workflow with deterministic preflight, parallel vector specialists, adversarial reasoning, and strict false-positive gating.
-allowed-tools: [Bash, Read, Glob, Grep, Task]
+description: Security audit of Cairo/Starknet code. Trigger on "audit", "check this contract", "review for security". Modes - default (full repo), deep (+ adversarial reasoning), or specific filenames.
 ---
 
-# Cairo Auditor
+# Cairo/Starknet Security Audit
+
+You are the orchestrator of a parallelized Cairo/Starknet security audit. Your job is to discover in-scope files, run deterministic preflight, spawn scanning agents, then merge and deduplicate their findings into a single report.
 
 ## When to Use
 
@@ -25,81 +26,154 @@ allowed-tools: [Bash, Read, Glob, Grep, Task]
 - "It needs admin privileges, so it is not a vulnerability."
 - "We can ignore replay or nonce edges for now."
 
-## Modes
+## Mode Selection
 
-- `default`: full in-scope scan with four specialist vector passes.
-- `deep`: default + adversarial exploit-path pass.
-- `targeted`: explicit file set, same validation gate, faster iteration.
+**Exclude pattern** (applies to all modes): skip directories and files matching `test`, `tests`, `mock`, `mocks`, `example`, `examples`, `preset`, `presets`, `fixture`, `fixtures`, `vendor`, `vendors`, and files matching `*_test.cairo` or `*Test*.cairo`.
 
-## Quick Start
+- **Default** (no arguments): scan all `.cairo` files in the repo using the exclude pattern.
+- **deep**: same scope as default, but also spawns the adversarial reasoning agent (Agent 5). Use for thorough reviews. Slower and more costly.
+- **`$filename ...`**: scan the specified file(s) only.
 
-1. Open [workflows/default.md](workflows/default.md) for standard audits, or [workflows/deep.md](workflows/deep.md) for adversarial mode.
-2. Load [agents/vector-scan.md](agents/vector-scan.md), [references/judging.md](references/judging.md), and [references/README.md](references/README.md).
-3. Select attack-vector partitions from `references/attack-vectors/attack-vectors-1.md` through `references/attack-vectors/attack-vectors-4.md`.
-4. Run deterministic preflight on target repo:
+**Flags:**
 
-   ```bash
-   python scripts/quality/audit_local_repo.py \
-     --repo-root /path/to/repo \
-     --scan-id local-audit
-   ```
+- `--file-output` (off by default): also write the report to a markdown file. Without this flag, output goes to the terminal only.
 
-5. Format output using [references/report-formatting.md](references/report-formatting.md), then validate against `references/vulnerability-db/README.md`.
+## Orchestration
 
-## Orchestration (4 Turns)
+**Turn 1 — Discover.** Print the banner, then in the same message make parallel tool calls:
 
-### Turn 1: Discover
+(a) Bash `find` for in-scope `.cairo` files per mode selection:
 
-1. Determine mode (`default`, `deep`, `targeted`).
-2. Discover in-scope `.cairo` files; exclude tests/mocks/examples/vendor/generated paths.
-3. Run deterministic preflight checks to identify likely classes (upgrade/auth/session/external-call).
+```bash
+find <repo-root>/src -name "*.cairo" \
+  -not -path "*test*" -not -path "*mock*" -not -path "*example*" \
+  -not -path "*fixture*" -not -path "*vendor*" -not -path "*preset*" \
+  | sort
+```
 
-### Turn 2: Prepare
+(b) Glob for `**/references/attack-vectors/attack-vectors-1.md` and extract the `references/` directory path (two levels up from the match). Use this resolved path as `{resolved_path}` for all subsequent references.
 
-1. Load specialist instructions and references:
-   - [agents/vector-scan.md](agents/vector-scan.md)
-   - [references/judging.md](references/judging.md)
-   - [references/report-formatting.md](references/report-formatting.md)
-2. Build four specialist bundles. Each bundle includes:
-   - full in-scope Cairo code,
-   - one vector partition:
-     - `references/attack-vectors/attack-vectors-1.md`
-     - `references/attack-vectors/attack-vectors-2.md`
-     - `references/attack-vectors/attack-vectors-3.md`
-     - `references/attack-vectors/attack-vectors-4.md`
-3. Record line counts per bundle for parallel chunk-reading instructions.
+(c) If `scripts/quality/audit_local_repo.py` exists relative to the skill's repo root, run the deterministic preflight:
 
-### Turn 3: Spawn
+```bash
+python3 scripts/quality/audit_local_repo.py --repo-root <repo-root> --scan-id preflight --output-dir /tmp
+```
 
-1. Spawn 4 parallel vector specialists (one per bundle) following `agents/vector-scan.md`.
-2. In `deep` mode, spawn [agents/adversarial.md](agents/adversarial.md) in parallel.
-3. Each specialist must:
-   - triage vectors (`Skip/Borderline/Survive`),
-   - apply FP gate from [references/judging.md](references/judging.md),
-   - output only findings formatted by [references/report-formatting.md](references/report-formatting.md).
+Print the preflight results (class counts, severity counts) as context for specialists.
 
-### Turn 4: Report
+**Turn 2 — Prepare.** In a single message, make three parallel tool calls:
 
-1. Merge outputs.
-2. Deduplicate by root cause (keep higher-confidence variant).
-3. Run composability pass when multiple findings interact.
-4. If Scarb/Sierra is available, run Sierra confirmation for CEI and upgrade classes.
-5. Sort by priority and confidence.
-6. Emit actionable findings + required regression tests.
+(a) Read `{resolved_path}/agents/vector-scan.md` — you will paste this full text into every agent prompt.
+
+(b) Read `{resolved_path}/report-formatting.md` — you will use this for the final report.
+
+(c) Bash: create four per-agent bundle files (`/tmp/cairo-audit-agent-{1,2,3,4}-bundle.md`) in a **single command**. Each bundle concatenates:
+  - **all** in-scope `.cairo` files (with `### path` headers and fenced code blocks),
+  - `{resolved_path}/judging.md`,
+  - `{resolved_path}/report-formatting.md`,
+  - `{resolved_path}/attack-vectors/attack-vectors-N.md` (one per agent — only the attack-vectors file differs).
+
+Print line counts per bundle. Example command:
+
+```bash
+REFS="{resolved_path}"
+SRC="{repo-root}"
+
+build_code_block() {
+  for f in $(find "$SRC" -name "*.cairo" -not -path "*test*" -not -path "*mock*" -not -path "*example*" -not -path "*fixture*" -not -path "*vendor*" -not -path "*preset*" | sort); do
+    REL=$(echo "$f" | sed "s|$SRC/||")
+    echo "### $REL"
+    echo '```cairo'
+    cat "$f"
+    echo '```'
+    echo ""
+  done
+}
+
+CODE=$(build_code_block)
+
+for i in 1 2 3 4; do
+  {
+    echo "$CODE"
+    echo "---"
+    cat "$REFS/judging.md"
+    echo "---"
+    cat "$REFS/report-formatting.md"
+    echo "---"
+    cat "$REFS/attack-vectors/attack-vectors-$i.md"
+  } > "/tmp/cairo-audit-agent-$i-bundle.md"
+  echo "Bundle $i: $(wc -l < /tmp/cairo-audit-agent-$i-bundle.md) lines"
+done
+```
+
+Do NOT read or inline any file content into agent prompts — the bundle files replace that entirely.
+
+**Turn 3 — Spawn.** In a single message, spawn all agents as parallel foreground Agent tool calls (do NOT use `run_in_background`). Always spawn Agents 1–4. Only spawn Agent 5 when the mode is **deep**.
+
+- **Agents 1–4** (vector scanning) — spawn with `model: "sonnet"`. Each agent prompt must contain the full text of `vector-scan.md` (read in Turn 2, paste into every prompt). After the instructions, add: `Your bundle file is /tmp/cairo-audit-agent-N-bundle.md (XXXX lines).` (substitute the real line count). Include the deterministic preflight results if available so agents have extra context.
+
+- **Agent 5** (adversarial reasoning, **deep** mode only) — spawn with `model: "opus"`. The prompt must instruct it to:
+  1. Read `{resolved_path}/agents/adversarial.md` for its full instructions.
+  2. Read `{resolved_path}/judging.md` and `{resolved_path}/report-formatting.md`.
+  3. Read all in-scope `.cairo` files directly (not via bundle).
+  4. Reason freely — no attack vector reference. Look for logic errors, unsafe interactions, access control gaps, economic exploits, multi-step cross-function chains.
+  5. Apply FP gate to each finding immediately.
+  6. Format findings per report-formatting.md.
+
+**Turn 4 — Report.** Merge all agent results:
+
+1. Deduplicate by root cause (keep the higher-confidence version, merge broader attack path details).
+2. Sort by confidence highest-first.
+3. Re-number sequentially.
+4. Insert the **Below Confidence Threshold** separator row at confidence < 75.
+5. Print findings directly — do not re-draft or re-describe them.
+6. Add scope table and findings index table per report-formatting.md.
+7. Add the disclaimer.
+
+If `--file-output` is set, write the report to `{repo-root}/security-review-{timestamp}.md` and print the path.
+
+## Banner
+
+Before doing anything else, print this exactly:
+
+```
+
+ ██████╗ █████╗ ██╗██████╗  ██████╗      █████╗ ██╗   ██╗██████╗ ██╗████████╗ ██████╗ ██████╗
+██╔════╝██╔══██╗██║██╔══██╗██╔═══██╗    ██╔══██╗██║   ██║██╔══██╗██║╚══██╔══╝██╔═══██╗██╔══██╗
+██║     ███████║██║██████╔╝██║   ██║    ███████║██║   ██║██║  ██║██║   ██║   ██║   ██║██████╔╝
+██║     ██╔══██║██║██╔══██╗██║   ██║    ██╔══██║██║   ██║██║  ██║██║   ██║   ██║   ██║██╔══██╗
+╚██████╗██║  ██║██║██║  ██║╚██████╔╝    ██║  ██║╚██████╔╝██████╔╝██║   ██║   ╚██████╔╝██║  ██║
+ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝
+
+```
+
+## Version Check
+
+After printing the banner, run two parallel tool calls: (a) Read the local `VERSION` file from the same directory as this skill, (b) Bash `curl -sf https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/VERSION`. If the remote fetch succeeds and the versions differ, print:
+
+> You are not using the latest version. Run `/plugin marketplace update keep-starknet-strange/starknet-skills` for best security coverage.
+
+Then continue normally. If the fetch fails (offline, timeout), skip silently.
+
+## Limitations
+
+- Works best on codebases under **5,000 lines** of Cairo. Past that, triage accuracy and mid-bundle recall degrade.
+- For large codebases, run per-module (`targeted` mode) rather than full-repo.
+- AI catches pattern-based vulnerabilities reliably but cannot reason about novel economic exploits, cross-protocol composability, or game-theoretic attacks.
+- Not a substitute for a formal audit — but the check you should never skip.
 
 ## Reporting Contract
 
 Each finding must include:
 
 - `class_id`
-- `severity`
-- `confidence`
-- `entry_point`
-- `attack_path`
-- `guard_analysis`
-- `affected_files`
-- `recommended_fix`
-- `required_tests`
+- `severity` (Critical / High / Medium / Low)
+- `confidence` score (0–100)
+- `entry_point` (file:line)
+- `attack_path` (concrete caller -> function -> state -> impact)
+- `guard_analysis` (what guards exist, why they fail)
+- `recommended_fix` (diff block for confidence >= 75)
+- `required_tests` (regression + guard tests)
 
 ## Evidence Priority
 
@@ -109,7 +183,8 @@ Each finding must include:
 4. `../datasets/distilled/vuln-cards/`
 5. `../evals/cases/`
 
-## Output Rule
+## Output Rules
 
 - Report only findings that pass FP gate.
 - Findings with confidence `<75` may be listed as low-confidence notes without a fix block.
+- Do not report: style/naming issues, gas optimizations, missing events without security impact, generic centralization notes without exploit path, theoretical attacks requiring compromised sequencer.
