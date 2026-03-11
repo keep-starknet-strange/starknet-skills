@@ -135,12 +135,14 @@
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
       const element = entry.target;
-      const target = Number(element.getAttribute('data-value'));
+      const rawTarget = element.getAttribute('data-value') || '';
+      const target = Number(rawTarget);
       if (!Number.isFinite(target)) {
         countObserver.unobserve(element);
         return;
       }
-      const decimals = String(target).includes('.') ? 1 : 0;
+      const decimalMatch = rawTarget.match(/\.(\d+)/);
+      const decimals = decimalMatch ? Math.min(decimalMatch[1].length, 6) : 0;
       const duration = 450;
       const start = performance.now();
       const tick = (now) => {
