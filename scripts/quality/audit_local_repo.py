@@ -355,10 +355,7 @@ def _find_relevant_line(code: str, class_id: str) -> int | None:
 
 def _md_escape_path(path: str) -> str:
     """Escape file paths for markdown table/code contexts."""
-    escaped = path.replace("|", "&#124;").replace("`", "'")
-    for char in ("[", "]", "*", "_", "\\", "<", ">"):
-        escaped = escaped.replace(char, f"\\{char}")
-    return escaped
+    return path.replace("|", "&#124;").replace("`", "'")
 
 
 def _existing_dir(value: str) -> Path:
