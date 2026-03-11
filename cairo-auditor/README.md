@@ -35,15 +35,16 @@ git clone https://github.com/keep-starknet-strange/starknet-skills.git \
   && cp -R starknet-skills/cairo-auditor/. ~/.claude/commands/cairo-auditor/
 ```
 
-**Cursor (project-local rules):**
+**Cursor (manual guidance only):**
 
 ```bash
 git clone https://github.com/keep-starknet-strange/starknet-skills.git \
-  && mkdir -p .cursor/rules/cairo-auditor \
-  && cp -R starknet-skills/cairo-auditor/. .cursor/rules/cairo-auditor/
+  && mkdir -p docs/cairo-auditor \
+  && cp -R starknet-skills/cairo-auditor/references/. docs/cairo-auditor/
 ```
 
-Cursor currently uses project-local rule files/directories. There is no official global `~/.cursor/skills` install path for this package.
+Cursor does not execute this package as a runnable `/cairo-auditor` command. Use Claude Code CLI or Plugin Marketplace for the executable orchestrator flow. In Cursor, treat these files as reference guidance only.
+There is no official global `~/.cursor/skills` install path for this package.
 
 **Claude Code Plugin Marketplace:**
 
@@ -58,8 +59,8 @@ Cursor currently uses project-local rule files/directories. There is no official
 cd starknet-skills && git pull
 # Claude Code CLI:
 cp -R cairo-auditor/. ~/.claude/commands/cairo-auditor/
-# Cursor project-local rules:
-cp -R cairo-auditor/. .cursor/rules/cairo-auditor/
+# Cursor docs refresh (manual guidance only):
+cp -R cairo-auditor/references/. docs/cairo-auditor/
 ```
 
 ## Usage
