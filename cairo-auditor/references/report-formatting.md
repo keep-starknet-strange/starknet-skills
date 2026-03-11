@@ -4,7 +4,7 @@ Use this exact structure for each finding.
 
 ## Finding Template
 
-`[{confidence}] **{title}**`
+`[{confidence_score}] **{title}**`
 
 `Location: {file}:{line}`
 
@@ -36,7 +36,7 @@ Use this exact structure for each finding.
 
 ## Confidence Threshold Rule
 
-- Findings with confidence `<75` can be reported, but omit the `Recommended improvement` diff block.
+- Findings with `confidence_score < 75` can be reported, but omit the `Recommended improvement` diff block.
 - Findings that fail FP gate must be dropped and not reported.
 - Severity labels (`high/critical`) are manual signoff-only metadata and should never be auto-assigned by deterministic scanners.
 

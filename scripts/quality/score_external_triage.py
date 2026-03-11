@@ -38,9 +38,11 @@ class LabelRow:
 
     @property
     def is_security_countable(self) -> bool:
+        if self.triage_category != "security_bug":
+            return False
         if self.security_countable is not None:
             return self.security_countable
-        if self.triage_category != "security_bug" or self.needs_poc:
+        if self.needs_poc:
             return False
         return bool(self.reviewer_1.strip()) and bool(self.reviewer_2.strip())
 

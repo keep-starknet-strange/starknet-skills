@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -128,6 +130,7 @@ FRAMEWORK_GUARD_MARKERS = (
 )
 
 SPREADSHEET_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+DEFAULT_GIT_HOST = os.environ.get("STARKSKILLS_GIT_HOST", "https://github.com")
 
 
 def parse_repo_spec(raw: str) -> RepoSpec:
@@ -182,8 +185,16 @@ def _format_exception(exc: Exception) -> str:
     return f"{type(exc).__name__}: {exc}"
 
 
+def _clone_dir_name(spec: RepoSpec) -> str:
+    base = spec.slug.replace("/", "__")
+    if not spec.ref:
+        return base
+    digest = hashlib.sha1(spec.ref.encode("utf-8")).hexdigest()[:10]
+    return f"{base}__{digest}"
+
+
 def clone_repo(spec: RepoSpec, workdir: Path, git_host: str) -> tuple[Path, str]:
-    repo_dir = workdir / spec.slug.replace("/", "__")
+    repo_dir = workdir / _clone_dir_name(spec)
     if repo_dir.exists():
         shutil.rmtree(repo_dir)
     url = repo_git_url(spec, git_host)
@@ -377,6 +388,7 @@ def scan_repo(
         "repo": spec.slug,
         "url": repo_git_url(spec, git_host),
         "ref": resolved_ref,
+        "clone_dir": repo_dir.as_posix(),
         "all_cairo_files": len(all_files),
         "prod_cairo_files": len(prod_files),
         "prod_hits": len(findings),
@@ -609,7 +621,7 @@ def main() -> int:
         default="test,tests,mock,mocks,example,examples,preset,presets,fixture,fixtures,vendor,vendors",
     )
     parser.add_argument("--detectors", default="")
-    parser.add_argument("--git-host", default="https://github.com")
+    parser.add_argument("--git-host", default=DEFAULT_GIT_HOST)
     args = parser.parse_args()
 
     repo_specs: list[RepoSpec] = []
@@ -665,12 +677,19 @@ def main() -> int:
     output_json = Path(args.output_json)
     output_json.parent.mkdir(parents=True, exist_ok=True)
 
+    repo_root = Path(__file__).resolve().parents[2]
+    try:
+        generator_revision = run(["git", "rev-parse", "HEAD"], cwd=repo_root)
+    except Exception:
+        generator_revision = "unknown"
+
     payload: dict[str, object] = {
         "scan_id": args.scan_id,
         "generated_at": generated_at,
         "scanner": {
             "tool": "scripts/quality/scan_external_repos.py",
             "detectors_source": "scripts/quality/benchmark_cairo_auditor.py",
+            "generator_revision": generator_revision,
             "detectors": sorted(detector_map.keys()),
             "exclude_markers": list(excluded_markers),
             "confidence_model": {

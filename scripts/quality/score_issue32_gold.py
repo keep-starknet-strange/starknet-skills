@@ -73,14 +73,20 @@ def load_gold(path: Path) -> list[GoldRow]:
         if not isinstance(raw["expected_detect"], bool):
             raise ValueError(f"{path}:{line_no}: expected_detect must be boolean")
 
+        text_fields = ("finding_id", "repo", "ref", "file", "class_id", "rationale")
+        for key in text_fields:
+            if not isinstance(raw.get(key), str):
+                got = type(raw.get(key)).__name__
+                raise ValueError(f"{path}:{line_no}: {key} must be string (got {got})")
+
         row = GoldRow(
-            finding_id=str(raw["finding_id"]),
-            repo=str(raw["repo"]),
-            ref=str(raw["ref"]),
-            file=str(raw["file"]),
-            class_id=str(raw["class_id"]),
+            finding_id=raw["finding_id"],
+            repo=raw["repo"],
+            ref=raw["ref"],
+            file=raw["file"],
+            class_id=raw["class_id"],
             expected_detect=raw["expected_detect"],
-            rationale=str(raw["rationale"]),
+            rationale=raw["rationale"],
         )
         if row.finding_id in seen_ids:
             raise ValueError(f"{path}:{line_no}: duplicate finding_id: {row.finding_id}")
@@ -110,11 +116,17 @@ def load_findings(path: Path) -> list[FindingRow]:
                 raise ValueError(f"{path}:{line_no}: predicted_detect must be boolean")
             if not raw["predicted_detect"]:
                 continue
+        text_fields = ("repo", "ref", "file", "class_id")
+        for key in text_fields:
+            if not isinstance(raw.get(key), str):
+                got = type(raw.get(key)).__name__
+                raise ValueError(f"{path}:{line_no}: {key} must be string (got {got})")
+
         row = FindingRow(
-            repo=str(raw["repo"]),
-            ref=str(raw["ref"]),
-            file=str(raw["file"]),
-            class_id=str(raw["class_id"]),
+            repo=raw["repo"],
+            ref=raw["ref"],
+            file=raw["file"],
+            class_id=raw["class_id"],
         )
         if row.key in seen:
             continue

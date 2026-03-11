@@ -92,6 +92,13 @@ def _run(
         raise RuntimeError(
             f"command timed out after {timeout}s in {cwd.as_posix()}: {cmd_preview}"
         ) from exc
+    except OSError as exc:
+        cmd_preview = " ".join(cmd)
+        tool = cmd[0] if cmd else "<empty-cmd>"
+        raise RuntimeError(
+            f"command failed to start (missing tool or OS error) in {cwd.as_posix()}: "
+            f"{tool}: {exc}. cmd={cmd_preview}"
+        ) from exc
     return CommandResult(returncode=proc.returncode, stdout=proc.stdout, stderr=proc.stderr)
 
 

@@ -689,42 +689,38 @@ def _build_finding_confirmations(
                 artifact_breakdown.get("sierra_json", 0) > 0
                 and function_signals.get("functions_with_upgrade", 0) > 0
             )
-            if has_upgrade_functions:
-                ir_confirmation = "confirmed"
-                signal_quality = "high"
-                artifact_source = "sierra_json"
-                evidence_kind = "replace_class_function_signal"
-            elif has_replace_marker:
-                ir_confirmation = "confirmed"
-                artifact_source = default_source
-                signal_quality = _source_quality(artifact_source)
-                evidence_kind = "replace_class_marker_signal"
-            else:
-                if artifact_breakdown.get("sierra_json", 0) > 0:
-                    ir_confirmation = "missing"
+            if has_upgrade_functions or has_replace_marker:
+                # Avoid attributing repo-wide IR markers to a specific finding until
+                # file-level correlation is available.
+                ir_confirmation = "unknown"
+                if has_upgrade_functions:
                     signal_quality = "high"
                     artifact_source = "sierra_json"
-                    evidence_kind = "replace_class_absent_under_high_signal"
                 else:
-                    ir_confirmation = "unknown"
-                    signal_quality = default_quality
                     artifact_source = default_source
-                    evidence_kind = "insufficient_upgrade_signal"
+                    signal_quality = _source_quality(artifact_source)
+                evidence_kind = "repo_level_upgrade_signal_unmapped"
+            else:
+                ir_confirmation = "unknown"
+                signal_quality = default_quality
+                artifact_source = default_source
+                evidence_kind = "repo_level_upgrade_signal_absent_unmapped"
         elif signal_kind == "cei_external_then_write":
             has_fn_order_signal = (
                 artifact_breakdown.get("sierra_json", 0) > 0
                 and function_signals.get("functions_external_then_write", 0) > 0
             )
             if has_fn_order_signal:
-                ir_confirmation = "confirmed"
+                # Avoid mapping repo-wide CEI pattern detections to specific rows.
+                ir_confirmation = "unknown"
                 signal_quality = "high"
                 artifact_source = "sierra_json"
-                evidence_kind = "external_then_write_function_signal"
+                evidence_kind = "repo_level_cei_signal_unmapped"
             elif artifact_breakdown.get("sierra_json", 0) > 0:
-                ir_confirmation = "missing"
-                signal_quality = "high"
+                ir_confirmation = "unknown"
+                signal_quality = default_quality
                 artifact_source = "sierra_json"
-                evidence_kind = "no_external_then_write_under_high_signal"
+                evidence_kind = "repo_level_cei_signal_absent_unmapped"
             else:
                 ir_confirmation = "unknown"
                 signal_quality = default_quality
@@ -1070,6 +1066,10 @@ def render_markdown(
     if ceis:
         lines.append("## CEI Function Examples (IR)")
         lines.append("")
+        for repo, functions in ceis:
+            values = ", ".join(f"`{f}`" for f in list(functions)[:5])
+            lines.append(f"- `{repo}`: {values}")
+        lines.append("")
 
     finding_rows = [
         (row.repo, item)
@@ -1090,10 +1090,6 @@ def render_markdown(
             )
         if len(finding_rows) > 500:
             lines.append(f"| ... | ... | ... | ... | ... | ... | ... ({len(finding_rows) - 500} more) |")
-        lines.append("")
-        for repo, functions in ceis:
-            values = ", ".join(f"`{f}`" for f in list(functions)[:5])
-            lines.append(f"- `{repo}`: {values}")
         lines.append("")
 
     errors = [(row.repo, err) for row in rows for err in row.errors]

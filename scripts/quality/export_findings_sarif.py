@@ -111,7 +111,7 @@ def _coerce_finding(raw: dict, *, source: str) -> Finding:
     else:
         needs_poc = str(raw_needs_poc).strip().lower() in {"1", "true", "yes", "y"}
 
-    score_raw = raw.get("confidence_score", 100)
+    score_raw = raw.get("confidence", raw.get("confidence_score", 100))
     try:
         score = int(score_raw)
     except (TypeError, ValueError):
@@ -201,7 +201,7 @@ def _build_sarif(*, findings: list[Finding], root_uri: str, run_name: str, infor
             },
         }
 
-        if finding.gate_status == "suppressed":
+        if finding.actionability.lower() == "suppressed" or finding.gate_status.lower() == "suppressed":
             result["suppressions"] = [
                 {
                     "kind": "external",

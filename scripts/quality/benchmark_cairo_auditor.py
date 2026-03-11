@@ -851,11 +851,15 @@ def detect_unexpected_access_control(code: str) -> bool:
     _signature, body = _extract_fn_signature_and_body(lower, "cancel")
     if body is None:
         return False
-    return bool(
-        re.search(r"_is_caller_stream_sender\([^)]*\)", body)
-        and "||" in body
-        and re.search(r"get_caller_address\(\)\s*==\s*self\.get_recipient\(", body)
+    left_to_right = re.search(
+        r"_is_caller_stream_sender\([^)]*\)\s*\|\|\s*get_caller_address\(\)\s*==\s*self\.get_recipient\(",
+        body,
     )
+    right_to_left = re.search(
+        r"get_caller_address\(\)\s*==\s*self\.get_recipient\([^)]*\)\s*\|\|\s*_is_caller_stream_sender\(",
+        body,
+    )
+    return bool(left_to_right or right_to_left)
 
 
 def detect_missing_fee_bounds(code: str) -> bool:
@@ -996,10 +1000,12 @@ def detect_unprotected_initializer(code: str) -> bool:
     )
     has_once_guard = bool(
         re.search(r"\b(already_initialized|is_initialized|only_once)\b", body)
-        or re.search(r"\bself\.\w*initialized\w*\.read\(\)", body)
-        or re.search(r"\bself\.\w*initialized\w*\.write\(\s*(true|1)\b", body)
         or re.search(
             r"assert!?\([^)]*\binitialized\b[^)]*(is_zero|is_non_zero|==|!=)",
+            body,
+        )
+        or re.search(
+            r"if\s+[^\n;]{0,260}\binitialized\b[^\n;{]{0,120}\{[^}]{0,260}(assert!?|panic|revert|return)\b",
             body,
         )
     )

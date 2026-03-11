@@ -4,6 +4,7 @@
   "scanner": {
     "tool": "scripts/quality/scan_external_repos.py",
     "detectors_source": "scripts/quality/benchmark_cairo_auditor.py",
+    "generator_revision": "61a62ef0a2f892e76a24652ab5247c084a46a2d2",
     "detectors": [
       "AA-SELF-CALL-SESSION",
       "CEI_VIOLATION_ERC1155",

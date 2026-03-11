@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -21,6 +22,8 @@ PACK_FILES = {
     "less-known": "evals/packs/less-known.txt",
     "issue32": "evals/packs/issue32.txt",
 }
+
+DEFAULT_GIT_HOST = os.environ.get("STARKSKILLS_GIT_HOST", "https://github.com")
 
 
 @dataclass(frozen=True)
@@ -46,6 +49,13 @@ def _slug(text: str) -> str:
     while "--" in slug:
         slug = slug.replace("--", "-")
     return slug or "external-pack"
+
+
+def _repo_ref_token(ref: str) -> str:
+    clean = _slug(ref) if ref.strip() else "no-ref"
+    if re.fullmatch(r"[0-9a-f]{7,64}", ref.strip().lower()):
+        return ref.strip()[:12]
+    return clean[:24] or "no-ref"
 
 
 def _resolve_repo_file(repo_root: Path, args: argparse.Namespace) -> tuple[Path, str]:
@@ -143,6 +153,14 @@ def _run_scan(
             capture_output=True,
             timeout=timeout_seconds,
         )
+    except subprocess.CalledProcessError as exc:
+        cmd_str = " ".join(cmd)
+        stdout = (exc.stdout or "").strip() or "(empty)"
+        stderr = (exc.stderr or "").strip() or "(empty)"
+        raise RuntimeError(
+            "Stage-1 scan exited non-zero while running "
+            f"{cmd_str} (exit={exc.returncode}). stdout={stdout} stderr={stderr}"
+        ) from exc
     except subprocess.TimeoutExpired as exc:
         cmd_str = " ".join(cmd)
         raise RuntimeError(
@@ -245,14 +263,22 @@ def _prepare_stage2(
     findings = [row for row in payload.get("findings", []) if isinstance(row, dict)]
     actionable = [row for row in findings if row.get("actionability") == "actionable"]
 
-    by_repo: dict[str, list[dict[str, object]]] = defaultdict(list)
+    by_repo: dict[tuple[str, str], list[dict[str, object]]] = defaultdict(list)
     for row in actionable:
-        by_repo[str(row["repo"])].append(row)
+        repo_slug = str(row.get("repo", "")).strip()
+        ref = str(row.get("ref", "")).strip()
+        by_repo[(repo_slug, ref)].append(row)
 
     stage2_dir = output_paths.stage2_manifest_json.parent / f"{output_paths.json.stem}.stage2-bundles"
     stage2_dir.mkdir(parents=True, exist_ok=True)
 
-    repo_index = {str(row.get("repo")): row for row in payload.get("repos", []) if isinstance(row, dict)}
+    repo_index: dict[tuple[str, str], dict[str, object]] = {}
+    for row in payload.get("repos", []):
+        if not isinstance(row, dict):
+            continue
+        repo_slug = str(row.get("repo", "")).strip()
+        ref = str(row.get("ref", "")).strip()
+        repo_index[(repo_slug, ref)] = row
 
     manifest: dict[str, object] = {
         "scan_id": payload.get("scan_id", "unknown"),
@@ -307,9 +333,20 @@ def _prepare_stage2(
     report_formatting_text = reference_map["cairo-auditor/references/report-formatting.md"]
     vector_texts = [reference_map[rel] for rel in vector_files]
 
-    for repo_slug, repo_findings in sorted(by_repo.items()):
-        ref = str(repo_index.get(repo_slug, {}).get("ref", ""))
-        repo_clone_dir = workdir / repo_slug.replace("/", "__")
+    for (repo_slug, ref), repo_findings in sorted(by_repo.items()):
+        repo_meta = repo_index.get((repo_slug, ref))
+        if repo_meta is None:
+            # Backward-compatible fallback when upstream payload omits ref.
+            repo_candidates = [v for (slug, _r), v in repo_index.items() if slug == repo_slug]
+            if len(repo_candidates) == 1:
+                repo_meta = repo_candidates[0]
+
+        clone_dir_raw = str(repo_meta.get("clone_dir", "")).strip() if repo_meta else ""
+        repo_clone_dir = (
+            Path(clone_dir_raw).resolve()
+            if clone_dir_raw
+            else (workdir / repo_slug.replace("/", "__"))
+        )
         if not repo_clone_dir.exists():
             warning = (
                 f"clone directory missing for actionable repo: {repo_slug} "
@@ -376,7 +413,7 @@ def _prepare_stage2(
             embedded_chars += len(code)
             embedded_bytes += len(code.encode("utf-8"))
 
-        repo_bundle_dir = stage2_dir / repo_slug.replace("/", "__")
+        repo_bundle_dir = stage2_dir / f"{repo_slug.replace('/', '__')}__{_repo_ref_token(ref)}"
         repo_bundle_dir.mkdir(parents=True, exist_ok=True)
 
         truncation_notes: list[str] = []
@@ -487,7 +524,7 @@ def main() -> int:
         default="test,tests,mock,mocks,example,examples,preset,presets,fixture,fixtures,vendor,vendors",
     )
     parser.add_argument("--detectors", default="")
-    parser.add_argument("--git-host", default="https://github.com")
+    parser.add_argument("--git-host", default=DEFAULT_GIT_HOST)
     parser.add_argument("--manual-triage-id-prefix", default="")
     parser.add_argument(
         "--scan-timeout-seconds",
