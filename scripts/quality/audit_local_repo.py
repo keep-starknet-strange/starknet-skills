@@ -363,6 +363,14 @@ def _md_escape_cell(value: str) -> str:
     return value.replace("|", "&#124;").replace("`", "'").replace("\n", " ")
 
 
+def _safe_int(value: object, default: int = 0) -> int:
+    """Best-effort integer conversion for optional/partial payloads."""
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return default
+
+
 def _existing_dir(value: str) -> Path:
     path = Path(value).resolve()
     if not path.exists() or not path.is_dir():
@@ -509,9 +517,9 @@ def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tup
 
 def _render_sierra_md(sierra: dict[str, object]) -> list[str]:
     """Render Sierra confirmation section as markdown lines."""
-    projects_built = int(sierra.get("projects_built", 0) or 0)
-    projects_total = int(sierra.get("projects_total", 0) or 0)
-    artifacts = int(sierra.get("artifacts", 0) or 0)
+    projects_built = _safe_int(sierra.get("projects_built", 0), default=0)
+    projects_total = _safe_int(sierra.get("projects_total", 0), default=0)
+    artifacts = _safe_int(sierra.get("artifacts", 0), default=0)
     lines: list[str] = [
         "## Sierra Confirmation",
         "",
@@ -606,7 +614,7 @@ def _render_markdown(
             for f in sev_findings:
                 finding_num += 1
                 priority = f.get("priority", "P3")
-                title = f.get("title", f.get("class_id", "Unknown"))
+                title = _md_escape_cell(str(f.get("title", f.get("class_id", "Unknown"))))
                 confidence = f.get("confidence", 75)
                 file_path = f.get("file", "")
                 line_num = f.get("line")
