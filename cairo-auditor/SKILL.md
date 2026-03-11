@@ -1,6 +1,7 @@
 ---
 name: cairo-auditor
 description: Security audit of Cairo/Starknet code. Trigger on "audit", "check this contract", "review for security". Modes - default (full repo), deep (+ adversarial reasoning), or specific filenames.
+allowed-tools: [Bash, Read, Glob, Grep, Task]
 ---
 
 # Cairo/Starknet Security Audit
@@ -28,7 +29,10 @@ You are the orchestrator of a parallelized Cairo/Starknet security audit. Your j
 
 ## Mode Selection
 
-**Exclude pattern** (applies to all modes): skip directories and files matching `test`, `tests`, `mock`, `mocks`, `example`, `examples`, `preset`, `presets`, `fixture`, `fixtures`, `vendor`, `vendors`, and files matching `*_test.cairo` or `*Test*.cairo`.
+**Exclude pattern** (applies to all modes):
+
+- Skip paths containing: `test`, `tests`, `mock`, `mocks`, `example`, `examples`, `preset`, `presets`, `fixture`, `fixtures`, `vendor`, `vendors`.
+- Skip files matching: `*_test.cairo`, `*Test*.cairo`.
 
 - **Default** (no arguments): scan all `.cairo` files in the repo using the exclude pattern.
 - **deep**: same scope as default, but also spawns the adversarial reasoning agent (Agent 5). Use for thorough reviews. Slower and more costly.
@@ -45,13 +49,16 @@ You are the orchestrator of a parallelized Cairo/Starknet security audit. Your j
 (a) Bash `find` for in-scope `.cairo` files per mode selection:
 
 ```bash
-find <repo-root>/src -name "*.cairo" \
+find <repo-root> -name "*.cairo" \
   -not -path "*test*" -not -path "*mock*" -not -path "*example*" \
   -not -path "*fixture*" -not -path "*vendor*" -not -path "*preset*" \
   | sort
 ```
 
-(b) Glob for `**/references/attack-vectors/attack-vectors-1.md` and extract the `references/` directory path (two levels up from the match). Use this resolved path as `{resolved_path}` for all subsequent references.
+(b) Glob for `**/references/attack-vectors/attack-vectors-1.md` and resolve:
+
+- `{refs_root}` = two levels up from the match (`.../references`)
+- `{skill_root}` = three levels up from the match (skill directory that contains `SKILL.md`, `agents/`, `references/`, `VERSION`)
 
 (c) If `scripts/quality/audit_local_repo.py` exists relative to the skill's repo root, run the deterministic preflight:
 
@@ -63,20 +70,20 @@ Print the preflight results (class counts, severity counts) as context for speci
 
 **Turn 2 — Prepare.** In a single message, make three parallel tool calls:
 
-(a) Read `{resolved_path}/agents/vector-scan.md` — you will paste this full text into every agent prompt.
+(a) Read `{skill_root}/agents/vector-scan.md` — you will paste this full text into every agent prompt.
 
-(b) Read `{resolved_path}/report-formatting.md` — you will use this for the final report.
+(b) Read `{refs_root}/report-formatting.md` — you will use this for the final report.
 
 (c) Bash: create four per-agent bundle files (`/tmp/cairo-audit-agent-{1,2,3,4}-bundle.md`) in a **single command**. Each bundle concatenates:
   - **all** in-scope `.cairo` files (with `### path` headers and fenced code blocks),
-  - `{resolved_path}/judging.md`,
-  - `{resolved_path}/report-formatting.md`,
-  - `{resolved_path}/attack-vectors/attack-vectors-N.md` (one per agent — only the attack-vectors file differs).
+  - `{refs_root}/judging.md`,
+  - `{refs_root}/report-formatting.md`,
+  - `{refs_root}/attack-vectors/attack-vectors-N.md` (one per agent — only the attack-vectors file differs).
 
 Print line counts per bundle. Example command:
 
 ```bash
-REFS="{resolved_path}"
+REFS="{refs_root}"
 SRC="{repo-root}"
 
 build_code_block() {
@@ -113,8 +120,8 @@ Do NOT read or inline any file content into agent prompts — the bundle files r
 - **Agents 1–4** (vector scanning) — spawn with `model: "sonnet"`. Each agent prompt must contain the full text of `vector-scan.md` (read in Turn 2, paste into every prompt). After the instructions, add: `Your bundle file is /tmp/cairo-audit-agent-N-bundle.md (XXXX lines).` (substitute the real line count). Include the deterministic preflight results if available so agents have extra context.
 
 - **Agent 5** (adversarial reasoning, **deep** mode only) — spawn with `model: "opus"`. The prompt must instruct it to:
-  1. Read `{resolved_path}/agents/adversarial.md` for its full instructions.
-  2. Read `{resolved_path}/judging.md` and `{resolved_path}/report-formatting.md`.
+  1. Read `{skill_root}/agents/adversarial.md` for its full instructions.
+  2. Read `{refs_root}/judging.md` and `{refs_root}/report-formatting.md`.
   3. Read all in-scope `.cairo` files directly (not via bundle).
   4. Reason freely — no attack vector reference. Look for logic errors, unsafe interactions, access control gaps, economic exploits, multi-step cross-function chains.
   5. Apply FP gate to each finding immediately.
@@ -149,16 +156,22 @@ Before doing anything else, print this exactly:
 
 ## Version Check
 
-After printing the banner, run two parallel tool calls: (a) Read the local `VERSION` file from the same directory as this skill, (b) Bash `curl -sf https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/VERSION`. If the remote fetch succeeds and the versions differ, print:
+After printing the banner, run two parallel tool calls: (a) Read the local `VERSION` file from the same directory as this skill, (b) Bash `curl -sf --connect-timeout 5 --max-time 10 https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/VERSION`. If the remote fetch succeeds and the versions differ, print:
 
 > You are not using the latest version. Run `/plugin marketplace update keep-starknet-strange/starknet-skills` for best security coverage.
 
 Then continue normally. If the fetch fails (offline, timeout), skip silently.
 
+Use this command for the remote check:
+
+```bash
+curl -sf --connect-timeout 5 --max-time 10 https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/VERSION
+```
+
 ## Limitations
 
 - Works best on codebases under **5,000 lines** of Cairo. Past that, triage accuracy and mid-bundle recall degrade.
-- For large codebases, run per-module (`targeted` mode) rather than full-repo.
+- For large codebases, run per-module with explicit file arguments (`$filename ...`) rather than full-repo.
 - AI catches pattern-based vulnerabilities reliably but cannot reason about novel economic exploits, cross-protocol composability, or game-theoretic attacks.
 - Not a substitute for a formal audit — but the check you should never skip.
 
