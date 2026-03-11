@@ -2,7 +2,7 @@
 
 ## Report Path
 
-When `--file-output` is set, save the report to `{repo-root}/security-review-{timestamp}.md` where `{timestamp}` is `YYYYMMDD-HHMMSS` at scan time.
+When `--file-output` is set, save the report to `{repo-root}/security-review-{timestamp}.md` where `{timestamp}` is `YYYYMMDD-HHMMSS` at scan time (middle `MM` denotes minutes).
 
 ## Output Format
 
