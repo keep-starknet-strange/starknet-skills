@@ -576,6 +576,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Allow zero evaluated cases (all skipped) to pass with a warning",
     )
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        help="Copy output markdown to evals/scorecards/<basename(output)>.",
+    )
     return parser.parse_args()
 
 
@@ -628,6 +633,12 @@ def main() -> int:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(markdown, encoding="utf-8")
+    if args.save:
+        scorecards_dir = repo_root / "evals" / "scorecards"
+        scorecards_dir.mkdir(parents=True, exist_ok=True)
+        target = scorecards_dir / output_path.name
+        if output_path.resolve() != target.resolve():
+            shutil.copy2(output_path, target)
 
     if evaluated == 0:
         if args.allow_empty_evaluated:

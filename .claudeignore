@@ -5,7 +5,6 @@ datasets/audits/extracted/
 # Eval fixtures and held-out sets
 evals/contracts/
 evals/heldout/
-evals/scorecards/
 evals/reports/
 
 # Website

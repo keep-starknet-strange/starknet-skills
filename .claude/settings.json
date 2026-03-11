@@ -4,6 +4,9 @@
     "deny": [
       "Bash(rm -rf *)",
       "Bash(rm -fr *)",
+      "Bash(rm -r *)",
+      "Bash(rm -R *)",
+      "Bash(rm --recursive *)",
       "Bash(sudo *)",
       "Bash(git push --force*)",
       "Bash(git push * --force*)",
@@ -19,6 +22,7 @@
       "Write(~/.ssh/**)",
       "Read(~/.ssh/**)",
       "Read(~/.gnupg/**)",
+      "Write(~/.gnupg/**)",
       "Read(~/.aws/**)",
       "Read(~/.config/gh/**)",
       "Read(~/.git-credentials)",
@@ -52,7 +56,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE '(^|;[[:space:]]*|&&[[:space:]]*|[|][|][[:space:]]*|[|][[:space:]]*)rm[[:space:]]' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[rR]|--recursive' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[fF]|--force'; then echo 'BLOCKED: rm -rf is not allowed. Remove files individually or use trash.' >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE '(^|;[[:space:]]*|&&[[:space:]]*|[|][|][[:space:]]*|[|][[:space:]]*)rm[[:space:]]' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[rR]|--recursive'; then echo 'BLOCKED: recursive rm is not allowed. Remove files individually or use trash.' >&2; exit 2; fi"
           },
           {
             "type": "command",

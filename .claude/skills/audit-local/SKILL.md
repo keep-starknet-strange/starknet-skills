@@ -10,7 +10,7 @@ argument-hint: <path-to-cairo-repo>
 ## Quick Start
 
 1. Validate and sanitize the target repo path:
-   `REPO="$ARGUMENTS"; [ -n "$REPO" ] && [ -d "$REPO" ] && ! echo "$REPO" | grep -qE '[;&|$()]'`
+   `REPO="$ARGUMENTS"; [ -n "$REPO" ] || { echo "ERROR: repo path is required" >&2; exit 1; }; echo "$REPO" | grep -qE '^[A-Za-z0-9_./-]+$' || { echo "ERROR: repo path contains unsafe characters" >&2; exit 1; }; [ -d "$REPO" ] || { echo "ERROR: '$REPO' is not a directory" >&2; exit 1; }`
 2. Run the local deterministic audit:
    `python scripts/quality/audit_local_repo.py --repo-root "$REPO" --scan-id "local-$(date +%s)"`
 3. Report findings grouped by severity (`Critical > High > Medium > Low > Info`) with title, location, and fix.
