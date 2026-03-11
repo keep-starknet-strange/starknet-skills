@@ -46,7 +46,9 @@
       "Read(~/.pypirc)",
       "Write(~/.pypirc)",
       "Read(./.env)",
-      "Read(./.env.*)"
+      "Read(./.env.*)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)"
     ],
     "allow": [
       "Read",
