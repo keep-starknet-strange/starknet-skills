@@ -65,7 +65,7 @@ cat /tmp/cairo-audit-files.txt
 For **`$filename ...`** mode, do not run `find`. Instead, run:
 
 ```bash
-REPO_ROOT="<repo-root>"
+REPO_ROOT=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "<repo-root>")
 > /tmp/cairo-audit-files.txt
 for f in "$@"; do
   [ -z "$f" ] && continue
