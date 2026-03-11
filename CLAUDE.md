@@ -19,9 +19,9 @@ Cairo/Starknet reasoning skills for agents. 7 modules, evaluation-backed.
 ## Commands
 
 ```bash
-python scripts/quality/validate_skills.py      # structure check
-python scripts/quality/validate_marketplace.py  # marketplace metadata
-python scripts/quality/parity_check.py          # optional, needs snforge+sncast
+python3 scripts/quality/validate_skills.py     # structure check
+python3 scripts/quality/validate_marketplace.py # marketplace metadata
+python3 scripts/quality/parity_check.py         # optional, needs snforge+sncast
 ruff check scripts/                             # Python lint
 ```
 
