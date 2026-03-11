@@ -6,7 +6,7 @@ When `--file-output` is set, save the report to `{repo-root}/security-review-{ti
 
 ## Output Format
 
-````
+````markdown
 # Security Review — <project name or repo basename>
 
 ---
@@ -88,8 +88,8 @@ When `--file-output` is set, save the report to `{repo-root}/security-review-{ti
 ## Rules
 
 - Follow the template above exactly.
-- Sort findings by confidence (highest first).
-- Findings below threshold (confidence < 75) get a description but no **Fix** block.
+- Sort findings by priority (`P0` first); within each priority tier, sort by confidence (highest first).
+- Findings below threshold (confidence < 75) get a description but no **Fix** block and no **Required Tests** block.
 - Do not re-draft or re-describe agent findings — print them directly.
 - Insert the **Below Confidence Threshold** separator row in the Findings Index.
 - Findings that fail FP gate must be dropped entirely and not reported.
@@ -102,7 +102,7 @@ Each finding must include:
 - `Class: {class_id}` · `{file}:{line}` · `Confidence: {score}` · `Severity: {severity}`
 - `Description:` one paragraph with concrete exploit path and impact.
 - `Fix:` diff block (only for confidence >= 75).
-- `Required Tests:` regression + guard test descriptions.
+- `Required Tests:` regression + guard test descriptions (only for confidence >= 75).
 
 ## Priority Mapping
 
