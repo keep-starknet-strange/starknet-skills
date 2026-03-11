@@ -4,61 +4,123 @@
 
 # cairo-auditor
 
-Flagship Cairo/Starknet audit skill.
+A security agent for Cairo/Starknet — findings in minutes, not weeks.
+
+Built for:
+
+- **Cairo devs** who want a security check before every commit
+- **Security researchers** looking for fast wins before a manual review
+- **Anyone** deploying on Starknet who wants an extra pair of eyes
+
+Not a substitute for a formal audit — but the check you should never skip.
 
 <p>
   <img alt="mode default" src="https://img.shields.io/badge/mode-default-0969da" />
   <img alt="mode deep" src="https://img.shields.io/badge/mode-deep-7c3aed" />
   <img alt="fp gate" src="https://img.shields.io/badge/false--positive-gated-2ea043" />
-  <img alt="deterministic smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-f59e0b" />
-  <img alt="agent eval" src="https://img.shields.io/badge/agent%20eval-in%20progress-f59e0b" />
+  <img alt="deterministic smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-2ea043" />
 </p>
 
-## Usage
+<!-- TODO: add demo GIF once recorded -->
+<!-- ## Demo -->
+<!-- ![Running cairo-auditor in terminal](assets/demo.gif) -->
+
+## Install
+
+**Claude Code CLI:**
 
 ```bash
-/cairo-auditor
-/cairo-auditor deep
-/cairo-auditor contracts/account.cairo
+git clone https://github.com/keep-starknet-strange/starknet-skills.git \
+  && mkdir -p ~/.claude/commands \
+  && cp -r starknet-skills/cairo-auditor ~/.claude/commands/cairo-auditor
 ```
 
-Install only this module from the plugin marketplace:
+**Cursor:**
+
+```bash
+git clone https://github.com/keep-starknet-strange/starknet-skills.git \
+  && mkdir -p ~/.cursor/skills \
+  && cp -r starknet-skills/cairo-auditor ~/.cursor/skills/cairo-auditor
+```
+
+**Claude Code Plugin Marketplace:**
 
 ```bash
 /plugin marketplace add keep-starknet-strange/starknet-skills
 /plugin install cairo-auditor@starknet-skills
 ```
 
-Deterministic local repo audit entrypoint:
+**Update to latest:**
 
 ```bash
-python scripts/quality/audit_local_repo.py \
-  --repo-root /path/to/your/cairo-repo \
-  --scan-id local-cairo-audit \
-  --output-json /tmp/local-cairo-audit.json \
-  --output-md /tmp/local-cairo-audit.md
+cd starknet-skills && git pull
+# Claude Code CLI:
+cp -r cairo-auditor ~/.claude/commands/cairo-auditor
+# Cursor:
+cp -r cairo-auditor ~/.cursor/skills/cairo-auditor
 ```
 
-With Sierra confirmation (build mode):
+## Usage
 
 ```bash
-python scripts/quality/audit_local_repo.py \
-  --repo-root /path/to/your/cairo-repo \
-  --scan-id local-cairo-audit-sierra \
-  --sierra-confirm \
-  --allow-build \
-  --output-json /tmp/local-cairo-audit-sierra.json \
-  --output-md /tmp/local-cairo-audit-sierra.md
+# Scan the full repo (default — 4 parallel agents)
+/cairo-auditor
+
+# Full repo + adversarial reasoning agent (slower, more thorough)
+/cairo-auditor deep
+
+# Review specific file(s)
+/cairo-auditor src/contracts/account.cairo
+/cairo-auditor src/contracts/account.cairo src/contracts/factory.cairo
+
+# Write report to a markdown file (terminal-only by default)
+/cairo-auditor --file-output
 ```
 
-## Structure
+### Deterministic local scan (no AI)
 
-- `SKILL.md`: 4-turn orchestration contract.
-- `agents/`: vector + adversarial specialist instructions.
-- `references/attack-vectors/`: partitioned D:/FP: vectors (120 total).
-- `references/judging.md`: strict FP gate and confidence rules.
-- `references/vulnerability-db/`: canonical class docs.
-- `references/semgrep/`: optional Semgrep auxiliary rules.
+```bash
+python3 scripts/quality/audit_local_repo.py \
+  --repo-root /path/to/your/cairo-repo \
+  --scan-id my-audit
+```
+
+## Example output
+
+```
+[P0] 1. Ungated Upgrade Path
+  NO_ACCESS_CONTROL_MUTATION · src/contracts/account.cairo:42 · Confidence: 92
+
+  Description
+  External upgrade() calls replace_class_syscall without caller gate.
+  Any account can replace the contract class, leading to full takeover.
+
+  Fix
+  - fn upgrade(ref self: ContractState, new_class: ClassHash) {
+  + fn upgrade(ref self: ContractState, new_class: ClassHash) {
+  +     self.ownable.assert_only_owner();
+
+  Required Tests
+  - Unauthorized caller reverts on upgrade
+  - Owner successfully upgrades and new class hash persists
+```
+
+## How it works
+
+The skill orchestrates a **4-turn pipeline**:
+
+1. **Discover** — find in-scope `.cairo` files, run deterministic preflight
+2. **Prepare** — build 4 code bundles, each with a different attack-vector partition
+3. **Spawn** — 4 parallel vector specialists (`model: sonnet`), optionally + 1 adversarial (`model: opus` in deep mode)
+4. **Report** — merge, deduplicate by root cause, sort by confidence, emit findings
+
+Each agent scans the full codebase against 30 attack vectors from its partition (120 total), applies a strict false-positive gate, and formats findings with exploit paths and fix diffs.
+
+## Known limitations
+
+**Codebase size.** Works best under ~5,000 lines of Cairo. Past that, triage accuracy and mid-bundle recall degrade. For large codebases, run per-module rather than everything at once.
+
+**What AI misses.** AI catches pattern-based vulnerabilities reliably: missing access controls, CEI violations, unsafe upgrades, zero-address initialization. It struggles with: multi-transaction state setups, specification/invariant bugs, cross-protocol composability, game-theoretic attacks, and off-chain oracle assumptions. AI catches what humans forget to check. Humans catch what AI cannot reason about. You need both.
 
 ## Benchmarks
 
@@ -73,13 +135,22 @@ Additional quality signals:
 
 - External triage: [v0.2.0-cairo-auditor-external-triage.md](../evals/scorecards/v0.2.0-cairo-auditor-external-triage.md)
 - Manual gold: [v0.2.0-cairo-auditor-manual-19-gold-recall.md](../evals/scorecards/v0.2.0-cairo-auditor-manual-19-gold-recall.md)
-- Sierra auxiliary: [sierra-parallel-low-profile-2026-03-09-v2.md](../evals/reports/sierra-parallel-low-profile-2026-03-09-v2.md)
-- Caracal + Semgrep adapters: see [../scripts/quality/README.md](../scripts/quality/README.md)
 
-## References
+## Structure
 
-- Skill policy: [SKILL.md](SKILL.md)
-- Workflow docs: [workflows/default.md](workflows/default.md), [workflows/deep.md](workflows/deep.md)
-- Vector index: [references/attack-vectors/](references/attack-vectors)
-- FP gate: [references/judging.md](references/judging.md)
-- Class docs: [references/vulnerability-db/README.md](references/vulnerability-db/README.md)
+```
+cairo-auditor/
+  SKILL.md                     # 4-turn orchestration contract
+  agents/
+    vector-scan.md             # vector specialist instructions
+    adversarial.md             # adversarial specialist instructions
+  references/
+    attack-vectors/            # 120 vectors in 4 partitions
+    vulnerability-db/          # 13 canonical vulnerability classes
+    judging.md                 # FP gate + confidence scoring
+    report-formatting.md       # finding template + priority mapping
+    semgrep/                   # optional Semgrep auxiliary rules
+  workflows/
+    default.md                 # 4-agent pipeline reference
+    deep.md                    # + adversarial agent details
+```
