@@ -62,7 +62,26 @@ find <repo-root> \
 cat /tmp/cairo-audit-files.txt
 ```
 
-For **`$filename ...`** mode, do not run `find`. Instead, resolve each provided filename to an absolute path under `<repo-root>`, keep only existing `.cairo` files, write that exact list to `/tmp/cairo-audit-files.txt`, then print it.
+For **`$filename ...`** mode, do not run `find`. Instead, run:
+
+```bash
+REPO_ROOT="<repo-root>"
+> /tmp/cairo-audit-files.txt
+for f in "$@"; do
+  [ -z "$f" ] && continue
+  ABS_PATH=$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$f")
+  case "$ABS_PATH" in
+    "$REPO_ROOT"/*) ;;
+    *) continue ;;
+  esac
+  [ -f "$ABS_PATH" ] || continue
+  case "$ABS_PATH" in
+    *.cairo) echo "$ABS_PATH" >> /tmp/cairo-audit-files.txt ;;
+  esac
+done
+sort -u -o /tmp/cairo-audit-files.txt /tmp/cairo-audit-files.txt
+cat /tmp/cairo-audit-files.txt
+```
 
 (b) Glob for `**/references/attack-vectors/attack-vectors-1.md` and resolve:
 
@@ -90,6 +109,8 @@ Print the preflight results (class counts, severity counts) as context for speci
   - `{refs_root}/attack-vectors/attack-vectors-N.md` (one per agent — only the attack-vectors file differs).
 
 Print line counts per bundle. Example command:
+
+Before running this command, substitute placeholders (`{refs_root}`, `{repo-root}`) with the concrete paths resolved in Turn 1.
 
 ```bash
 REFS="{refs_root}"
@@ -133,7 +154,7 @@ Do NOT read or inline any file content into agent prompts — the bundle files r
 - **Agent 5** (adversarial reasoning, **deep** mode only) — spawn with `model: "opus"`. The prompt must instruct it to:
   1. Read `{skill_root}/agents/adversarial.md` for its full instructions.
   2. Read `{refs_root}/judging.md` and `{refs_root}/report-formatting.md`.
-  3. Read all in-scope `.cairo` files directly (not via bundle).
+  3. Read `/tmp/cairo-audit-files.txt` to obtain in-scope paths, then read only those `.cairo` files directly (not via bundle).
   4. Reason freely — no attack vector reference. Look for logic errors, unsafe interactions, access control gaps, economic exploits, multi-step cross-function chains.
   5. Apply FP gate to each finding immediately.
   6. Format findings per report-formatting.md.
