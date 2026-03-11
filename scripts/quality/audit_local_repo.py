@@ -355,7 +355,10 @@ def _find_relevant_line(code: str, class_id: str) -> int | None:
 
 def _md_escape_path(path: str) -> str:
     """Escape file paths for markdown table/code contexts."""
-    return path.replace("|", "&#124;").replace("`", "'")
+    escaped = path.replace("|", "&#124;").replace("`", "'")
+    for char in ("[", "]", "*", "_", "\\", "<", ">"):
+        escaped = escaped.replace(char, f"\\{char}")
+    return escaped
 
 
 def _existing_dir(value: str) -> Path:
@@ -554,11 +557,12 @@ def _render_markdown(
         "|--------|-------|",
         f"| **Scan ID** | `{scan_id}` |",
         "| **Mode** | deterministic (regex-based detectors) |",
-        f"| **Files reviewed** | {summary['prod_cairo_files']} prod ({summary['all_cairo_files']} total) |",
+        f"| **Files reviewed** | {summary.get('prod_cairo_files', 0)} prod ({summary.get('all_cairo_files', 0)} total) |",
         f"| **Files with findings** | {files_str} |",
+        "| **Line mapping** | best-effort (first regex match per class) |",
         "| **Confidence threshold** | 75 |",
         f"| **Generated** | {generated_at} |",
-        f"| **Commit** | `{summary['ref']}` |",
+        f"| **Commit** | `{summary.get('ref', 'unknown')}` |",
         "",
     ]
 
@@ -579,8 +583,16 @@ def _render_markdown(
     if findings:
         lines += ["## Findings", ""]
         finding_num = 0
+        severity_rank = {sev: i for i, sev in enumerate(_SEVERITY_ORDER)}
+        sorted_findings = sorted(
+            findings,
+            key=lambda x: (
+                severity_rank.get(str(x.get("severity", "info")).lower(), len(_SEVERITY_ORDER)),
+                str(x.get("title", x.get("class_id", "Unknown"))),
+            ),
+        )
         for sev in _SEVERITY_ORDER:
-            sev_findings = [f for f in findings if str(f.get("severity", "info")).lower() == sev]
+            sev_findings = [f for f in sorted_findings if str(f.get("severity", "info")).lower() == sev]
             if not sev_findings:
                 continue
             lines += [f"### {_SEVERITY_LABELS.get(sev, sev)}", ""]
@@ -627,15 +639,7 @@ def _render_markdown(
         lines += ["## Findings Index", "", "| # | Severity | Confidence | Title |",
                   "|--:|----------|----------:|------|"]
         idx = 0
-        severity_rank = {sev: i for i, sev in enumerate(_SEVERITY_ORDER)}
-        sorted_f = sorted(
-            findings,
-            key=lambda x: (
-                severity_rank.get(str(x.get("severity", "info")).lower(), len(_SEVERITY_ORDER)),
-                str(x.get("title", x.get("class_id", "Unknown"))),
-            ),
-        )
-        for f in sorted_f:
+        for f in sorted_findings:
             idx += 1
             sev = _SEVERITY_LABELS.get(str(f.get("severity", "info")).lower(), "Info")
             conf = f.get("confidence", 75)
