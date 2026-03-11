@@ -60,7 +60,6 @@
       "Bash(git diff*)",
       "Bash(git log*)",
       "Bash(git branch*)",
-      "Bash(ls *)",
       "Bash(pwd)",
       "Bash(which *)",
       "Bash(wc *)"
