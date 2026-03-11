@@ -1,12 +1,18 @@
 ---
 name: cairo-auditor
 description: Security audit of Cairo/Starknet code. Trigger on "audit", "check this contract", "review for security". Modes - default (full repo), deep (+ adversarial reasoning), or specific filenames.
-allowed-tools: [Bash, Read, Glob, Grep, Task]
+allowed-tools: [Bash, Read, Glob, Grep, Task, Agent]
 ---
 
 # Cairo/Starknet Security Audit
 
 You are the orchestrator of a parallelized Cairo/Starknet security audit. Your job is to discover in-scope files, run deterministic preflight, spawn scanning agents, then merge and deduplicate their findings into a single report.
+
+## Quick Start
+
+- Default flow: [workflows/default.md](workflows/default.md)
+- Deep flow: [workflows/deep.md](workflows/deep.md)
+- Report schema: [references/report-formatting.md](references/report-formatting.md)
 
 ## When to Use
 
@@ -31,7 +37,7 @@ You are the orchestrator of a parallelized Cairo/Starknet security audit. Your j
 
 **Exclude pattern** (applies to all modes):
 
-- Skip paths containing: `test`, `tests`, `mock`, `mocks`, `example`, `examples`, `preset`, `presets`, `fixture`, `fixtures`, `vendor`, `vendors`.
+- Skip exact directory names via `find ... -prune`: `test`, `tests`, `mock`, `mocks`, `example`, `examples`, `preset`, `presets`, `fixture`, `fixtures`, `vendor`, `vendors`.
 - Skip files matching: `*_test.cairo`, `*Test*.cairo`.
 
 - **Default** (no arguments): scan all `.cairo` files in the repo using the exclude pattern.
@@ -46,14 +52,17 @@ You are the orchestrator of a parallelized Cairo/Starknet security audit. Your j
 
 **Turn 1 — Discover.** Print the banner, then in the same message make parallel tool calls:
 
-(a) Bash `find` for in-scope `.cairo` files per mode selection:
+(a) Resolve and persist in-scope `.cairo` files to `/tmp/cairo-audit-files.txt` per mode selection:
 
 ```bash
-find <repo-root> -name "*.cairo" \
-  -not -path "*test*" -not -path "*mock*" -not -path "*example*" \
-  -not -path "*fixture*" -not -path "*vendor*" -not -path "*preset*" \
-  | sort
+find <repo-root> \
+  \( -type d \( -name test -o -name tests -o -name mock -o -name mocks -o -name example -o -name examples -o -name fixture -o -name fixtures -o -name vendor -o -name vendors -o -name preset -o -name presets \) -prune \) \
+  -o \( -type f -name "*.cairo" ! -name "*_test.cairo" ! -name "*Test*.cairo" -print \) \
+  | sort > /tmp/cairo-audit-files.txt
+cat /tmp/cairo-audit-files.txt
 ```
+
+For **`$filename ...`** mode, do not run `find`. Instead, resolve each provided filename to an absolute path under `<repo-root>`, keep only existing `.cairo` files, write that exact list to `/tmp/cairo-audit-files.txt`, then print it.
 
 (b) Glob for `**/references/attack-vectors/attack-vectors-1.md` and resolve:
 
@@ -85,16 +94,18 @@ Print line counts per bundle. Example command:
 ```bash
 REFS="{refs_root}"
 SRC="{repo-root}"
+IN_SCOPE="/tmp/cairo-audit-files.txt"
 
 build_code_block() {
-  for f in $(find "$SRC" -name "*.cairo" -not -path "*test*" -not -path "*mock*" -not -path "*example*" -not -path "*fixture*" -not -path "*vendor*" -not -path "*preset*" | sort); do
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
     REL=$(echo "$f" | sed "s|$SRC/||")
     echo "### $REL"
     echo '```cairo'
     cat "$f"
     echo '```'
     echo ""
-  done
+  done < "$IN_SCOPE"
 }
 
 CODE=$(build_code_block)
@@ -143,7 +154,7 @@ If `--file-output` is set, write the report to `{repo-root}/security-review-{tim
 
 Before doing anything else, print this exactly:
 
-```
+```text
 
  ██████╗ █████╗ ██╗██████╗  ██████╗      █████╗ ██╗   ██╗██████╗ ██╗████████╗ ██████╗ ██████╗
 ██╔════╝██╔══██╗██║██╔══██╗██╔═══██╗    ██╔══██╗██║   ██║██╔══██╗██║╚══██╔══╝██╔═══██╗██╔══██╗
@@ -171,7 +182,7 @@ curl -sf --connect-timeout 5 --max-time 10 https://raw.githubusercontent.com/kee
 ## Limitations
 
 - Works best on codebases under **5,000 lines** of Cairo. Past that, triage accuracy and mid-bundle recall degrade.
-- For large codebases, run per-module with explicit file arguments (`$filename ...`) rather than full-repo.
+- For large codebases, run per-module by passing explicit file arguments (`$filename ...`) rather than full-repo.
 - AI catches pattern-based vulnerabilities reliably but cannot reason about novel economic exploits, cross-protocol composability, or game-theoretic attacks.
 - Not a substitute for a formal audit — but the check you should never skip.
 
