@@ -363,6 +363,17 @@ def _md_escape_cell(value: str) -> str:
     return value.replace("|", "&#124;").replace("`", "'").replace("\n", " ")
 
 
+def _md_escape_heading(value: str) -> str:
+    """Escape markdown heading text for predictable rendering."""
+    return (
+        value.replace("\\", "\\\\")
+        .replace("[", "\\[")
+        .replace("]", "\\]")
+        .replace("\n", " ")
+        .replace("\r", " ")
+    )
+
+
 def _safe_int(value: object, default: int = 0) -> int:
     """Best-effort integer conversion for optional/partial payloads."""
     try:
@@ -614,7 +625,7 @@ def _render_markdown(
             for f in sev_findings:
                 finding_num += 1
                 priority = f.get("priority", "P3")
-                title = _md_escape_cell(str(f.get("title", f.get("class_id", "Unknown"))))
+                title = _md_escape_heading(str(f.get("title", f.get("class_id", "Unknown"))))
                 confidence = f.get("confidence", 75)
                 file_path = f.get("file", "")
                 line_num = f.get("line")
