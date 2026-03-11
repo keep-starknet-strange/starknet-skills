@@ -547,7 +547,7 @@ def _render_markdown(
     sierra: dict[str, object] | None,
 ) -> str:
     lines: list[str] = []
-    repo_name = summary.get("repo", "unknown")
+    repo_name = _md_escape_cell(str(summary.get("repo", "unknown")))
 
     # Header
     lines.append(f"# Security Review — {repo_name}")
@@ -650,7 +650,7 @@ def _render_markdown(
             idx += 1
             sev = _SEVERITY_LABELS.get(str(f.get("severity", "info")).lower(), "Info")
             conf = f.get("confidence", 75)
-            title = f.get("title", f.get("class_id", "Unknown"))
+            title = _md_escape_cell(str(f.get("title", f.get("class_id", "Unknown"))))
             lines.append(f"| {idx} | {sev} | {conf} | {title} |")
         lines.append("")
 
