@@ -324,7 +324,11 @@ _SEVERITY_LABELS = {
 
 
 def _find_relevant_line(code: str, class_id: str) -> int | None:
-    """Return approximate 1-based line number for the vulnerable construct."""
+    """Return a best-effort 1-based line number for the vulnerable construct.
+
+    The matcher is intentionally heuristic and may return the first matching
+    construct in the file rather than the exact vulnerable call-site.
+    """
     line_patterns: dict[str, list[str]] = {
         "CRITICAL_ADDRESS_INIT_WITHOUT_NONZERO_GUARD": [r"\bfn\s+constructor\b"],
         "CONSTRUCTOR_DEAD_PARAM": [r"\bfn\s+constructor\b"],
@@ -347,6 +351,11 @@ def _find_relevant_line(code: str, class_id: str) -> int | None:
             if re.search(pattern, line, re.IGNORECASE):
                 return i
     return None
+
+
+def _md_escape_path(path: str) -> str:
+    """Escape file paths for markdown table/code contexts."""
+    return path.replace("|", "&#124;").replace("`", "'")
 
 
 def _existing_dir(value: str) -> Path:
@@ -454,7 +463,14 @@ def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tup
 
         for class_id, detector in DETECTORS.items():
             if detector(code):
-                meta = VULN_METADATA.get(class_id, {})
+                meta = VULN_METADATA.get(class_id)
+                if not meta:
+                    print(
+                        "WARNING: missing VULN_METADATA for "
+                        + f"class_id={class_id} repo={repo_slug} ref={ref} file={rel}",
+                        file=sys.stderr,
+                    )
+                    meta = {}
                 line_number = _find_relevant_line(code, class_id)
                 findings.append(
                     {
@@ -519,7 +535,6 @@ def _render_markdown(
     scan_id: str,
     generated_at: str,
     summary: dict[str, object],
-    class_counts: Counter[str],
     findings: list[dict[str, object]],
     sierra: dict[str, object] | None,
 ) -> str:
@@ -532,7 +547,7 @@ def _render_markdown(
 
     # Scope table
     hit_files = sorted({str(f.get("file", "")) for f in findings})
-    files_str = " · ".join(f"`{f}`" for f in hit_files) if hit_files else "—"
+    files_str = " · ".join(f"`{_md_escape_path(f)}`" for f in hit_files) if hit_files else "—"
     lines += [
         "## Scope", "",
         "| Aspect | Value |",
@@ -550,7 +565,7 @@ def _render_markdown(
     # Severity summary
     sev_counts: dict[str, int] = {}
     for f in findings:
-        sev = str(f.get("severity", "info"))
+        sev = str(f.get("severity", "info")).lower()
         sev_counts[sev] = sev_counts.get(sev, 0) + 1
     total = sum(sev_counts.values())
     lines += ["## Summary", "", "| Severity | Count |", "|----------|------:|"]
@@ -565,7 +580,7 @@ def _render_markdown(
         lines += ["## Findings", ""]
         finding_num = 0
         for sev in _SEVERITY_ORDER:
-            sev_findings = [f for f in findings if str(f.get("severity", "info")) == sev]
+            sev_findings = [f for f in findings if str(f.get("severity", "info")).lower() == sev]
             if not sev_findings:
                 continue
             lines += [f"### {_SEVERITY_LABELS.get(sev, sev)}", ""]
@@ -576,7 +591,8 @@ def _render_markdown(
                 confidence = f.get("confidence", 75)
                 file_path = f.get("file", "")
                 line_num = f.get("line")
-                location = f"`{file_path}:{line_num}`" if line_num else f"`{file_path}`"
+                safe_path = _md_escape_path(str(file_path))
+                location = f"`{safe_path}:{line_num}`" if line_num else f"`{safe_path}`"
                 cid = f.get("class_id", "")
 
                 lines += [
@@ -609,12 +625,19 @@ def _render_markdown(
     # Findings index
     if findings:
         lines += ["## Findings Index", "", "| # | Severity | Confidence | Title |",
-                   "|--:|----------|----------:|----|"]
+                  "|--:|----------|----------:|------|"]
         idx = 0
-        sorted_f = sorted(findings, key=lambda x: _SEVERITY_ORDER.index(str(x.get("severity", "info"))))
+        severity_rank = {sev: i for i, sev in enumerate(_SEVERITY_ORDER)}
+        sorted_f = sorted(
+            findings,
+            key=lambda x: (
+                severity_rank.get(str(x.get("severity", "info")).lower(), len(_SEVERITY_ORDER)),
+                str(x.get("title", x.get("class_id", "Unknown"))),
+            ),
+        )
         for f in sorted_f:
             idx += 1
-            sev = _SEVERITY_LABELS.get(str(f.get("severity", "info")), "Info")
+            sev = _SEVERITY_LABELS.get(str(f.get("severity", "info")).lower(), "Info")
             conf = f.get("confidence", 75)
             title = f.get("title", f.get("class_id", "Unknown"))
             lines.append(f"| {idx} | {sev} | {conf} | {title} |")
@@ -795,11 +818,13 @@ def main() -> int:
             }
 
         generated_at_iso = generated_at.isoformat()
+        severity_counts = Counter(str(row.get("severity", "info")).lower() for row in findings)
         payload: dict[str, object] = {
             "scan_id": args.scan_id,
             "generated_at": generated_at_iso,
             "summary": summary,
             "class_counts": dict(class_counts),
+            "severity_counts": dict(severity_counts),
             "findings": findings,
             "sierra_confirmation": sierra_payload,
         }
@@ -829,7 +854,6 @@ def main() -> int:
                 scan_id=args.scan_id,
                 generated_at=generated_at_iso,
                 summary=summary,
-                class_counts=class_counts,
                 findings=findings,
                 sierra=sierra_payload,
             ),
@@ -844,7 +868,6 @@ def main() -> int:
                 overwrite=False,
             )
 
-        severity_counts = Counter(str(row.get("severity", "info")) for row in findings)
         print(
             json.dumps(
                 {
