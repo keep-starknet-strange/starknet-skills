@@ -17,6 +17,10 @@ argument-hint: <path-to-cairo-repo>
      echo "ERROR: repo path contains unsafe characters" >&2
      exit 1
    }
+   [ -f scripts/quality/audit_local_repo.py ] || {
+     echo "ERROR: scripts/quality/audit_local_repo.py not found from current working directory" >&2
+     exit 1
+   }
    [ -d "$REPO" ] || { echo "ERROR: '$REPO' is not a directory" >&2; exit 1; }
    ```
 2. Run the local deterministic audit:

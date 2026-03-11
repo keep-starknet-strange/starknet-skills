@@ -62,6 +62,13 @@ def load_cases(path: Path) -> list[Case]:
     return cases
 
 
+def display_path(path: Path, root: Path) -> Path:
+    try:
+        return path.relative_to(root)
+    except ValueError:
+        return path
+
+
 def detect_aa_self_call_session(code: str) -> bool:
     lower = code.lower()
     if "__execute__" not in lower and "session" not in lower:
@@ -972,7 +979,7 @@ def main() -> int:
         f"{args.version} {cases_path.stem.replace('_', ' ').replace('-', ' ').title()}"
     )
     markdown = render_markdown(
-        cases_path=cases_path,
+        cases_path=display_path(cases_path, repo_root),
         version=args.version,
         title=title,
         results=results,

@@ -99,7 +99,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if command -v osascript >/dev/null 2>&1; then osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\"' >/dev/null 2>&1; elif command -v notify-send >/dev/null 2>&1; then notify-send 'Claude Code' 'Claude Code needs your attention' >/dev/null 2>&1; elif command -v powershell.exe >/dev/null 2>&1; then powershell.exe -NoProfile -Command \"[void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); [System.Windows.Forms.MessageBox]::Show('Claude Code needs your attention','Claude Code')\" >/dev/null 2>&1; fi"
+            "command": "if command -v osascript >/dev/null 2>&1; then osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\"' >/dev/null 2>&1; elif command -v notify-send >/dev/null 2>&1; then notify-send 'Claude Code' 'Claude Code needs your attention' >/dev/null 2>&1; fi"
           }
         ]
       }

@@ -659,39 +659,47 @@ def main() -> int:
 
     if evaluated == 0:
         if args.allow_empty_evaluated:
-            print("WARNING: no evaluated cases (all skipped); allowed by --allow-empty-evaluated")
+            print(
+                "WARNING: no evaluated cases (all skipped); allowed by --allow-empty-evaluated",
+                file=sys.stderr,
+            )
             return 0
-        print("FAIL: no evaluated cases (all skipped)")
+        print("FAIL: no evaluated cases (all skipped)", file=sys.stderr)
         return BENCHMARK_GATE_FAILURE_EXIT_CODE
 
     if prec < args.min_precision or rec < args.min_recall:
         print(
             "FAIL: threshold gate not met "
             f"(precision={prec:.4f}, recall={rec:.4f}, "
-            f"min_precision={args.min_precision:.4f}, min_recall={args.min_recall:.4f})"
+            f"min_precision={args.min_precision:.4f}, min_recall={args.min_recall:.4f})",
+            file=sys.stderr,
         )
         return BENCHMARK_GATE_FAILURE_EXIT_CODE
 
     if args.enforce_min_evaluated and evaluated < args.min_evaluated:
         print(
             "FAIL: reportable threshold not met "
-            f"(evaluated={evaluated}, min_evaluated={args.min_evaluated})"
+            f"(evaluated={evaluated}, min_evaluated={args.min_evaluated})",
+            file=sys.stderr,
         )
         return BENCHMARK_GATE_FAILURE_EXIT_CODE
 
     if evaluated < args.min_evaluated:
         print(
             "NOTE: benchmark passed but sample is smoke-only "
-            f"(evaluated={evaluated}, recommended_min={args.min_evaluated})."
+            f"(evaluated={evaluated}, recommended_min={args.min_evaluated}).",
+            file=sys.stderr,
         )
         print(
             "PASS: contract smoke gate met "
-            f"(precision={prec:.4f}, recall={rec:.4f}, evaluated={evaluated}, skipped={skipped})"
+            f"(precision={prec:.4f}, recall={rec:.4f}, evaluated={evaluated}, skipped={skipped})",
+            file=sys.stderr,
         )
     else:
         print(
             "PASS: contract reportable gate met "
-            f"(precision={prec:.4f}, recall={rec:.4f}, evaluated={evaluated}, skipped={skipped})"
+            f"(precision={prec:.4f}, recall={rec:.4f}, evaluated={evaluated}, skipped={skipped})",
+            file=sys.stderr,
         )
     return 0
 
@@ -700,5 +708,5 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except Exception as exc:
-        print(f"FAIL: {exc}")
+        print(f"FAIL: {exc}", file=sys.stderr)
         sys.exit(BENCHMARK_RUNTIME_ERROR_EXIT_CODE)

@@ -25,4 +25,4 @@ allowed-tools: Bash, Read, Grep, Glob
 ## When NOT to Use
 
 - You need dataset schema validation only (use audit-pipeline validators).
-- The environment is missing required dependencies and cannot run checks.
+- Required dependencies are missing and checks cannot run.
