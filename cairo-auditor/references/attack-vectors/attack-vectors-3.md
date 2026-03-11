@@ -148,22 +148,22 @@
 - **D:** reward distribution checkpoint occurs after new stake is recorded, allowing just-in-time depositor to claim share of pending rewards without contributing to the earning period.
 - **FP:** checkpoint/accumulator updated before new stake is recorded, or time-weighted distribution prevents instantaneous dilution.
 
-**152. Interest or reward accrual uses stale cached timestamp**
-- **D:** accrual math reads timestamp from validation phase (or cached state) instead of refreshing at execution boundary, miscalculating duration.
-- **FP:** accrual reads fresh execution-phase timestamp and tests for validation-vs-execution discrepancy.
+**152. Cross-market timestamp contamination in accrual snapshot**
+- **D:** accrual for one market/reward stream reads cached timestamp/snapshot belonging to another market stream, mispricing duration and payouts.
+- **FP:** each accrual path reads and updates its own market-specific timestamp key.
 
-**153. Batch operation bypasses cumulative limit while per-item passes**
-- **D:** each item in a batch passes individual limit check, but the aggregate batch exceeds the policy limit (e.g., per-item spending cap vs total daily cap).
-- **FP:** both per-item and cumulative aggregate limits are enforced within the batch.
+**153. Batch route validates per-leg minimums but misses final aggregate invariant**
+- **D:** each leg in a batched route satisfies local min/max checks, but protocol never validates final aggregate exposure/min-out, allowing harmful composite sequences.
+- **FP:** final aggregate invariant is enforced after full batch execution in addition to per-leg checks.
 
 **154. Emergency withdrawal fails due to insufficient contract balance**
 - **D:** emergency withdrawal path assumes contract holds sufficient assets, but partial withdrawals or external drains leave insufficient balance, causing revert when users need funds most.
 - **FP:** emergency path handles partial fulfillment or has priority claim mechanism with clear accounting.
 
-**155. Negative P&L or signed state blocks settlement or cycle close**
-- **D:** settlement/epoch-close function cannot handle negative P&L values, causing panic/overflow that blocks the cycle from completing and freezing all participant funds.
-- **FP:** settlement explicitly handles negative values with signed arithmetic and tested edge cases.
+**155. Deficit/socialization branch unreachable during settlement**
+- **D:** settlement path includes nominal deficit handling in design but implementation never reaches socialization/debt branch under negative outcomes, causing hard revert and stalled cycle close.
+- **FP:** deficit branch is reachable and integration-tested across negative settlement scenarios.
 
-**156. Swap or liquidity fee parameter accepted without upper bound**
-- **D:** fee parameter (basis points, percentage) passed to swap/liquidity function without max bound validation; extreme values (>100%, >10000 BPS) enable fund extraction.
-- **FP:** fee parameter validated against explicit maximum (e.g., `fee_bps <= 1000`) at setter and usage site.
+**156. Fee unit-domain mismatch between setter and consumer**
+- **D:** fee configured in one unit domain (for example BPS) but consumed in another (percent/WAD), causing systematic over/under-charging despite bounded input values.
+- **FP:** shared fee unit constant and conversion helpers are enforced at setter and consumer with cross-path tests.

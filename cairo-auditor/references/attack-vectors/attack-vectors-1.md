@@ -128,9 +128,9 @@
 - **D:** `transfer_ownership` or admin transfer accepts any `ContractAddress` without validating the target is a deployed contract or non-zero.
 - **FP:** transfer validates target is non-zero and optionally confirms deployment via class hash check.
 
-**123. Shutdown mode bypass via alternate function path**
-- **D:** contract implements shutdown/fixed mode but an alternate function path (different selector or module) skips the mode check and mutates protected state.
-- **FP:** shared internal gate enforces mode check for all state-mutating paths.
+**123. Forced shutdown override precedence inversion**
+- **D:** contract has inferred mode plus forced/shutdown override, but inferred-mode branch returns early before forced override check, leaving critical paths active when forced shutdown is set.
+- **FP:** forced override is checked first (or centralized) before any inferred-mode branch logic.
 
 **124. Extension or module parity failure on new capability**
 - **D:** new state override or mode (e.g., overwrite shutdown) implemented in core but not propagated to extension/oracle/adapter modules that also enforce the same state.
@@ -162,8 +162,8 @@
 
 **131. Proxy storage layout collision after class replacement**
 - **D:** new implementation class uses storage slots that collide with proxy-level state (admin slot, implementation slot), corrupting proxy metadata.
-- **FP:** implementation uses ERC-7201 namespaced storage or explicitly avoids proxy-reserved slot ranges.
+- **FP:** implementation uses explicit non-overlapping Starknet storage namespaces/substorage roots and preserves proxy-reserved metadata invariants.
 
-**132. Access check timing allows partial state mutation before revert**
-- **D:** function performs partial storage writes before reaching the access control assertion, leaving dirty state if the assertion is caught by a try/catch caller.
-- **FP:** access check is the first operation in the function, before any state mutation.
+**132. Authorization/policy check occurs after state mutation on non-reverting error path**
+- **D:** function writes critical state before auth/policy check or before a non-reverting `Err` return branch, allowing inconsistent state when the operation reports failure without transaction revert.
+- **FP:** auth/policy checks execute before any state write and failure paths do not persist partial mutations.

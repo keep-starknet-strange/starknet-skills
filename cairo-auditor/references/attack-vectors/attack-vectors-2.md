@@ -120,13 +120,13 @@
 - **D:** privileged flow catches/logs external error but keeps partial state updates.
 - **FP:** privileged path either reverts or atomically compensates all partial state.
 
-**133. Unchecked ERC20 transfer return enables silent failure**
-- **D:** `transfer` or `transfer_from` return value (bool) not checked; non-reverting token returns `false` but caller proceeds as if transfer succeeded.
-- **FP:** return value explicitly asserted `true`, or token is known-reverting (OZ standard) and documented.
+**133. Safe-dispatcher error branch ignored with state progression**
+- **D:** call through a safe dispatcher returns `Result::Err(panic_data)` but caller ignores `Err` and continues mutating state as if external action succeeded.
+- **FP:** every `Err` branch reverts or compensates before any dependent state transition.
 
-**134. call_contract_syscall error swallowed by pattern mismatch**
-- **D:** `call_contract_syscall` error handling uses pattern that Cairo cannot catch (e.g., assertion failures cannot be caught by `match` on `Result`), silently proceeding on failure.
-- **FP:** error handling uses supported patterns, or function is documented as infallible for the target.
+**134. Safe-dispatcher fallback assumes catchability of non-catchable syscall failures**
+- **D:** fallback logic assumes all external call failures are catchable, but cases like non-existent contract/class hash or Cairo 0 edge paths revert the entire transaction and bypass fallback.
+- **FP:** fallback logic is limited to documented catchable failure modes and pre-validates contract/class existence where needed.
 
 **135. Deserialization failure in try_* syscall wrapper causes unexpected revert**
 - **D:** `try_call_contract` or similar wrapper reverts on deserialization failure of the return value instead of returning an error, breaking fallback logic.
@@ -140,25 +140,25 @@
 - **D:** token bridge activation requires multiple transactions (deploy + register + configure); between steps, another actor can front-run or interfere with an incomplete activation.
 - **FP:** activation is atomic or protected by a pending-state lock that blocks interference.
 
-**138. Non-standard token support gap (missing decimals, fee-on-transfer)**
-- **D:** protocol calls `decimals()` or assumes standard transfer semantics, but token lacks optional function or deducts fee on transfer, causing accounting errors or reverts.
-- **FP:** token is validated at registration for required interface support, or accounting uses balance-delta instead of nominal amounts.
+**138. Optional token metadata/interface assumption without capability check**
+- **D:** protocol assumes optional token metadata/interface functions (for example `decimals()`) are present and trusted, causing runtime failure or incorrect normalization on non-standard tokens.
+- **FP:** token capability is validated at registration and missing optional interfaces are handled explicitly.
 
 **139. Cross-chain bridge missing rate limit or circuit breaker**
 - **D:** single bridge transaction can drain the entire locked pool with no per-transaction cap or pause mechanism.
 - **FP:** bridge enforces per-tx and per-period caps with automatic pause on anomalous volume.
 
-**140. Batch call order dependency on mutable shared state**
-- **D:** batched/multicall operations share mutable state (balances, nonces, allowances); reordering calls within the batch yields different outcomes, enabling exploit sequences.
-- **FP:** batch enforces deterministic ordering or operations are commutative on shared state.
+**140. Batch executor reuses stale external-state cache across legs**
+- **D:** batched execution caches external state (allowance/balance/config) from an early leg and reuses it after intervening calls mutate that state, enabling incorrect authorization/accounting.
+- **FP:** each leg refreshes external state at point-of-use or invalidates cache on every state-changing leg.
 
 **141. Excessive message or output size causes DoS in state update**
 - **D:** bridge `update_state` or message handler does not validate input array sizes; excessively large payloads cause out-of-gas or computation overflow.
 - **FP:** handler enforces maximum array/message size bounds before processing.
 
-**142. Dispatch to user-controlled class hash without allowlist**
-- **D:** `library_call_syscall` or dispatcher target class hash derived from user input without verifying against an allowlist of known implementations.
-- **FP:** class hash is validated against immutable or governance-controlled allowlist before dispatch.
+**142. Registry-to-dispatch TOCTOU on class-hash validation**
+- **D:** class hash is validated only at registration time, but dispatch uses a mutable registry value later without re-validating against current allowlist/snapshot.
+- **FP:** dispatch re-validates class hash against immutable snapshot/allowlist at execution time.
 
 **143. Callback during token transfer enables cross-protocol reentrancy**
 - **D:** ERC721/ERC1155 safe transfer triggers receiver callback; receiving contract re-enters a different protocol function that reads stale state from the transferring contract.

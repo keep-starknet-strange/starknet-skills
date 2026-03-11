@@ -156,9 +156,9 @@
 - **D:** calling the same state-update function again (e.g., `start_cancellation`, `start_withdrawal`) overwrites the original timestamp, resetting or extending the waiting period.
 - **FP:** repeated call blocked while pending, or first timestamp is immutable until completion/expiry.
 
-**166. Silent failure path missing event emission for off-chain tracking**
-- **D:** operation fails (token activation, message processing, withdrawal) but no event is emitted, leaving off-chain indexers unaware of the failure state.
-- **FP:** all terminal outcomes (success and failure) emit distinct events with relevant context.
+**166. Non-reverting failure path lacks durable failure signal**
+- **D:** operation records a non-reverting failure state (for example status flag/partial retry state) but emits no event or durable queryable marker, leaving off-chain systems blind.
+- **FP:** non-reverting terminal outcomes emit explicit failure events or write a queryable failure-state record.
 
 **167. Cross-function state inconsistency via unsynchronized counters**
 - **D:** two functions read/write the same logical counter (e.g., `notesCount`) but one uses stale or differently-scoped state, producing inconsistent results across queries.
@@ -168,10 +168,10 @@
 - **D:** zero-knowledge proof, encrypted note, or commitment valid for one action (deposit) can be replayed for a different action (withdrawal) because the action type is not bound in the proof domain.
 - **FP:** proof/commitment domain explicitly includes action discriminator preventing cross-action replay.
 
-**169. ContractAddress type cannot represent full 32-byte external identifiers**
-- **D:** cross-chain or interop path receives 32-byte address but stores it as `ContractAddress` (31 bytes / 251 bits), silently truncating high bits and creating address collision or loss.
-- **FP:** external identifiers stored as `felt252` or `u256` with explicit domain conversion at protocol boundaries.
+**169. ContractAddress boundary mismatch for 32-byte external identifiers**
+- **D:** cross-chain or interop path receives 32-byte identifier but stores it as `ContractAddress`/`felt252` (field-prime bounded, ~252-bit domain), causing invalid mapping/collision when identifier is outside Starknet address domain.
+- **FP:** external identifiers are validated and stored in an explicit 256-bit domain (`u256`/byte array) with deliberate conversion at protocol boundaries.
 
-**170. Aggregation module misfunctions past element count boundary**
-- **D:** aggregation ISM, batch verifier, or multi-validator module uses `u8` or fixed-size counter for element count; exceeding 255 (or similar boundary) causes silent overflow and incorrect verification.
-- **FP:** element count uses appropriately sized type (`u32`/`u64`) or enforces explicit maximum with revert on overflow.
+**170. Aggregation element-count truncation via unsafe narrow/wrapping conversion**
+- **D:** aggregation module narrows validator/message count into small integer (`u8`) via wrapping/unchecked conversion; counts above boundary are truncated and quorum checks mis-evaluate.
+- **FP:** count stays in sufficiently large type (`u32`/`u64`) or narrowing is guarded by explicit upper-bound assertion with fail-fast revert.
