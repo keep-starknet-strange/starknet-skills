@@ -69,7 +69,7 @@ REPO_ROOT="<repo-root>"
 > /tmp/cairo-audit-files.txt
 for f in "$@"; do
   [ -z "$f" ] && continue
-  ABS_PATH=$(python3 -c 'import os,sys; print(os.path.abspath(sys.argv[1]))' "$f")
+  ABS_PATH=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$f")
   case "$ABS_PATH" in
     "$REPO_ROOT"/*) ;;
     *) continue ;;
@@ -116,6 +116,7 @@ Before running this command, substitute placeholders (`{refs_root}`, `{repo-root
 REFS="{refs_root}"
 SRC="{repo-root}"
 IN_SCOPE="/tmp/cairo-audit-files.txt"
+set -euo pipefail
 
 build_code_block() {
   while IFS= read -r f; do
