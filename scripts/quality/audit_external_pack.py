@@ -58,7 +58,7 @@ def _repo_ref_token(ref: str) -> str:
     return clean[:24] or "no-ref"
 
 
-def _resolve_repo_file(repo_root: Path, args: argparse.Namespace) -> tuple[Path, str]:
+def _resolve_repo_file(repo_root: Path, output_dir: Path, args: argparse.Namespace) -> tuple[Path, str]:
     if args.repos_file:
         path = Path(args.repos_file)
         if not path.is_absolute():
@@ -68,7 +68,7 @@ def _resolve_repo_file(repo_root: Path, args: argparse.Namespace) -> tuple[Path,
         return path, path.stem
 
     if args.repos:
-        temp_file = (Path(args.output_dir).resolve() / f"{_slug(args.pack)}-inline-repos.txt")
+        temp_file = output_dir / f"{_slug(args.pack)}-inline-repos.txt"
         temp_file.parent.mkdir(parents=True, exist_ok=True)
         temp_file.write_text("\n".join(args.repos) + "\n", encoding="utf-8")
         return temp_file, f"{_slug(args.pack)}-inline"
@@ -342,11 +342,15 @@ def _prepare_stage2(
                 repo_meta = repo_candidates[0]
 
         clone_dir_raw = str(repo_meta.get("clone_dir", "")).strip() if repo_meta else ""
-        repo_clone_dir = (
-            Path(clone_dir_raw).resolve()
-            if clone_dir_raw
-            else (workdir / repo_slug.replace("/", "__"))
-        )
+        if clone_dir_raw:
+            clone_dir_path = Path(clone_dir_raw)
+            repo_clone_dir = (
+                clone_dir_path.resolve()
+                if clone_dir_path.is_absolute()
+                else (workdir / clone_dir_path).resolve()
+            )
+        else:
+            repo_clone_dir = (workdir / repo_slug.replace("/", "__")).resolve()
         if not repo_clone_dir.exists():
             warning = (
                 f"clone directory missing for actionable repo: {repo_slug} "
@@ -564,7 +568,7 @@ def main() -> int:
         output_dir = (repo_root / output_dir).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    repos_file, source_slug = _resolve_repo_file(repo_root, args)
+    repos_file, source_slug = _resolve_repo_file(repo_root, output_dir, args)
     scan_id = args.scan_id.strip() or f"external-pack-{source_slug}-{date.today().isoformat()}"
     outputs = _build_output_paths(output_dir, scan_id)
 

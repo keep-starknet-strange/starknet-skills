@@ -102,7 +102,10 @@ def load_labels(path: Path) -> list[LabelRow]:
         if isinstance(raw_needs_poc, bool):
             needs_poc = raw_needs_poc
         else:
-            needs_poc = str(raw_needs_poc).strip().lower() in {"1", "true", "yes", "y"}
+            lowered = str(raw_needs_poc).strip().lower()
+            if lowered not in {"1", "0", "true", "false", "yes", "no", "y", "n"}:
+                raise ValueError(f"{path}:{line_no}: invalid needs_poc value")
+            needs_poc = lowered in {"1", "true", "yes", "y"}
         reviewer_primary = str(raw.get("reviewer_1", raw["reviewer"])).strip()
         reviewer_secondary = str(raw.get("reviewer_2", "")).strip()
         security_countable_raw = raw.get("security_countable")

@@ -55,7 +55,10 @@ def load_gold(path: Path) -> list[GoldRow]:
     for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
-        raw = json.loads(line)
+        try:
+            raw = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
         if not isinstance(raw, dict):
             raise ValueError(f"{path}:{line_no}: expected JSON object, got {type(raw).__name__}")
         required = {
@@ -104,7 +107,10 @@ def load_findings(path: Path) -> list[FindingRow]:
     for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
-        raw = json.loads(line)
+        try:
+            raw = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
         if not isinstance(raw, dict):
             raise ValueError(f"{path}:{line_no}: expected JSON object, got {type(raw).__name__}")
         required = {"repo", "ref", "file", "class_id"}
@@ -247,6 +253,9 @@ def _parse_trend_rows(path: Path) -> list[tuple[str, int, int, int, int, float, 
         if len(parts) != 8:
             continue
         rel, tp_raw, fp_raw, new_raw, fn_raw, p_raw, r_raw, date = parts
+        rel = rel.strip()
+        if any(ch in rel for ch in "|\r\n"):
+            continue
         try:
             rows.append(
                 (

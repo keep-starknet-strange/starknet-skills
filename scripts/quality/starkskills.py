@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -32,7 +33,7 @@ class CommandResult:
     stderr: str
 
 
-def _load_config(path: str) -> tuple[dict[str, Any], Path | None]:
+def _load_config(path: str, *, allow_auto_load: bool = True) -> tuple[dict[str, Any], Path | None]:
     candidates: list[Path] = []
     if path:
         p = Path(path)
@@ -44,6 +45,8 @@ def _load_config(path: str) -> tuple[dict[str, Any], Path | None]:
             raise ValueError(f"config path must be a file: {p.as_posix()}")
         candidates.append(p)
     else:
+        if not allow_auto_load:
+            return {}, None
         candidates.append((Path.cwd() / ".starkskills.toml").resolve())
         candidates.append((REPO_ROOT / ".starkskills.toml").resolve())
 
@@ -127,6 +130,18 @@ def _safe_ref_token(ref: str) -> str:
     cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "_", ref.strip())
     cleaned = cleaned.strip("._-")
     return cleaned[:40] if cleaned else "ref"
+
+
+def _validate_probe_url(url: str) -> tuple[bool, str]:
+    value = url.strip()
+    if not value:
+        return False, "models probe url is empty"
+    if any(ch in value for ch in "\r\n"):
+        return False, "models probe url contains invalid newline characters"
+    parsed = urllib.parse.urlparse(value)
+    if parsed.scheme != "https" or not parsed.netloc:
+        return False, "models probe url must be a valid HTTPS URL"
+    return True, value
 
 
 def _remap_external_findings_for_sarif(*, findings_jsonl: str, workdir: Path, output_path: Path) -> Path:
@@ -247,7 +262,7 @@ def _print_doctor_report(rows: list[dict[str, Any]], *, as_json: bool) -> int:
 
 def cmd_doctor(args: argparse.Namespace) -> int:
     try:
-        cfg, cfg_path = _load_config(args.config)
+        cfg, cfg_path = _load_config(args.config, allow_auto_load=not args.probe_models)
     except Exception as exc:
         print(f"ERROR: failed to load config: {exc}", file=sys.stderr)
         return 1
@@ -285,10 +300,27 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
     if args.probe_models:
         default_probe_url = "https://models.github.ai/inference/chat/completions"
-        probe_url = str(
-            os.environ.get("STARKSKILLS_MODELS_PROBE_URL")
-            or _cfg(cfg, "defaults", "models_probe_url", default_probe_url)
-        )
+        env_probe_url = os.environ.get("STARKSKILLS_MODELS_PROBE_URL", "").strip()
+        if env_probe_url:
+            probe_url = env_probe_url
+            probe_source = "env:STARKSKILLS_MODELS_PROBE_URL"
+        elif args.config:
+            probe_url = str(_cfg(cfg, "defaults", "models_probe_url", default_probe_url))
+            probe_source = "explicit-config"
+        else:
+            # Never trust auto-discovered cwd config for token-bearing probe URLs.
+            probe_url = default_probe_url
+            probe_source = "built-in-default"
+        probe_ok, probe_value = _validate_probe_url(probe_url)
+        if not probe_ok:
+            rows.append(
+                {
+                    "name": "github_models_probe",
+                    "status": "warn",
+                    "detail": f"skipped ({probe_value}; source={probe_source})",
+                }
+            )
+            return _print_doctor_report(rows, as_json=args.json)
         if not token:
             rows.append({
                 "name": "github_models_probe",
@@ -303,7 +335,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                 os.devnull,
                 "-w",
                 "%{http_code}",
-                probe_url,
+                probe_value,
                 "-H",
                 "Content-Type: application/json",
                 "-H",
@@ -323,7 +355,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                 rows.append({
                     "name": "github_models_probe",
                     "status": "ok" if code in ok_codes else "warn",
-                    "detail": f"http={code or 'unknown'}",
+                    "detail": f"http={code or 'unknown'} source={probe_source}",
                 })
             except RuntimeError as exc:
                 rows.append({

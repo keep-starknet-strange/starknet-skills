@@ -388,7 +388,8 @@ def scan_repo(
         "repo": spec.slug,
         "url": repo_git_url(spec, git_host),
         "ref": resolved_ref,
-        "clone_dir": repo_dir.as_posix(),
+        # Persist only a stable repo-local identifier; avoid leaking absolute host paths.
+        "clone_dir": _clone_dir_name(spec),
         "all_cairo_files": len(all_files),
         "prod_cairo_files": len(prod_files),
         "prod_hits": len(findings),

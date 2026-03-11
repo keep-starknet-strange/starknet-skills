@@ -518,8 +518,8 @@ def verify_link(label: str, href: str, meta: str) -> str:
 def scorecard_metric(label: str, value: int | float | None) -> str:
     metric_value = fmt_metric(value)
     data_value = ""
-    if isinstance(value, (int, float)):
-        data_value = f' data-value="{value}"'
+    if metric_value:
+        data_value = f' data-value="{e(metric_value)}"'
     return (
         '<article class="score-metric reveal">'
         f'<p>{e(label)}</p>'

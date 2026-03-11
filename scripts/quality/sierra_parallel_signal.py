@@ -20,6 +20,8 @@ from typing import Any
 
 from scan_external_repos import RepoSpec, clone_repo, parse_repo_spec
 
+RepoRefKey = tuple[str, str]
+
 
 @dataclass
 class RepoSignal:
@@ -643,7 +645,7 @@ def _best_artifact_source(artifact_breakdown: Counter[str]) -> str:
     if artifact_breakdown.get("sierra_text", 0) > 0:
         return "sierra_text"
     if artifact_breakdown.get("starknet_artifacts", 0) > 0:
-        return "contract_class"
+        return "starknet_artifacts"
     return "none"
 
 
@@ -654,7 +656,25 @@ def _source_quality(source: str) -> str:
         return "medium"
     if source == "sierra_text":
         return "low"
+    if source == "starknet_artifacts":
+        return "low"
     return "low"
+
+
+def _lookup_repo_ref_value(
+    mapping: dict[RepoRefKey, Any],
+    *,
+    repo: str,
+    ref: str,
+    default: Any,
+) -> Any:
+    key = (repo, ref)
+    if key in mapping:
+        return mapping[key]
+    by_repo = [value for (slug, _row_ref), value in mapping.items() if slug == repo]
+    if len(by_repo) == 1:
+        return by_repo[0]
+    return default
 
 
 def _build_finding_confirmations(
@@ -753,8 +773,8 @@ def analyze_repo(
     repo_dir: Path,
     ref: str,
     allow_build: bool,
-    detector_class_counts: dict[str, Counter[str]],
-    detector_findings_by_repo: dict[str, list[dict[str, object]]],
+    detector_class_counts: dict[RepoRefKey, Counter[str]],
+    detector_findings_by_repo: dict[RepoRefKey, list[dict[str, object]]],
     scarb_timeout_s: float,
 ) -> RepoSignal:
     scarb_projects = find_scarb_projects(repo_dir)
@@ -903,7 +923,12 @@ def analyze_repo(
         }
         analysis_status = "skipped_no_artifacts"
 
-    class_counts = detector_class_counts.get(spec.slug, Counter())
+    class_counts = _lookup_repo_ref_value(
+        detector_class_counts,
+        repo=spec.slug,
+        ref=ref,
+        default=Counter(),
+    )
     confirmation = _build_confirmation(
         class_counts=class_counts,
         marker_counts=marker_counts,
@@ -912,7 +937,12 @@ def analyze_repo(
         signal_observed=signal_observed,
     )
     finding_confirmations = _build_finding_confirmations(
-        finding_rows=detector_findings_by_repo.get(spec.slug, []),
+        finding_rows=_lookup_repo_ref_value(
+            detector_findings_by_repo,
+            repo=spec.slug,
+            ref=ref,
+            default=[],
+        ),
         analysis_status=analysis_status,
         artifacts=artifact_count,
         artifact_breakdown=artifact_breakdown,
@@ -950,23 +980,25 @@ def analyze_repo(
 
 def load_detector_summary(
     path: Path,
-) -> tuple[dict[str, int], dict[str, Counter[str]], dict[str, list[dict[str, object]]]]:
-    per_repo_hits: dict[str, int] = defaultdict(int)
-    per_repo_classes: dict[str, Counter[str]] = defaultdict(Counter)
-    per_repo_findings: dict[str, list[dict[str, object]]] = defaultdict(list)
+) -> tuple[dict[RepoRefKey, int], dict[RepoRefKey, Counter[str]], dict[RepoRefKey, list[dict[str, object]]]]:
+    per_repo_hits: dict[RepoRefKey, int] = defaultdict(int)
+    per_repo_classes: dict[RepoRefKey, Counter[str]] = defaultdict(Counter)
+    per_repo_findings: dict[RepoRefKey, list[dict[str, object]]] = defaultdict(list)
 
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
-        repo = str(row.get("repo", ""))
+        repo = str(row.get("repo", "")).strip()
+        ref = str(row.get("ref", "")).strip()
         class_id = str(row.get("class_id", ""))
         if not repo:
             continue
-        per_repo_hits[repo] += 1
+        key = (repo, ref)
+        per_repo_hits[key] += 1
         if class_id:
-            per_repo_classes[repo][class_id] += 1
-        per_repo_findings[repo].append(
+            per_repo_classes[key][class_id] += 1
+        per_repo_findings[key].append(
             {
                 "finding_id": str(row.get("finding_id", "")).strip(),
                 "file": str(row.get("file", "")).strip(),
@@ -977,8 +1009,8 @@ def load_detector_summary(
 
     return (
         dict(per_repo_hits),
-        {repo: counts for repo, counts in per_repo_classes.items()},
-        {repo: rows for repo, rows in per_repo_findings.items()},
+        {repo_ref: counts for repo_ref, counts in per_repo_classes.items()},
+        {repo_ref: rows for repo_ref, rows in per_repo_findings.items()},
     )
 
 
@@ -987,7 +1019,7 @@ def render_markdown(
     scan_id: str,
     generated_at: str,
     rows: list[RepoSignal],
-    detector_hits: dict[str, int],
+    detector_hits: dict[RepoRefKey, int],
     detector_findings: str,
     allow_build: bool,
 ) -> str:
@@ -1008,7 +1040,14 @@ def render_markdown(
     for row in rows:
         replace = row.marker_counts.get("replace_class_syscall", 0)
         ext_then_write = row.function_signals.get("functions_external_then_write", 0)
-        hits = detector_hits.get(row.repo, 0)
+        hits = int(
+            _lookup_repo_ref_value(
+                detector_hits,
+                repo=row.repo,
+                ref=row.ref,
+                default=0,
+            )
+        )
 
         upgrade_findings = int(row.confirmation.get("upgrade_findings", 0))
         if upgrade_findings == 0:
@@ -1158,9 +1197,9 @@ def main() -> int:
     workdir = Path(args.workdir)
     workdir.mkdir(parents=True, exist_ok=True)
 
-    detector_hits: dict[str, int] = {}
-    detector_class_counts: dict[str, Counter[str]] = {}
-    detector_findings_by_repo: dict[str, list[dict[str, object]]] = {}
+    detector_hits: dict[RepoRefKey, int] = {}
+    detector_class_counts: dict[RepoRefKey, Counter[str]] = {}
+    detector_findings_by_repo: dict[RepoRefKey, list[dict[str, object]]] = {}
     if args.detector_findings_jsonl:
         detector_hits, detector_class_counts, detector_findings_by_repo = load_detector_summary(
             Path(args.detector_findings_jsonl)
@@ -1244,7 +1283,14 @@ def main() -> int:
                 "finding_confirmations": row.finding_confirmations,
                 "errors": row.errors,
                 "build_attempts": row.build_attempts,
-                "detector_hits": detector_hits.get(row.repo, 0),
+                "detector_hits": int(
+                    _lookup_repo_ref_value(
+                        detector_hits,
+                        repo=row.repo,
+                        ref=row.ref,
+                        default=0,
+                    )
+                ),
             }
             for row in rows
         ],
