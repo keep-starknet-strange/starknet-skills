@@ -85,7 +85,7 @@ When `--file-output` is set, save the report to `{repo-root}/security-review-{ti
 | 1 | P0       | [92]       | Critical | <title> |
 | 2 | P1       | [85]       | High     | <title> |
 |   |          |            |          | **Below Confidence Threshold** |
-| 3 | P2       | [70]       | Medium   | <title> |
+| 3 | P2       | [68]       | Medium   | <title> |
 | 4 | P3       | [55]       | Low      | <title> |
 
 ---
