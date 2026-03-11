@@ -946,8 +946,17 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    repo_root = Path(__file__).resolve().parents[2]
     cases_path = Path(args.cases)
     output_path = Path(args.output)
+    if not cases_path.is_absolute():
+        cases_path = (repo_root / cases_path).resolve()
+    else:
+        cases_path = cases_path.resolve()
+    if not output_path.is_absolute():
+        output_path = (repo_root / output_path).resolve()
+    else:
+        output_path = output_path.resolve()
 
     cases = load_cases(cases_path)
     results, totals = run_benchmark(cases)
@@ -975,7 +984,6 @@ def main() -> int:
     output_path.write_text(markdown + "\n", encoding="utf-8")
     saved_output: str | None = None
     if args.save:
-        repo_root = Path(__file__).resolve().parents[2]
         scorecards_dir = repo_root / "evals" / "scorecards"
         scorecards_dir.mkdir(parents=True, exist_ok=True)
         target = scorecards_dir / output_path.name

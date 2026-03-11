@@ -9,9 +9,9 @@ allowed-tools: Bash, Read, Grep, Glob
 ## Quick Start
 
 1. Run skill/router validation:
-   `python scripts/quality/validate_skills.py`
+   `python3 scripts/quality/validate_skills.py`
 2. Run marketplace metadata validation:
-   `python scripts/quality/validate_marketplace.py`
+   `python3 scripts/quality/validate_marketplace.py`
 3. Run Python lint:
    `ruff check scripts/`
 4. Report pass/fail per check with concrete errors.

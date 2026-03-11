@@ -633,12 +633,29 @@ def main() -> int:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(markdown, encoding="utf-8")
+    saved_output: str | None = None
     if args.save:
         scorecards_dir = repo_root / "evals" / "scorecards"
         scorecards_dir.mkdir(parents=True, exist_ok=True)
         target = scorecards_dir / output_path.name
         if output_path.resolve() != target.resolve():
             shutil.copy2(output_path, target)
+        saved_output = target.as_posix()
+
+    print(
+        json.dumps(
+            {
+                "cases": len(cases),
+                "precision": round(prec, 6),
+                "recall": round(rec, 6),
+                "evaluated": evaluated,
+                "skipped": skipped,
+                "output": output_path.as_posix(),
+                "saved_output": saved_output,
+            },
+            ensure_ascii=True,
+        )
+    )
 
     if evaluated == 0:
         if args.allow_empty_evaluated:

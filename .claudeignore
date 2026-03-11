@@ -21,7 +21,7 @@ __pycache__/
 .ruff_cache/
 
 # Lock files and minified
-*.lock
+uv.lock
 *.min.js
 *.min.css
 

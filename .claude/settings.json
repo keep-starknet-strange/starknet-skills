@@ -34,6 +34,7 @@
       "Glob",
       "Grep",
       "Bash(python scripts/quality/*)",
+      "Bash(python3 scripts/quality/*)",
       "Bash(ruff *)",
       "Bash(shellcheck *)",
       "Bash(git status*)",
@@ -43,10 +44,7 @@
       "Bash(ls *)",
       "Bash(pwd)",
       "Bash(which *)",
-      "Bash(wc *)",
-      "Bash(head *)",
-      "Bash(tail *)",
-      "Bash(jq *)"
+      "Bash(wc *)"
     ]
   },
   "hooks": {
@@ -72,7 +70,7 @@
           },
           {
             "type": "command",
-            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE 'cat[[:space:]].*((~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/(\\.ssh|\\.aws|\\.gnupg|\\.docker/config|\\.kube|\\.npmrc|\\.pypirc)|(~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/\\.git-credentials|(^|[[:space:]])\\.env([[:space:]]|$)|/\\.env(\\.|$))'; then echo 'BLOCKED: Reading secrets/credentials via bash is not allowed.' >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE '(cat|head|tail|jq)[[:space:]].*((~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/(\\.ssh|\\.aws|\\.gnupg|\\.docker/config|\\.kube|\\.npmrc|\\.pypirc)|(~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/\\.git-credentials|(^|[[:space:]])\\.env([[:space:]]|$)|/\\.env(\\.|$))'; then echo 'BLOCKED: Reading secrets/credentials via bash is not allowed.' >&2; exit 2; fi"
           }
         ]
       },
@@ -101,7 +99,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\"' 2>/dev/null || true"
+            "command": "if command -v osascript >/dev/null 2>&1; then osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\"' >/dev/null 2>&1; elif command -v notify-send >/dev/null 2>&1; then notify-send 'Claude Code' 'Claude Code needs your attention' >/dev/null 2>&1; elif command -v powershell.exe >/dev/null 2>&1; then powershell.exe -NoProfile -Command \"[void][Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms'); [System.Windows.Forms.MessageBox]::Show('Claude Code needs your attention','Claude Code')\" >/dev/null 2>&1; fi"
           }
         ]
       }
