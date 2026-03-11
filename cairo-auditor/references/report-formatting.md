@@ -65,7 +65,16 @@ When `--file-output` is set, save the report to `{repo-root}/security-review-{ti
 
 ---
 
-< ... all findings ... >
+[P2] **3. <Title (below threshold example)>**
+
+`Class: CLASS_ID` · `file.cairo:line` · Confidence: 68 · Severity: Medium
+
+**Description**
+<One paragraph: exploit path and impact.>
+
+---
+
+< ... remaining findings ... >
 
 ---
 
@@ -90,19 +99,19 @@ When `--file-output` is set, save the report to `{repo-root}/security-review-{ti
 - Follow the template above exactly.
 - Sort findings by priority (`P0` first); within each priority tier, sort by confidence (highest first).
 - Findings below threshold (confidence < 75) get a description but no **Fix** block and no **Required Tests** block.
-- Do not re-draft or re-describe agent findings — print them directly.
+- Preserve agent substance verbatim where possible, but normalize into this canonical structure/order (heading, metadata line, Description/Fix/Required Tests blocks as applicable).
 - Insert the **Below Confidence Threshold** separator row in the Findings Index.
 - Findings that fail FP gate must be dropped entirely and not reported.
 
 ## Finding Template (per finding)
 
-Each finding must include:
+Use this exact per-finding structure:
 
-- `[P{priority}] **{title}**`
-- `Class: {class_id}` · `{file}:{line}` · `Confidence: {score}` · `Severity: {severity}`
-- `Description:` one paragraph with concrete exploit path and impact.
-- `Fix:` diff block (only for confidence >= 75).
-- `Required Tests:` regression + guard test descriptions (only for confidence >= 75).
+- `[P{priority}] **{index}. {title}**`
+- `` `Class: {class_id}` · `{file}:{line}` · Confidence: {score} · Severity: {severity} ``
+- `**Description**` then one paragraph with concrete exploit path and impact.
+- `**Fix**` then a `diff` block (only for confidence >= 75).
+- `**Required Tests**` then bullet list (only for confidence >= 75).
 
 ## Priority Mapping
 
