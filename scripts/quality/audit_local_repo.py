@@ -358,6 +358,11 @@ def _md_escape_path(path: str) -> str:
     return path.replace("|", "&#124;").replace("`", "'")
 
 
+def _md_escape_cell(value: str) -> str:
+    """Escape generic markdown table cell content."""
+    return value.replace("|", "&#124;").replace("`", "'").replace("\n", " ")
+
+
 def _existing_dir(value: str) -> Path:
     path = Path(value).resolve()
     if not path.exists() or not path.is_dir():
@@ -504,13 +509,16 @@ def _scan_local(repo_root: Path, repo_slug: str, ref: str, excluded_markers: tup
 
 def _render_sierra_md(sierra: dict[str, object]) -> list[str]:
     """Render Sierra confirmation section as markdown lines."""
+    projects_built = int(sierra.get("projects_built", 0) or 0)
+    projects_total = int(sierra.get("projects_total", 0) or 0)
+    artifacts = int(sierra.get("artifacts", 0) or 0)
     lines: list[str] = [
         "## Sierra Confirmation",
         "",
         "Sierra IR used as auxiliary confirmation for selected source-level classes.",
         "",
-        f"- Projects built/total: {sierra['projects_built']}/{sierra['projects_total']}",
-        f"- Artifacts parsed: {sierra['artifacts']}",
+        f"- Projects built/total: {projects_built}/{projects_total}",
+        f"- Artifacts parsed: {artifacts}",
     ]
     rc = sierra.get("marker_counts", {})
     fn = sierra.get("function_signals", {})
@@ -552,7 +560,7 @@ def _render_markdown(
         "## Scope", "",
         "| Aspect | Value |",
         "|--------|-------|",
-        f"| **Scan ID** | `{scan_id}` |",
+        f"| **Scan ID** | `{_md_escape_cell(scan_id)}` |",
         "| **Mode** | deterministic (regex-based detectors) |",
         f"| **Files reviewed** | {summary.get('prod_cairo_files', 0)} prod ({summary.get('all_cairo_files', 0)} total) |",
         f"| **Files with findings** | {files_str} |",
@@ -575,6 +583,8 @@ def _render_markdown(
         if count > 0:
             lines.append(f"| {_SEVERITY_LABELS.get(sev, sev)} | {count} |")
     lines += [f"| **Total** | **{total}** |", ""]
+
+    sorted_findings: list[dict[str, object]] = []
 
     # Findings grouped by severity
     if findings:
