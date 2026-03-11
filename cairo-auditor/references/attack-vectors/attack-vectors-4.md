@@ -119,3 +119,59 @@
 **120. Cross-module invariant gap after dependency swap**
 - **D:** dependency swap updates pointer successfully but does not revalidate post-swap invariants across tightly-coupled modules, leaving inconsistent cross-module state.
 - **FP:** swap path performs explicit post-swap invariant revalidation across coupled modules and aborts on inconsistency.
+
+**157. Storage key collision via duplicate token or pool identifiers**
+- **D:** adding a pool/token with the same identifier (address, denomination) overwrites the existing mapping entry silently, corrupting prior state.
+- **FP:** registration path checks for existing entry and reverts or uses unique composite key.
+
+**158. Dynamic felt252 array storage with incorrect size tracking**
+- **D:** `StoreFelt252Array` or manual array storage writes elements but stores incorrect length, causing reads to return truncated or out-of-bounds data.
+- **FP:** array length updated atomically with element writes and validated on read.
+
+**159. Bytes or felt encoding accepts invalid input without validation**
+- **D:** `Bytes` type or raw felt span accepted from external input without validating encoding (e.g., non-zero padding, invalid UTF-8, oversized elements), causing downstream decode failures.
+- **FP:** input validation at boundary rejects malformed encoding before storage or processing.
+
+**160. Array element removal leaves stale reference or index gap**
+- **D:** removing element from storage array (swap-and-pop or shift) does not update all secondary indices/references, leaving stale pointers (e.g., lock ID array after unlock).
+- **FP:** removal atomically updates all dependent indices and validates consistency.
+
+**161. State counter not updated in secondary function path**
+- **D:** primary function updates a state counter (e.g., `notesCount`, `totalDeposits`) but secondary function that also modifies the underlying data skips the counter update.
+- **FP:** all mutation paths update the shared counter, enforced by shared internal helper.
+
+**162. Fiat-Shamir challenge omits public input binding in proof composition**
+- **D:** challenge derivation in zero-knowledge proof composition omits critical public inputs (bit proofs, commitments, statement components), allowing proof forgery via input substitution.
+- **FP:** challenge hash includes all public inputs, statement components, and proof-stream commitments per protocol specification.
+
+**163. Signature replay via omitted nonce or commitment binding**
+- **D:** signed payload (encrypted notes, transfer authorization) does not bind to a unique nonce or commitment, allowing the same signature to authorize multiple distinct operations.
+- **FP:** signature domain includes monotonic nonce, unique commitment hash, and operation-specific context.
+
+**164. Multisig or aggregation ISM allows duplicate signatures**
+- **D:** multi-signature verification (ISM, multisig wallet) counts duplicate signatures from the same signer toward the threshold, allowing single signer to reach quorum.
+- **FP:** verification deduplicates signers before counting, or enforces strictly ascending signer order.
+
+**165. Repeated state update overwrites pending timestamp or deadline**
+- **D:** calling the same state-update function again (e.g., `start_cancellation`, `start_withdrawal`) overwrites the original timestamp, resetting or extending the waiting period.
+- **FP:** repeated call blocked while pending, or first timestamp is immutable until completion/expiry.
+
+**166. Silent failure path missing event emission for off-chain tracking**
+- **D:** operation fails (token activation, message processing, withdrawal) but no event is emitted, leaving off-chain indexers unaware of the failure state.
+- **FP:** all terminal outcomes (success and failure) emit distinct events with relevant context.
+
+**167. Cross-function state inconsistency via unsynchronized counters**
+- **D:** two functions read/write the same logical counter (e.g., `notesCount`) but one uses stale or differently-scoped state, producing inconsistent results across queries.
+- **FP:** shared counter accessed through single internal getter/setter with consistent scope.
+
+**168. Proof or commitment reuse across distinct protocol actions**
+- **D:** zero-knowledge proof, encrypted note, or commitment valid for one action (deposit) can be replayed for a different action (withdrawal) because the action type is not bound in the proof domain.
+- **FP:** proof/commitment domain explicitly includes action discriminator preventing cross-action replay.
+
+**169. ContractAddress type cannot represent full 32-byte external identifiers**
+- **D:** cross-chain or interop path receives 32-byte address but stores it as `ContractAddress` (31 bytes / 251 bits), silently truncating high bits and creating address collision or loss.
+- **FP:** external identifiers stored as `felt252` or `u256` with explicit domain conversion at protocol boundaries.
+
+**170. Aggregation module misfunctions past element count boundary**
+- **D:** aggregation ISM, batch verifier, or multi-validator module uses `u8` or fixed-size counter for element count; exceeding 255 (or similar boundary) causes silent overflow and incorrect verification.
+- **FP:** element count uses appropriately sized type (`u32`/`u64`) or enforces explicit maximum with revert on overflow.
