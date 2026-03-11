@@ -119,3 +119,51 @@
 **110. Reciprocal pricing missing zero/underflow guards**
 - **D:** inverse price math executes without zero-floor and bound checks.
 - **FP:** reciprocal path validates non-zero numerator/denominator and bounds.
+
+**145. Felt252 range violation via unbounded parameter**
+- **D:** parameter passed to cryptographic function, bit operation, or storage derivation is not bounds-checked against safe range below felt252 field prime, enabling wrap-around or invalid proof inputs.
+- **FP:** explicit range assertion (e.g., `value < 2^64`, `bit_size < 252`) enforced before use.
+
+**146. Modulo arithmetic edge case causing index wrap or overwrite**
+- **D:** index derived via modulo (`value % CAPACITY`) wraps to a previously used slot, overwriting pending state (e.g., root history ring buffer).
+- **FP:** modulo-derived index checked for collision with occupied slot, or monotonic index prevents overwrite.
+
+**147. Collected fee balance stuck with no withdrawal mechanism**
+- **D:** contract collects fees (transfer-in on operations) but exposes no function to withdraw accumulated fee balance, permanently locking funds.
+- **FP:** dedicated fee withdrawal function exists with appropriate access control.
+
+**148. Fee hook or callback always reverts blocking operation**
+- **D:** fee collection path delegates to hook/callback that unconditionally reverts (wrong interface, missing implementation, or incorrect return value), blocking all fee-bearing operations.
+- **FP:** fee hook is validated at registration or has a bypass/fallback for misconfigured hooks.
+
+**149. First-depositor vault share inflation attack**
+- **D:** first depositor mints minimal shares then donates assets directly, inflating share price so subsequent depositors receive zero shares for non-trivial deposits.
+- **FP:** vault enforces minimum initial deposit, uses virtual shares/assets offset, or dead shares mechanism.
+
+**150. Instruction sequence interaction causing negative balance state**
+- **D:** specific combination of batch instructions (borrow + swap + repay) creates intermediate negative balance that either reverts unexpectedly or underflows storage.
+- **FP:** batch executor validates intermediate invariants between instructions, or instruction ordering is constrained.
+
+**151. Staking reward front-run by new depositor before checkpoint**
+- **D:** reward distribution checkpoint occurs after new stake is recorded, allowing just-in-time depositor to claim share of pending rewards without contributing to the earning period.
+- **FP:** checkpoint/accumulator updated before new stake is recorded, or time-weighted distribution prevents instantaneous dilution.
+
+**152. Interest or reward accrual uses stale cached timestamp**
+- **D:** accrual math reads timestamp from validation phase (or cached state) instead of refreshing at execution boundary, miscalculating duration.
+- **FP:** accrual reads fresh execution-phase timestamp and tests for validation-vs-execution discrepancy.
+
+**153. Batch operation bypasses cumulative limit while per-item passes**
+- **D:** each item in a batch passes individual limit check, but the aggregate batch exceeds the policy limit (e.g., per-item spending cap vs total daily cap).
+- **FP:** both per-item and cumulative aggregate limits are enforced within the batch.
+
+**154. Emergency withdrawal fails due to insufficient contract balance**
+- **D:** emergency withdrawal path assumes contract holds sufficient assets, but partial withdrawals or external drains leave insufficient balance, causing revert when users need funds most.
+- **FP:** emergency path handles partial fulfillment or has priority claim mechanism with clear accounting.
+
+**155. Negative P&L or signed state blocks settlement or cycle close**
+- **D:** settlement/epoch-close function cannot handle negative P&L values, causing panic/overflow that blocks the cycle from completing and freezing all participant funds.
+- **FP:** settlement explicitly handles negative values with signed arithmetic and tested edge cases.
+
+**156. Swap or liquidity fee parameter accepted without upper bound**
+- **D:** fee parameter (basis points, percentage) passed to swap/liquidity function without max bound validation; extreme values (>100%, >10000 BPS) enable fund extraction.
+- **FP:** fee parameter validated against explicit maximum (e.g., `fee_bps <= 1000`) at setter and usage site.
