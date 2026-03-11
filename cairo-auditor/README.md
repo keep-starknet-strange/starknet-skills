@@ -31,17 +31,19 @@ Not a substitute for a formal audit — but the check you should never skip.
 
 ```bash
 git clone https://github.com/keep-starknet-strange/starknet-skills.git \
-  && mkdir -p ~/.claude/commands \
-  && cp -r starknet-skills/cairo-auditor ~/.claude/commands/cairo-auditor
+  && mkdir -p ~/.claude/commands/cairo-auditor \
+  && cp -R starknet-skills/cairo-auditor/. ~/.claude/commands/cairo-auditor/
 ```
 
-**Cursor:**
+**Cursor (project-local rules):**
 
 ```bash
 git clone https://github.com/keep-starknet-strange/starknet-skills.git \
-  && mkdir -p ~/.cursor/skills \
-  && cp -r starknet-skills/cairo-auditor ~/.cursor/skills/cairo-auditor
+  && mkdir -p .cursor/rules/cairo-auditor \
+  && cp -R starknet-skills/cairo-auditor/. .cursor/rules/cairo-auditor/
 ```
+
+Cursor currently uses project-local rule files/directories. There is no official global `~/.cursor/skills` install path for this package.
 
 **Claude Code Plugin Marketplace:**
 
@@ -55,9 +57,9 @@ git clone https://github.com/keep-starknet-strange/starknet-skills.git \
 ```bash
 cd starknet-skills && git pull
 # Claude Code CLI:
-cp -r cairo-auditor ~/.claude/commands/cairo-auditor
-# Cursor:
-cp -r cairo-auditor ~/.cursor/skills/cairo-auditor
+cp -R cairo-auditor/. ~/.claude/commands/cairo-auditor/
+# Cursor project-local rules:
+cp -R cairo-auditor/. .cursor/rules/cairo-auditor/
 ```
 
 ## Usage
@@ -87,7 +89,7 @@ python3 scripts/quality/audit_local_repo.py \
 
 ## Example output
 
-```
+```text
 [P0] 1. Ungated Upgrade Path
   NO_ACCESS_CONTROL_MUTATION · src/contracts/account.cairo:42 · Confidence: 92
 
@@ -138,7 +140,7 @@ Additional quality signals:
 
 ## Structure
 
-```
+```text
 cairo-auditor/
   SKILL.md                     # 4-turn orchestration contract
   agents/
