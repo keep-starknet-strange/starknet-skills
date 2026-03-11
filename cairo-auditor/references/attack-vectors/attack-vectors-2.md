@@ -119,3 +119,51 @@
 **100. Error-logging without rollback in privileged path**
 - **D:** privileged flow catches/logs external error but keeps partial state updates.
 - **FP:** privileged path either reverts or atomically compensates all partial state.
+
+**133. Unchecked ERC20 transfer return enables silent failure**
+- **D:** `transfer` or `transfer_from` return value (bool) not checked; non-reverting token returns `false` but caller proceeds as if transfer succeeded.
+- **FP:** return value explicitly asserted `true`, or token is known-reverting (OZ standard) and documented.
+
+**134. call_contract_syscall error swallowed by pattern mismatch**
+- **D:** `call_contract_syscall` error handling uses pattern that Cairo cannot catch (e.g., assertion failures cannot be caught by `match` on `Result`), silently proceeding on failure.
+- **FP:** error handling uses supported patterns, or function is documented as infallible for the target.
+
+**135. Deserialization failure in try_* syscall wrapper causes unexpected revert**
+- **D:** `try_call_contract` or similar wrapper reverts on deserialization failure of the return value instead of returning an error, breaking fallback logic.
+- **FP:** wrapper handles both call failure and decode failure paths, or return type is guaranteed by target ABI.
+
+**136. L1/L2 message ordering gap enables blocking attack**
+- **D:** `update_state` or L1 handler processes messages sequentially; a single malformed or oversized message blocks all subsequent messages in the batch.
+- **FP:** messages are processed independently with per-message error isolation, or batch validation rejects invalid entries before processing.
+
+**137. Race condition in multi-step token activation**
+- **D:** token bridge activation requires multiple transactions (deploy + register + configure); between steps, another actor can front-run or interfere with an incomplete activation.
+- **FP:** activation is atomic or protected by a pending-state lock that blocks interference.
+
+**138. Non-standard token support gap (missing decimals, fee-on-transfer)**
+- **D:** protocol calls `decimals()` or assumes standard transfer semantics, but token lacks optional function or deducts fee on transfer, causing accounting errors or reverts.
+- **FP:** token is validated at registration for required interface support, or accounting uses balance-delta instead of nominal amounts.
+
+**139. Cross-chain bridge missing rate limit or circuit breaker**
+- **D:** single bridge transaction can drain the entire locked pool with no per-transaction cap or pause mechanism.
+- **FP:** bridge enforces per-tx and per-period caps with automatic pause on anomalous volume.
+
+**140. Batch call order dependency on mutable shared state**
+- **D:** batched/multicall operations share mutable state (balances, nonces, allowances); reordering calls within the batch yields different outcomes, enabling exploit sequences.
+- **FP:** batch enforces deterministic ordering or operations are commutative on shared state.
+
+**141. Excessive message or output size causes DoS in state update**
+- **D:** bridge `update_state` or message handler does not validate input array sizes; excessively large payloads cause out-of-gas or computation overflow.
+- **FP:** handler enforces maximum array/message size bounds before processing.
+
+**142. Dispatch to user-controlled class hash without allowlist**
+- **D:** `library_call_syscall` or dispatcher target class hash derived from user input without verifying against an allowlist of known implementations.
+- **FP:** class hash is validated against immutable or governance-controlled allowlist before dispatch.
+
+**143. Callback during token transfer enables cross-protocol reentrancy**
+- **D:** ERC721/ERC1155 safe transfer triggers receiver callback; receiving contract re-enters a different protocol function that reads stale state from the transferring contract.
+- **FP:** cross-protocol reentrancy guard or effects-before-interaction pattern across all dependent state.
+
+**144. Bridge message hash collision via weak domain separation**
+- **D:** bridge message hash omits chain ID, contract address, or nonce from hash preimage, allowing cross-chain or same-chain message replay.
+- **FP:** message hash includes full domain: source chain, target chain, sender, receiver, nonce, and payload.
