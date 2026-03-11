@@ -4,10 +4,25 @@ description: Run all local quality checks before submitting a PR
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
-Run all local quality checks and report results:
+# Validate Skill
 
-1. `python scripts/quality/validate_skills.py`
-2. `python scripts/quality/validate_marketplace.py`
-3. `ruff check scripts/`
+## Quick Start
 
-Report pass/fail for each check with specific errors. If a check fails, suggest the fix but ask before applying.
+1. Run skill/router validation:
+   `python scripts/quality/validate_skills.py`
+2. Run marketplace metadata validation:
+   `python scripts/quality/validate_marketplace.py`
+3. Run Python lint:
+   `ruff check scripts/`
+4. Report pass/fail per check with concrete errors.
+5. Follow the full workflow: [Validation Workflow](./workflow.md)
+
+## When to Use
+
+- Before opening or merging any PR.
+- After changing SKILL.md, references, scripts, or site generation code.
+
+## When NOT to Use
+
+- You need dataset schema validation only (use audit-pipeline validators).
+- The environment is missing required dependencies and cannot run checks.

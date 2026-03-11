@@ -3,7 +3,8 @@ paths:
   - "scripts/**/*.py"
 ---
 
-Python script conventions:
+# Python Script Conventions
+
 - Python 3.12, ruff defaults (no pyproject.toml overrides)
 - Run `ruff check` on changed files before committing
 - Scripts in scripts/quality/ are the primary validation tools

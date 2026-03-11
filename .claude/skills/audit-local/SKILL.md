@@ -5,10 +5,30 @@ allowed-tools: Bash, Read, Grep, Glob
 argument-hint: <path-to-cairo-repo>
 ---
 
-Run a local audit on the Cairo repository at $ARGUMENTS:
+# Audit Local Skill
 
-1. Verify the path exists and contains `.cairo` files
-2. Run `python scripts/quality/audit_local_repo.py --repo-root $ARGUMENTS --scan-id local-$(date +%s)`
-3. Group findings by severity: Critical > High > Medium > Low > Info
-4. For each finding show: title, severity, file location, recommended fix
-5. Summarize: total by severity, top 3 critical issues
+## Quick Start
+
+1. Validate and sanitize the target repo path:
+   `REPO="$ARGUMENTS"; [ -n "$REPO" ] && [ -d "$REPO" ] && ! echo "$REPO" | grep -qE '[;&|$()]'`
+2. Run the local deterministic audit:
+   `python scripts/quality/audit_local_repo.py --repo-root "$REPO" --scan-id "local-$(date +%s)"`
+3. Report findings grouped by severity (`Critical > High > Medium > Low > Info`) with title, location, and fix.
+4. Summarize totals and top-3 highest-severity findings.
+5. Follow the full workflow: [Audit Local Workflow](./workflow.md)
+
+## When to Use
+
+- You need a fast deterministic baseline scan on a local Cairo repo.
+- You want report artifacts (`.json`, `.md`, optional findings JSONL) for triage.
+
+## When NOT to Use
+
+- You need deep multi-agent reasoning over complex economic logic.
+- You are auditing non-Cairo targets or unrelated infrastructure.
+
+## Rationalizations to Reject
+
+- "No findings means secure."
+- "It compiled, so access control must be correct."
+- "This can wait until after merge."

@@ -12,8 +12,11 @@
       "Bash(git clean -f*)",
       "Bash(pip install *--break-system-packages*)",
       "Edit(~/.bashrc)",
+      "Write(~/.bashrc)",
       "Edit(~/.zshrc)",
+      "Write(~/.zshrc)",
       "Edit(~/.ssh/**)",
+      "Write(~/.ssh/**)",
       "Read(~/.ssh/**)",
       "Read(~/.gnupg/**)",
       "Read(~/.aws/**)",
@@ -49,23 +52,23 @@
         "hooks": [
           {
             "type": "command",
-            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qiE '(^|;[[:space:]]*|&&[[:space:]]*|[|][|][[:space:]]*|[|][[:space:]]*)rm[[:space:]]' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[rR]|--recursive' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[fF]|--force'; then echo 'BLOCKED: rm -rf is not allowed. Remove files individually or use trash.' >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE '(^|;[[:space:]]*|&&[[:space:]]*|[|][|][[:space:]]*|[|][[:space:]]*)rm[[:space:]]' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[rR]|--recursive' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[fF]|--force'; then echo 'BLOCKED: rm -rf is not allowed. Remove files individually or use trash.' >&2; exit 2; fi"
           },
           {
             "type": "command",
-            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qE 'git[[:space:]]+push.*(main|master)'; then echo 'BLOCKED: Do not push directly to main/master. Use a feature branch.' >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE '(^|[[:space:]])git[[:space:]]+push([[:space:]]+[^[:space:]]+)*([[:space:]]+(refs/heads/)?(main|master)([[:space:]]|$)|[[:space:]]+[^[:space:]]+:(refs/heads/)?(main|master)([[:space:]]|$))'; then echo 'BLOCKED: Do not push directly to main/master. Use a feature branch.' >&2; exit 2; fi"
           },
           {
             "type": "command",
-            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qE 'git[[:space:]]+reset[[:space:]]+--hard'; then echo 'BLOCKED: git reset --hard is not allowed.' >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE 'git[[:space:]]+reset[[:space:]]+--hard'; then echo 'BLOCKED: git reset --hard is not allowed.' >&2; exit 2; fi"
           },
           {
             "type": "command",
-            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qE 'git[[:space:]]+push.*(--force|-f)'; then echo 'BLOCKED: Force push is not allowed.' >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE '(^|[[:space:]])git[[:space:]]+push([[:space:]]|$).*([[:space:]]--force(-with-lease)?([[:space:]]|$)|[[:space:]]-f([[:space:]]|$))'; then echo 'BLOCKED: Force push is not allowed.' >&2; exit 2; fi"
           },
           {
             "type": "command",
-            "command": "CMD=$(jq -r '.tool_input.command'); if echo \"$CMD\" | grep -qiE 'cat.*(~/.ssh|~/.aws|~/.gnupg|~/.git-credentials|~/.docker/config|~/.kube|~/.npmrc|~/.pypirc|\\.env)'; then echo 'BLOCKED: Reading secrets/credentials via bash is not allowed.' >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE 'cat[[:space:]].*((~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/(\\.ssh|\\.aws|\\.gnupg|\\.docker/config|\\.kube|\\.npmrc|\\.pypirc)|(~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/\\.git-credentials|(^|[[:space:]])\\.env([[:space:]]|$)|/\\.env(\\.|$))'; then echo 'BLOCKED: Reading secrets/credentials via bash is not allowed.' >&2; exit 2; fi"
           }
         ]
       },
@@ -74,7 +77,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FILE=$(jq -r '.tool_input.file_path'); if echo \"$FILE\" | grep -qiE '(\\.env$|\\.env\\.|/\\.ssh/|/\\.aws/|/\\.gnupg/|/\\.git-credentials|/\\.docker/config|/\\.kube/|/\\.npmrc|/\\.pypirc|/Keychains/)'; then echo \"BLOCKED: Reading secrets/credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; FILE=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE\" | grep -qiE '(\\.env$|\\.env\\.|/\\.ssh/|/\\.aws/|/\\.gnupg/|/\\.git-credentials|/\\.docker/config|/\\.kube/|/\\.npmrc|/\\.pypirc|/Keychains/)'; then echo \"BLOCKED: Reading secrets/credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
           }
         ]
       },
@@ -83,7 +86,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FILE=$(jq -r '.tool_input.file_path'); if echo \"$FILE\" | grep -qiE '(\\.bashrc|\\.zshrc|/\\.ssh/|/\\.gnupg/)'; then echo \"BLOCKED: Editing shell config or credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; FILE=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE\" | grep -qiE '(\\.bashrc|\\.zshrc|/\\.ssh/|/\\.gnupg/)'; then echo \"BLOCKED: Editing shell config or credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
           }
         ]
       }

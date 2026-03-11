@@ -27,13 +27,13 @@ ruff check scripts/                             # Python lint
 
 ## Stack
 
-Python 3.12 · Scarb 2.14.0 · Starknet Foundry 0.56.0 · ruff · shellcheck
+Python 3.12 · Scarb 2.16.1 · Starknet Foundry 0.57.0 · ruff · shellcheck
 
 ## Style
 
 - Python: ruff defaults
 - Markdown: YAML frontmatter required (`name`, `description`)
-- JSONL: one JSON object per line, validate against `datasets/schemas/`
+- JSONL: one JSON object per line, validate against `datasets/manifests/` and `datasets/normalized/` schemas
 
 ## Compact instructions
 
