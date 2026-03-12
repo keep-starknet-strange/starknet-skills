@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(rm -fr *)",
+      "Bash(rm -r *)",
+      "Bash(rm -R *)",
+      "Bash(rm --recursive *)",
+      "Bash(sudo *)",
+      "Bash(git push --force*)",
+      "Bash(git push * --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(git checkout -- .)",
+      "Bash(git clean -f*)",
+      "Bash(pip install *--break-system-packages*)",
+      "Edit(~/.bashrc)",
+      "Write(~/.bashrc)",
+      "Edit(~/.zshrc)",
+      "Write(~/.zshrc)",
+      "Edit(~/.ssh/**)",
+      "Write(~/.ssh/**)",
+      "Read(~/.ssh/**)",
+      "Edit(~/.gnupg/**)",
+      "Read(~/.gnupg/**)",
+      "Write(~/.gnupg/**)",
+      "Edit(~/.aws/**)",
+      "Read(~/.aws/**)",
+      "Write(~/.aws/**)",
+      "Edit(~/.config/gh/**)",
+      "Read(~/.config/gh/**)",
+      "Write(~/.config/gh/**)",
+      "Edit(~/.git-credentials)",
+      "Read(~/.git-credentials)",
+      "Write(~/.git-credentials)",
+      "Edit(~/.docker/config)",
+      "Read(~/.docker/config)",
+      "Write(~/.docker/config)",
+      "Edit(~/.kube/**)",
+      "Read(~/.kube/**)",
+      "Write(~/.kube/**)",
+      "Edit(~/.npmrc)",
+      "Read(~/.npmrc)",
+      "Write(~/.npmrc)",
+      "Edit(~/.pypirc)",
+      "Read(~/.pypirc)",
+      "Write(~/.pypirc)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ],
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(python scripts/quality/*)",
+      "Bash(python3 scripts/quality/*)",
+      "Bash(ruff *)",
+      "Bash(shellcheck *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(ls *)",
+      "Bash(pwd)",
+      "Bash(which *)",
+      "Bash(wc *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE '(^|;[[:space:]]*|&&[[:space:]]*|[|][|][[:space:]]*|[|][[:space:]]*)rm[[:space:]]' && echo \"$CMD\" | grep -qiE '(^|[[:space:]])-[a-zA-Z]*[rR]|--recursive'; then echo 'BLOCKED: recursive rm is not allowed. Remove files individually or use trash.' >&2; exit 2; fi"
+          },
+          {
+            "type": "command",
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE '(^|[[:space:]])git[[:space:]]+push([[:space:]]+[^[:space:]]+)*([[:space:]]+(refs/heads/)?(main|master)([[:space:]]|$)|[[:space:]]+[^[:space:]]+:(refs/heads/)?(main|master)([[:space:]]|$))'; then echo 'BLOCKED: Do not push directly to main/master. Use a feature branch.' >&2; exit 2; fi"
+          },
+          {
+            "type": "command",
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE 'git[[:space:]]+reset[[:space:]]+--hard'; then echo 'BLOCKED: git reset --hard is not allowed.' >&2; exit 2; fi"
+          },
+          {
+            "type": "command",
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE '(^|[[:space:]])git[[:space:]]+push([[:space:]]|$).*([[:space:]]--force(-with-lease)?([[:space:]]|$)|[[:space:]]-f([[:space:]]|$))'; then echo 'BLOCKED: Force push is not allowed.' >&2; exit 2; fi"
+          },
+          {
+            "type": "command",
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE '((~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/(\\.ssh|\\.aws|\\.gnupg|\\.docker/config|\\.kube|\\.npmrc|\\.pypirc)|(~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/\\.git-credentials|(^|[[:space:]])\\.env([[:space:]]|$)|/\\.env(\\.|$))'; then echo 'BLOCKED: Accessing secrets/credentials via bash is not allowed.' >&2; exit 2; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; FILE=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE\" | grep -qiE '(\\.env$|\\.env\\.|/\\.ssh/|/\\.aws/|/\\.gnupg/|/\\.git-credentials|/\\.docker/config|/\\.kube/|/\\.npmrc|/\\.pypirc|/Keychains/)'; then echo \"BLOCKED: Reading secrets/credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; FILE=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE\" | grep -qiE '(\\.bashrc|\\.zshrc|/\\.ssh/|/\\.aws/|/\\.gnupg/|/\\.git-credentials|/\\.docker/config|/\\.kube/|/\\.npmrc|/\\.pypirc|/\\.config/gh/)'; then echo \"BLOCKED: Editing shell config or credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v osascript >/dev/null 2>&1; then osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\"' >/dev/null 2>&1; elif command -v notify-send >/dev/null 2>&1; then notify-send 'Claude Code' 'Claude Code needs your attention' >/dev/null 2>&1; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
