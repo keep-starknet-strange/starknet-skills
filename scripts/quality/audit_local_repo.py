@@ -365,7 +365,13 @@ def _md_escape_cell(value: str) -> str:
 
 def _md_escape_text(value: str) -> str:
     """Escape markdown control chars in paragraph/list text."""
-    return value.replace("\\", "\\\\").replace("*", "\\*").replace("\n", " ").replace("\r", " ")
+    return (
+        value.replace("\\", "\\\\")
+        .replace("*", "\\*")
+        .replace("_", "\\_")
+        .replace("\n", " ")
+        .replace("\r", " ")
+    )
 
 
 def _md_escape_heading(value: str) -> str:
@@ -582,7 +588,11 @@ def _render_markdown(
 
     # Scope table
     hit_files = sorted({str(f.get("file", "")) for f in findings})
-    files_str = " · ".join(f"`{_md_escape_path(f)}`" for f in hit_files) if hit_files else "—"
+    max_scope_files = 25
+    shown_hit_files = hit_files[:max_scope_files]
+    files_str = " · ".join(f"`{_md_escape_path(f)}`" for f in shown_hit_files) if shown_hit_files else "—"
+    if len(hit_files) > max_scope_files:
+        files_str += f" · ... (+{len(hit_files) - max_scope_files} more)"
     lines += [
         "## Scope", "",
         "| Aspect | Value |",
