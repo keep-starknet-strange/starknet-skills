@@ -87,7 +87,7 @@ Keep the plan under 30 lines. Wait for user confirmation before implementing.
 *Security rules (mandatory):*
 - Every storage-mutating `#[abi(embed_v0)]` impl function or `#[external(v0)]` function MUST have explicit access posture: guarded (`assert_only_owner` / role check) or intentionally public with a comment stating why.
 - Constructor MUST validate critical addresses are non-zero: `assert!(!owner.is_zero(), "owner_zero")`.
-- Upgrade flows MUST reject zero class hash: `assert!(new_class_hash != 0, "class_hash_zero")`.
+- Upgrade flows MUST reject zero class hash: `assert!(new_class_hash != 0, "class_hash_zero")` (or equivalent typed `ClassHash` zero-check if the API uses `ClassHash` directly).
 - Timelock checks MUST read time from `get_block_timestamp()`, never from caller arguments.
 - Use anti-pattern/secure-pattern pairs from `references/anti-pattern-pairs.md` — never write the anti-pattern.
 

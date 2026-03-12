@@ -1,12 +1,19 @@
+---
+name: cairo-optimization-default-workflow
+description: Phase-by-phase execution checklist for the cairo-optimization skill.
+---
+
 # Default Workflow
 
 Orchestrated by [SKILL.md](../SKILL.md). This is the reference for each phase.
 
+Where `{skill_dir}` is the directory containing this workflow's parent skill (`cairo-optimization/`).
+
 ## Phase 1 — Baseline
 
 - Run `snforge test` to confirm all tests pass. Stop if any fail.
-- Profile target paths with `python3 scripts/profile.py profile`.
-- Read the output PNG to identify top hotspots by steps.
+- Profile target paths with `python3 {skill_dir}/scripts/profile.py profile`.
+- Capture a machine-readable hotspot summary (table/text report) and use it as the ranking source of truth; PNGs are optional visual aids.
 - Record baseline metrics for later comparison.
 
 ## Phase 2 — Plan
@@ -14,7 +21,7 @@ Orchestrated by [SKILL.md](../SKILL.md). This is the reference for each phase.
 - List top 3-5 functions by step cost.
 - Match each hotspot to optimization rules from `references/legacy-full.md`.
 - Identify anti-patterns from `references/anti-pattern-pairs.md`.
-- For BoundedInt work: compute bounds with `scripts/bounded_int_calc.py`.
+- For BoundedInt work: compute bounds with `python3 {skill_dir}/scripts/bounded_int_calc.py`.
 - Wait for user confirmation before applying changes.
 
 ## Phase 3 — Optimize

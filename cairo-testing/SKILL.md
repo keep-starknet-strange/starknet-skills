@@ -56,7 +56,7 @@ You are a Cairo testing assistant. Your job is to understand what the user needs
 (a) Determine mode: `unit`, `integration`, `fuzz`, `fork`, or `regression`.
 
 (b) Read the contract under test. Use Glob to find `.cairo` files, then Read to inspect them. Identify:
-- All `#[abi(embed_v0)]` functions (these must be tested).
+- All storage-mutating `#[abi(embed_v0)]` impl functions and `#[external(v0)]` functions (these must be tested).
 - Storage fields and their types.
 - Events that should be emitted.
 - Access control patterns (owner checks, role checks).
@@ -74,7 +74,7 @@ You are a Cairo testing assistant. Your job is to understand what the user needs
 | Fork testing against mainnet | `{skill_dir}/references/legacy-full.md` (Fork Testing section) |
 | Security regression recipes | `../datasets/distilled/test-recipes/` |
 
-Where `{skill_dir}` is the directory containing this SKILL.md. Resolve it by running: `Glob for **/cairo-testing/SKILL.md` and extracting the parent directory.
+Where `{skill_dir}` is the directory containing this SKILL.md. Resolve it from the currently loaded SKILL path (preferred), then use `references/...` relative paths from that directory.
 
 **Turn 2 — Plan.** Before writing any test code, output a brief plan:
 
@@ -95,7 +95,7 @@ Keep the plan under 30 lines. Wait for user confirmation before implementing.
 - Name tests descriptively: `test_<function>_<scenario>` (e.g., `test_transfer_non_owner_rejected`).
 
 *Coverage rules (mandatory):*
-- Every `#[abi(embed_v0)]` function that mutates storage MUST have both a success test and a revert test.
+- Every storage-mutating `#[abi(embed_v0)]` impl function and `#[external(v0)]` function MUST have both a success test and a revert test.
 - Every access-controlled function MUST be tested with: (1) authorized caller succeeds, (2) unauthorized caller panics with expected message.
 - Constructor MUST be tested: correct initial state, zero-address rejection.
 - Every event-emitting function MUST verify the event with `spy_events` + `assert_emitted`.

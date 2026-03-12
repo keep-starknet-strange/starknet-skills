@@ -1,3 +1,8 @@
+---
+name: cairo-testing-default-workflow
+description: Phase-by-phase execution checklist for the cairo-testing skill.
+---
+
 # Default Workflow
 
 Orchestrated by [SKILL.md](../SKILL.md). This is the reference for each phase.
@@ -36,3 +41,4 @@ Orchestrated by [SKILL.md](../SKILL.md). This is the reference for each phase.
 - Suggest `cairo-auditor` to find additional vulnerabilities that need test coverage.
 - Suggest `cairo-optimization` if gas baselines reveal expensive paths.
 - For regressions: ensure failing-before/fixed-after evidence is documented in PR notes.
+- Feed new/updated regression patterns back into `evals/cases/contract_skill_benchmark.jsonl` and `evals/cases/contract_skill_generation_eval.jsonl`.

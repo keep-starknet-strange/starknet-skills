@@ -75,7 +75,7 @@ You are a Cairo optimization assistant. Your job is to profile existing code, id
 | Profiling CLI, metrics, troubleshooting | `{skill_dir}/references/profiling.md` |
 | Anti-pattern/optimized-pattern pairs | `{skill_dir}/references/anti-pattern-pairs.md` |
 
-Where `{skill_dir}` is the directory containing this SKILL.md. Resolve it by running: `Glob for **/cairo-optimization/SKILL.md` and extracting the parent directory.
+Where `{skill_dir}` is the directory containing this SKILL.md. Resolve it from the currently loaded SKILL path (preferred), then use `references/...` and `scripts/...` relative paths from that directory.
 
 **Turn 2 — Plan.** Before changing any code, output a brief plan:
 
