@@ -69,7 +69,15 @@ REPO_ROOT=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "<r
 > /tmp/cairo-audit-files.txt
 for f in "$@"; do
   [ -z "$f" ] && continue
-  ABS_PATH=$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$f")
+  ABS_PATH=$(python3 - "$REPO_ROOT" "$f" <<'PY'
+import os
+import sys
+
+repo_root, arg = sys.argv[1], sys.argv[2]
+candidate = arg if os.path.isabs(arg) else os.path.join(repo_root, arg)
+print(os.path.realpath(candidate))
+PY
+)
   case "$ABS_PATH" in
     "$REPO_ROOT"/*) ;;
     *) continue ;;
@@ -88,7 +96,7 @@ cat /tmp/cairo-audit-files.txt
 - `{refs_root}` = two levels up from the match (`.../references`)
 - `{skill_root}` = three levels up from the match (skill directory that contains `SKILL.md`, `agents/`, `references/`, `VERSION`)
 
-(c) If `scripts/quality/audit_local_repo.py` exists relative to the skill's repo root, run the deterministic preflight:
+(c) If `scripts/quality/audit_local_repo.py` exists relative to the skill's repo root, run the deterministic preflight for full-repo modes only (default/deep). In `$filename ...` mode, skip preflight so the context stays scoped to the targeted files:
 
 ```bash
 python3 scripts/quality/audit_local_repo.py --repo-root <repo-root> --scan-id preflight --output-dir /tmp
