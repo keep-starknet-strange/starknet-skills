@@ -35,4 +35,5 @@ Orchestrated by [SKILL.md](../SKILL.md). This is the reference for each phase.
 
 - Run `cairo-auditor` on touched files to check for security regressions.
 - Add or update benchmark cases in `evals/cases/contract_skill_benchmark.jsonl`.
+- Add or update generation eval cases in `evals/cases/contract_skill_generation_eval.jsonl`.
 - Link to concrete rewrites in `references/anti-pattern-pairs.md`.

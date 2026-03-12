@@ -129,7 +129,7 @@ After each optimization, run `snforge test` and `python3 scripts/profile.py prof
 
 (d) Suggest next steps:
 - "Run `cairo-auditor` on touched files to ensure no security regressions."
-- "Consider adding benchmark cases to `evals/cases/contract_skill_benchmark.jsonl` to lock these gains."
+- "Add or update eval cases in `evals/cases/contract_skill_benchmark.jsonl` and `evals/cases/contract_skill_generation_eval.jsonl` to lock these gains."
 
 ## Security-Critical Rules
 

@@ -92,13 +92,8 @@ Keep the plan under 30 lines. Wait for user confirmation before implementing.
 - Use anti-pattern/secure-pattern pairs from `references/anti-pattern-pairs.md` — never write the anti-pattern.
 
 *Component wiring (when using OZ components):*
-1. `use` import for each component.
-2. `component!(path: ..., storage: ..., event: ...)` registration.
-3. `#[abi(embed_v0)]` for external impls (MixinImpl).
-4. Internal impl aliases for internal-only calls.
-5. `#[substorage(v0)]` fields in Storage.
-6. `#[flat]` variants in Event enum.
-7. Call `.initializer(...)` in constructor for each component.
+- Follow the component wiring checklist in `references/legacy-full.md` (Components section) and `workflows/default.md`.
+- Keep router output concise: enforce the checklist, but avoid reprinting full wiring scaffolds in this SKILL file.
 
 After writing the code, run `scarb build` to verify compilation. If it fails, fix the errors and rebuild.
 

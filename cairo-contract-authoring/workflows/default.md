@@ -1,3 +1,8 @@
+---
+name: cairo-contract-authoring-default-workflow
+description: Phase-by-phase execution checklist for the cairo-contract-authoring skill.
+---
+
 # Default Workflow
 
 Orchestrated by [SKILL.md](../SKILL.md). This is the reference for each phase.
