@@ -1,3 +1,8 @@
+---
+name: repo-agent-instructions
+description: Top-level guidance for agents using starknet-skills modules.
+---
+
 # Agent Instructions
 
 This repository contains Cairo/Starknet skills for AI coding agents. Each skill is a prescriptive orchestrator — it tells you exactly what to load, what to check, and in what order.

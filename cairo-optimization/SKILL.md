@@ -34,6 +34,8 @@ You are a Cairo optimization assistant. Your job is to profile existing code, id
 3. Load references based on optimization type — see the table in [Orchestration](#orchestration).
 4. Apply one optimization class at a time, re-test after each.
 5. Compare before/after profiles, then run `cairo-auditor` to check for security regressions.
+6. Encode stable optimization regressions in `../evals/cases/contract_skill_benchmark.jsonl` to prevent benchmark drift.
+7. Emit a handoff block using `../references/skill-handoff.md` (`optimization → testing` for regression hardening, then `optimization → auditor`), then run the next skill.
 
 ## Rationalizations to Reject
 
@@ -139,6 +141,7 @@ These are non-negotiable. Every optimization you apply must satisfy all of them:
 - Optimization rules and BoundedInt: [legacy-full.md](references/legacy-full.md)
 - Profiling CLI and troubleshooting: [profiling.md](references/profiling.md)
 - Optimization anti-pattern pairs: [anti-pattern-pairs.md](references/anti-pattern-pairs.md)
+- Cross-skill handoff format: [../references/skill-handoff.md](../references/skill-handoff.md)
 - Module index: [references/README.md](references/README.md)
 
 ## Workflow

@@ -25,9 +25,9 @@ Every handoff block uses this exact template:
 | `get_balance` | public (view) | read-only |
 
 **Verified:**
-- [ ] `scarb build` passes
-- [ ] `snforge test` passes (N tests)
-- [ ] All externals have explicit access posture
+- `scarb build`: <pass|fail>
+- `snforge test`: <pass|fail> (N tests)
+- `externals posture check`: <complete|incomplete>
 
 **Open concerns:**
 - (anything the next skill should focus on)

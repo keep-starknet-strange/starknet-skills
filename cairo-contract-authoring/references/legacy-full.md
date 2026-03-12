@@ -1,3 +1,8 @@
+---
+name: cairo-contract-authoring-legacy-full
+description: Comprehensive reference for Cairo contract structure, components, and security hardening patterns.
+---
+
 # Cairo Contract Authoring
 
 Reference for writing Cairo smart contracts on Starknet. Covers structure, storage, events, interfaces, components, and OpenZeppelin v3 patterns.
@@ -72,7 +77,7 @@ version = "0.1.0"
 edition = "2024_07"
 
 [dependencies]
-starknet = "2.16.1"
+starknet = "^2.14.0"
 openzeppelin_access = "3.0.0"
 openzeppelin_token = "3.0.0"
 openzeppelin_upgrades = "3.0.0"
