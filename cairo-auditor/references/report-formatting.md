@@ -99,6 +99,7 @@ When `--file-output` is set, save the report to `{repo-root}/security-review-{ti
 - Follow the template above exactly.
 - Sort findings by priority (`P0` first); within each priority tier, sort by confidence (highest first).
 - Findings below threshold (confidence < 75) get a description but no **Fix** block and no **Required Tests** block.
+- After filtering/deduplication/sorting, renumber findings sequentially starting at `1`.
 - Preserve agent substance verbatim where possible, but normalize into this canonical structure/order (heading, metadata line, Description/Fix/Required Tests blocks as applicable).
 - Insert the **Below Confidence Threshold** separator row in the Findings Index.
 - Findings that fail FP gate must be dropped entirely and not reported.
