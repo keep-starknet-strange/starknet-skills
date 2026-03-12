@@ -148,22 +148,22 @@
 - **D:** reward distribution checkpoint occurs after new stake is recorded, allowing just-in-time depositor to claim share of pending rewards without contributing to the earning period.
 - **FP:** checkpoint/accumulator updated before new stake is recorded, or time-weighted distribution prevents instantaneous dilution.
 
-**152. Cross-market timestamp contamination in accrual snapshot**
-- **D:** accrual for one market/reward stream reads cached timestamp/snapshot belonging to another market stream, mispricing duration and payouts.
-- **FP:** each accrual path reads and updates its own market-specific timestamp key.
+**152. Cross-market timestamp-key alias contaminates accrual state**
+- **D:** two market/reward streams resolve to the same timestamp storage key (aliasing bug), so updates in one stream silently mutate accrual baseline of another.
+- **FP:** each stream has a unique storage key namespace and invariant tests prove no cross-market key aliasing.
 
-**153. Batch route validates per-leg minimums but misses final aggregate invariant**
-- **D:** each leg in a batched route satisfies local min/max checks, but protocol never validates final aggregate exposure/min-out, allowing harmful composite sequences.
-- **FP:** final aggregate invariant is enforced after full batch execution in addition to per-leg checks.
+**153. Route-level slippage check omitted despite per-leg checks**
+- **D:** each leg in a batched route satisfies local min/max checks, but no final route-level min-out/slippage assertion is enforced at settlement, allowing harmful composite paths.
+- **FP:** protocol enforces both per-leg checks and a final route-level aggregate slippage/invariant check.
 
 **154. Emergency withdrawal fails due to insufficient contract balance**
 - **D:** emergency withdrawal path assumes contract holds sufficient assets, but partial withdrawals or external drains leave insufficient balance, causing revert when users need funds most.
 - **FP:** emergency path handles partial fulfillment or has priority claim mechanism with clear accounting.
 
-**155. Deficit/socialization branch unreachable during settlement**
-- **D:** settlement path includes nominal deficit handling in design but implementation never reaches socialization/debt branch under negative outcomes, causing hard revert and stalled cycle close.
-- **FP:** deficit branch is reachable and integration-tested across negative settlement scenarios.
+**155. Deficit handling branch reachable but debt accounting not persisted**
+- **D:** settlement reaches the deficit/socialization path but fails to persist updated debt/socialization state before exit, causing repeated deficit handling or inconsistent recovery accounting.
+- **FP:** deficit branch atomically persists debt/socialization state and integration tests cover consecutive negative-settlement cycles.
 
-**156. Fee unit-domain mismatch between setter and consumer**
-- **D:** fee configured in one unit domain (for example BPS) but consumed in another (percent/WAD), causing systematic over/under-charging despite bounded input values.
-- **FP:** shared fee unit constant and conversion helpers are enforced at setter and consumer with cross-path tests.
+**156. Fee override path bypasses canonical normalization**
+- **D:** primary setter normalizes fee inputs correctly, but admin/import/override path writes raw fee values directly, letting consumers apply mixed-scale state.
+- **FP:** every fee write path goes through the same normalization helper, and override/import routes are tested against the canonical stored unit.

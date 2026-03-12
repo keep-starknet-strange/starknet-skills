@@ -120,9 +120,9 @@
 - **D:** privileged flow catches/logs external error but keeps partial state updates.
 - **FP:** privileged path either reverts or atomically compensates all partial state.
 
-**133. Safe-dispatcher error branch ignored with state progression**
-- **D:** call through a safe dispatcher returns `Result::Err(panic_data)` but caller ignores `Err` and continues mutating state as if external action succeeded.
-- **FP:** every `Err` branch reverts or compensates before any dependent state transition.
+**133. Safe-dispatcher panic data drives privileged fallback logic**
+- **D:** call through a safe dispatcher returns `Result::Err(panic_data)` and caller parses attacker-controlled `panic_data` to choose a privileged fallback path, effectively turning error payload into authorization/config input.
+- **FP:** `Err` branches treat panic payload as opaque diagnostics only; privileged decisions never depend on panic-data content.
 
 **134. Safe-dispatcher fallback assumes catchability of non-catchable syscall failures**
 - **D:** fallback logic assumes all external call failures are catchable, but cases like non-existent contract/class hash or Cairo 0 edge paths revert the entire transaction and bypass fallback.
@@ -149,7 +149,7 @@
 - **FP:** bridge enforces per-tx and per-period caps with automatic pause on anomalous volume.
 
 **140. Batch executor reuses stale external-state cache across legs**
-- **D:** batched execution caches external state (allowance/balance/config) from an early leg and reuses it after intervening calls mutate that state, enabling incorrect authorization/accounting.
+- **D:** batched execution caches external state (allowance/balance/config) from an early leg and reuses it after intervening calls mutate that state, so even fixed call ordering can execute against invalid assumptions.
 - **FP:** each leg refreshes external state at point-of-use or invalidates cache on every state-changing leg.
 
 **141. Excessive message or output size causes DoS in state update**
@@ -164,6 +164,6 @@
 - **D:** ERC721/ERC1155 safe transfer triggers receiver callback; receiving contract re-enters a different protocol function that reads stale state from the transferring contract.
 - **FP:** cross-protocol reentrancy guard or effects-before-interaction pattern across all dependent state.
 
-**144. Bridge message hash collision via weak domain separation**
-- **D:** bridge message hash omits chain ID, contract address, or nonce from hash preimage, allowing cross-chain or same-chain message replay.
-- **FP:** message hash includes full domain: source chain, target chain, sender, receiver, nonce, and payload.
+**144. Bridge message hash collision via non-canonical preimage encoding**
+- **D:** bridge participants hash semantically identical messages with different field packing/serialization rules (felt vs bytes layout, padding, or array framing), creating hash mismatches or collisions across domains.
+- **FP:** bridge defines one canonical preimage encoding shared by all participants and enforces it with cross-implementation test vectors.

@@ -156,9 +156,9 @@
 - **D:** sole admin can call `revoke_role` or `renounce_ownership` on themselves with no remaining admin, permanently locking privileged functions.
 - **FP:** revocation checks that at least one admin remains, or renounce requires pending transfer to be accepted first.
 
-**130. Declare-only class hash accepted without deploy verification**
-- **D:** upgrade or registry path accepts any class hash including declared-but-never-deployed classes, potentially pointing to malformed or incompatible implementations.
-- **FP:** class hash validation includes interface/compatibility check or the class has been successfully deployed and tested.
+**130. Arbitrary declared class hash accepted without compatibility verification**
+- **D:** upgrade or registry path accepts any declared class hash without validating expected interface, storage-layout compatibility, or migration invariants, allowing incompatible implementations to be installed.
+- **FP:** class hash is allowlisted or validated for interface/version/storage compatibility before upgrade, with migration invariants checked explicitly.
 
 **131. Proxy storage layout collision after class replacement**
 - **D:** new implementation class uses storage slots that collide with proxy-level state (admin slot, implementation slot), corrupting proxy metadata.

@@ -128,9 +128,9 @@
 - **D:** `StoreFelt252Array` or manual array storage writes elements but stores incorrect length, causing reads to return truncated or out-of-bounds data.
 - **FP:** array length updated atomically with element writes and validated on read.
 
-**159. Bytes or felt encoding accepts invalid input without validation**
-- **D:** `Bytes` type or raw felt span accepted from external input without validating encoding (e.g., non-zero padding, invalid UTF-8, oversized elements), causing downstream decode failures.
-- **FP:** input validation at boundary rejects malformed encoding before storage or processing.
+**159. ByteArray/felt encoding accepts malformed input without validation**
+- **D:** `ByteArray` or raw felt spans are accepted from external input without validating canonical encoding (non-canonical `bytes31` padding, declared-length mismatch, oversized chunk values), causing downstream decode failures.
+- **FP:** input validation at the boundary rejects malformed ByteArray/felt encoding before storage or processing.
 
 **160. Array element removal leaves stale reference or index gap**
 - **D:** removing element from storage array (swap-and-pop or shift) does not update all secondary indices/references, leaving stale pointers (e.g., lock ID array after unlock).
@@ -168,9 +168,9 @@
 - **D:** zero-knowledge proof, encrypted note, or commitment valid for one action (deposit) can be replayed for a different action (withdrawal) because the action type is not bound in the proof domain.
 - **FP:** proof/commitment domain explicitly includes action discriminator preventing cross-action replay.
 
-**169. ContractAddress boundary mismatch for 32-byte external identifiers**
-- **D:** cross-chain or interop path receives 32-byte identifier but stores it as `ContractAddress`/`felt252` (field-prime bounded, ~252-bit domain), causing invalid mapping/collision when identifier is outside Starknet address domain.
-- **FP:** external identifiers are validated and stored in an explicit 256-bit domain (`u256`/byte array) with deliberate conversion at protocol boundaries.
+**169. ContractAddress/felt252 narrowing mismatch for 32-byte external identifiers**
+- **D:** cross-chain or interop path receives a 32-byte identifier and narrows it into `ContractAddress` (`[0, 2**251)`) or `felt252` (`< P`, where `P = 2**251 + 17*2**192 + 1`) via unchecked truncation/modular reduction, causing collisions or invalid mappings.
+- **FP:** external identifiers remain in explicit 256-bit storage (`u256`/byte array) and boundary conversions into `ContractAddress`/`felt252` are explicit, range-checked, and fail-fast.
 
 **170. Aggregation element-count truncation via unsafe narrow/wrapping conversion**
 - **D:** aggregation module narrows validator/message count into small integer (`u8`) via wrapping/unchecked conversion; counts above boundary are truncated and quorum checks mis-evaluate.
