@@ -34,15 +34,15 @@ The skill orchestrates a **4-turn workflow**:
 
 Every contract this skill writes satisfies these non-negotiable rules:
 
+- Timelock checks read from `get_block_timestamp()`, never from caller arguments
 - Every storage-mutating external function has explicit access posture: **guarded** (owner/role check) or **documented-public** (with inline reason)
 - Constructor validates all critical addresses are non-zero
 - Upgrade flows reject zero class hash
-- Timelock checks read from `get_block_timestamp()`, never from caller arguments
 - Anti-pattern/secure-pattern pairs are enforced — the anti-pattern is never written
 
 ## What's included
 
-```
+```text
 cairo-contract-authoring/
   SKILL.md                          # 4-turn orchestration
   references/
@@ -56,7 +56,7 @@ cairo-contract-authoring/
 
 ## Recommended flow
 
-```
+```text
 cairo-contract-authoring → cairo-testing → cairo-auditor
 ```
 

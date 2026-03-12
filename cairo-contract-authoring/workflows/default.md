@@ -13,6 +13,7 @@ Orchestrated by [SKILL.md](../SKILL.md). This is the reference for each phase.
 - Output interface plan: trait functions, params, return types, view vs external.
 - Output storage plan: fields, types, maps.
 - Output component plan: which OZ components, wiring checklist.
+- Output events plan: emitted events, event params, and trigger points.
 - Output security posture: for each external function, guarded or documented-public.
 - Wait for user confirmation before implementing.
 
@@ -38,5 +39,5 @@ Orchestrated by [SKILL.md](../SKILL.md). This is the reference for each phase.
 
 - Run `references/audit-handoff.md` flow if security-sensitive.
 - Execute local deterministic preflight:
-  `python3 scripts/quality/audit_local_repo.py --repo-root /path/to/repo --scan-id handoff-audit`
+  `python3 scripts/quality/audit_local_repo.py --repo-root <project-root> --scan-id handoff-audit`
 - Patch findings and add regression tests.

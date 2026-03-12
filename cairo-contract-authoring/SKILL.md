@@ -1,6 +1,7 @@
 ---
 name: cairo-contract-authoring
 description: Cairo smart-contract authoring on Starknet. Trigger on "write a contract", "create a contract", "implement this in Cairo", "add storage/events/interface", "compose components". Guides structure, security patterns, and component wiring.
+allowed-tools: [Bash, Read, Write, Glob, Grep, Task]
 ---
 
 # Cairo/Starknet Contract Authoring
@@ -60,7 +61,7 @@ You are a Cairo contract authoring assistant. Your job is to understand what the
 | OpenZeppelin components, Ownable, ERC20, upgrades | `{skill_dir}/references/legacy-full.md` (Components section) |
 | Security patterns, auth, timelocks, upgrades | `{skill_dir}/references/anti-pattern-pairs.md` |
 
-Where `{skill_dir}` is the directory containing this SKILL.md. Resolve it by running: `Glob for **/cairo-contract-authoring/SKILL.md` and extracting the parent directory.
+Where `{skill_dir}` is the directory containing this SKILL.md. Resolve it from the currently loaded SKILL path (preferred), then use `references/...` relative paths from that directory.
 
 **Turn 2 — Plan.** Before writing any code, output a brief plan:
 
@@ -80,7 +81,7 @@ Keep the plan under 30 lines. Wait for user confirmation before implementing.
 - Follow the project structure: `src/lib.cairo` (mod declarations), `src/contract.cairo`, `src/interfaces.cairo`.
 
 *Security rules (mandatory):*
-- Every `#[abi(embed_v0)]` function that mutates storage MUST have explicit access posture: guarded (`assert_only_owner` / role check) or intentionally public with a comment stating why.
+- Every storage-mutating `#[abi(embed_v0)]` impl function or `#[external(v0)]` function MUST have explicit access posture: guarded (`assert_only_owner` / role check) or intentionally public with a comment stating why.
 - Constructor MUST validate critical addresses are non-zero: `assert!(!owner.is_zero(), "owner_zero")`.
 - Upgrade flows MUST reject zero class hash: `assert!(new_class_hash.is_non_zero(), "class_hash_zero")`.
 - Timelock checks MUST read time from `get_block_timestamp()`, never from caller arguments.
@@ -128,3 +129,10 @@ These are non-negotiable. Every contract you write must satisfy all of them:
 ## Workflow
 
 - Main authoring flow: [default workflow](workflows/default.md)
+
+## Eval Gate
+
+When security rules in this skill or its references change, update at least one case in:
+
+- `evals/cases/contract_skill_benchmark.jsonl`
+- `evals/cases/contract_skill_generation_eval.jsonl`
