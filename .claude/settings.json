@@ -21,11 +21,30 @@
       "Edit(~/.ssh/**)",
       "Write(~/.ssh/**)",
       "Read(~/.ssh/**)",
+      "Edit(~/.gnupg/**)",
       "Read(~/.gnupg/**)",
       "Write(~/.gnupg/**)",
+      "Edit(~/.aws/**)",
       "Read(~/.aws/**)",
+      "Write(~/.aws/**)",
+      "Edit(~/.config/gh/**)",
       "Read(~/.config/gh/**)",
+      "Write(~/.config/gh/**)",
+      "Edit(~/.git-credentials)",
       "Read(~/.git-credentials)",
+      "Write(~/.git-credentials)",
+      "Edit(~/.docker/config)",
+      "Read(~/.docker/config)",
+      "Write(~/.docker/config)",
+      "Edit(~/.kube/**)",
+      "Read(~/.kube/**)",
+      "Write(~/.kube/**)",
+      "Edit(~/.npmrc)",
+      "Read(~/.npmrc)",
+      "Write(~/.npmrc)",
+      "Edit(~/.pypirc)",
+      "Read(~/.pypirc)",
+      "Write(~/.pypirc)",
       "Read(./.env)",
       "Read(./.env.*)"
     ],
@@ -70,7 +89,7 @@
           },
           {
             "type": "command",
-            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE '(cat|head|tail|jq)[[:space:]].*((~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/(\\.ssh|\\.aws|\\.gnupg|\\.docker/config|\\.kube|\\.npmrc|\\.pypirc)|(~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/\\.git-credentials|(^|[[:space:]])\\.env([[:space:]]|$)|/\\.env(\\.|$))'; then echo 'BLOCKED: Reading secrets/credentials via bash is not allowed.' >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; CMD=$(jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qiE '((~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/(\\.ssh|\\.aws|\\.gnupg|\\.docker/config|\\.kube|\\.npmrc|\\.pypirc)|(~|\\$HOME|\\$\\{HOME\\}|/home/[^/]+|/Users/[^/]+|/root)/\\.git-credentials|(^|[[:space:]])\\.env([[:space:]]|$)|/\\.env(\\.|$))'; then echo 'BLOCKED: Accessing secrets/credentials via bash is not allowed.' >&2; exit 2; fi"
           }
         ]
       },
@@ -88,7 +107,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; FILE=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE\" | grep -qiE '(\\.bashrc|\\.zshrc|/\\.ssh/|/\\.gnupg/)'; then echo \"BLOCKED: Editing shell config or credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; FILE=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE\" | grep -qiE '(\\.bashrc|\\.zshrc|/\\.ssh/|/\\.aws/|/\\.gnupg/|/\\.git-credentials|/\\.docker/config|/\\.kube/|/\\.npmrc|/\\.pypirc|/\\.config/gh/)'; then echo \"BLOCKED: Editing shell config or credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
           }
         ]
       }
