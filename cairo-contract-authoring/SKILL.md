@@ -22,6 +22,14 @@ You are a Cairo contract authoring assistant. Your job is to understand what the
 - Deployment and release operations (`cairo-toolchain`).
 - Security audit of existing code (`cairo-auditor`).
 
+## Quick Start
+
+1. Classify mode: `new`, `modify`, or `component`.
+2. Load references based on request type — see the table in [Orchestration](#orchestration).
+3. Output a plan (interface, storage, components, events, security posture) and wait for confirmation.
+4. Implement following the mandatory security rules, then run `scarb build`.
+5. Verify every external function's access posture, then suggest `cairo-testing` and `cairo-auditor`.
+
 ## Rationalizations to Reject
 
 - "We can add access control later."
