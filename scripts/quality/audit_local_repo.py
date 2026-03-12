@@ -552,8 +552,10 @@ def _render_sierra_md(sierra: dict[str, object]) -> list[str]:
         if isinstance(cei_examples, (list, tuple)) and cei_examples:
             fns = ", ".join(f"`{_md_escape_path(str(f))}`" for f in cei_examples)
             lines.append(f"- CEI candidate functions: {fns}")
-    for err in sierra.get("errors") or []:
-        lines.append(f"- Error: {err}")
+    errors_raw = sierra.get("errors")
+    errors = errors_raw if isinstance(errors_raw, (list, tuple)) else []
+    for err in errors:
+        lines.append(f"- Error: {str(err)}")
     lines.append("")
     return lines
 
