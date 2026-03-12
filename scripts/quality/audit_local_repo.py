@@ -363,6 +363,11 @@ def _md_escape_cell(value: str) -> str:
     return value.replace("|", "&#124;").replace("`", "'").replace("\n", " ")
 
 
+def _md_escape_text(value: str) -> str:
+    """Escape markdown control chars in paragraph/list text."""
+    return value.replace("\\", "\\\\").replace("*", "\\*").replace("\n", " ").replace("\r", " ")
+
+
 def _md_escape_heading(value: str) -> str:
     """Escape markdown heading text for predictable rendering."""
     return (
@@ -555,7 +560,7 @@ def _render_sierra_md(sierra: dict[str, object]) -> list[str]:
     errors_raw = sierra.get("errors")
     errors = errors_raw if isinstance(errors_raw, (list, tuple)) else []
     for err in errors:
-        lines.append(f"- Error: {str(err)}")
+        lines.append(f"- Error: {_md_escape_cell(str(err))}")
     lines.append("")
     return lines
 
@@ -645,7 +650,7 @@ def _render_markdown(
                 desc = f.get("description", "")
                 if desc:
                     lines += ["**Description**", desc, ""]
-                exploit = f.get("exploit_path", "")
+                exploit = _md_escape_text(str(f.get("exploit_path", "")))
                 if exploit:
                     lines += ["**Exploit Path**", exploit, ""]
                 rec = f.get("recommendation", "")
