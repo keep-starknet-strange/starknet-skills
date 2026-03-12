@@ -61,6 +61,36 @@ Reject zero class hash in both schedule and immediate-upgrade flows:
 assert!(new_class_hash != 0, "class_hash_zero");
 ```
 
+## Recommended Scarb.toml
+
+Use these versions for new projects (as of March 2026):
+
+```toml
+[package]
+name = "my_contract"
+version = "0.1.0"
+edition = "2024_07"
+
+[dependencies]
+starknet = ">=2.14.0"
+openzeppelin_access = "3.0.0"
+openzeppelin_token = "3.0.0"
+openzeppelin_upgrades = "3.0.0"
+
+[dev-dependencies]
+snforge_std = "0.57.0"
+
+[cairo]
+sierra-replace-ids = true
+
+[[target.starknet-contract]]
+
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
+```
+
+> **Version pinning:** OZ 3.0.0 is the latest stable release. snforge 0.57.0 requires Scarb >= 2.14.0 (recommended: 2.16.x). Check [scarbs.dev](https://scarbs.dev) for updates.
+
 ## Contract Structure
 
 Every Starknet contract follows this skeleton:
