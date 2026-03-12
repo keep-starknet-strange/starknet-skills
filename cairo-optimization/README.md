@@ -2,21 +2,27 @@
 
 Optimize Cairo smart contracts on Starknet — profile first, optimize second, verify always.
 
+<p>
+  <img alt="mode profile" src="https://img.shields.io/badge/mode-profile-0969da" />
+  <img alt="mode arithmetic" src="https://img.shields.io/badge/mode-arithmetic-0969da" />
+  <img alt="mode bounded-int" src="https://img.shields.io/badge/mode-bounded--int-0969da" />
+  <img alt="mode storage" src="https://img.shields.io/badge/mode-storage-0969da" />
+  <img alt="optimization rules" src="https://img.shields.io/badge/optimization%20rules-12-2ea043" />
+</p>
+
 Built for:
 
 - **Cairo devs** reducing gas/steps in hot paths after tests pass
 - **Teams** applying BoundedInt optimizations for modular arithmetic and limb assembly
 - **Anyone** profiling contract execution to find and fix bottlenecks
 
-Optimizes with evidence, not guesswork.
-
 ## Usage
 
 ```bash
-# Optimize a contract (full profile → plan → optimize → verify)
+# Profile and optimize a contract
 /cairo-optimization
 
-# Ask for specific help
+# Specific requests
 /cairo-optimization "profile my NTT function and find hotspots"
 /cairo-optimization "convert this arithmetic to BoundedInt"
 /cairo-optimization "pack these storage fields into fewer slots"
@@ -26,37 +32,51 @@ Optimizes with evidence, not guesswork.
 
 The skill orchestrates a **4-turn workflow**:
 
-1. **Baseline** — confirm tests pass, profile hot paths, identify top hotspots
-2. **Plan** — match hotspots to optimization rules, list anti-patterns found. Wait for confirmation.
-3. **Optimize** — apply one class at a time, re-test and re-profile after each change
-4. **Verify** — compare before/after profiles, report step deltas, suggest `cairo-auditor` for regression check
+| Turn | What happens |
+|------|-------------|
+| **1. Baseline** | Confirm tests pass, profile hot paths, identify top hotspots |
+| **2. Plan** | Match hotspots to optimization rules, list anti-patterns. Wait for confirmation. |
+| **3. Optimize** | Apply one class at a time, re-test and re-profile after each change |
+| **4. Verify** | Compare before/after profiles, report step deltas, suggest `cairo-auditor` |
 
 ## Optimization rules (12 rules, always enforced)
 
-| # | Rule | Instead of | Use |
-|---|------|-----------|-----|
-| 1 | Combined quotient+remainder | `x / m` + `x % m` | `DivRem::div_rem(x, m)` |
-| 2 | Cheap loop conditions | `while i < n` | `while i != n` |
-| 3 | Constant powers of 2 | `2_u32.pow(k)` | match-based lookup table |
-| 4 | Pointer-based iteration | `*data.at(i)` | `pop_front` / `for` / `multi_pop_front` |
-| 5 | Cache array length | `.len()` in loop condition | `let n = data.len();` before loop |
-| 6 | Pointer-based slicing | Manual loop extraction | `span.slice(start, length)` |
-| 7 | Cheap parity/halving | `index & 1`, `index / 2` | `DivRem::div_rem(index, 2)` |
-| 8 | Smallest integer type | `u256` when range < 2^128 | `u128` |
-| 9 | Storage slot packing | One slot per field | `StorePacking` trait |
-| 10 | BoundedInt for limbs | Bitwise ops / raw math | `bounded_int::{div_rem, mul, add}` |
-| 11 | Fast 2-input Poseidon | `poseidon_hash_span([x,y])` | `hades_permutation(x, y, 2)` |
-| 12 | Bulk felt252 to BoundedInt | `downcast` / `try_into` | `u128s_from_felt252` + `upcast` |
+| # | Instead of | Use |
+|---|-----------|-----|
+| 1 | `x / m` + `x % m` | `DivRem::div_rem(x, m)` |
+| 2 | `while i < n` | `while i != n` |
+| 3 | `2_u32.pow(k)` | match-based lookup table |
+| 4 | `*data.at(i)` in index loop | `pop_front` / `for` / `multi_pop_front` |
+| 5 | `.len()` in loop condition | `let n = data.len();` before loop |
+| 6 | Manual loop extraction | `span.slice(start, length)` |
+| 7 | `index & 1`, `index / 2` | `DivRem::div_rem(index, 2)` |
+| 8 | `u256` when range < 2^128 | `u128` |
+| 9 | One slot per field | `StorePacking` trait |
+| 10 | Bitwise ops / raw math | `bounded_int::{div_rem, mul, add}` |
+| 11 | `poseidon_hash_span([x,y])` | `hades_permutation(x, y, 2)` |
+| 12 | `downcast` / `try_into` bulk | `u128s_from_felt252` + `upcast` |
 
-## What's included
+## Example optimization
+
+```cairo
+// BEFORE (2x the cost)
+let q = amount / 2;
+let r = amount % 2;
+
+// AFTER (single operation)
+use core::num::traits::DivRem;
+let (q, r) = DivRem::div_rem(amount, 2);
+```
+
+## Structure
 
 ```
 cairo-optimization/
   SKILL.md                              # 4-turn orchestration
   references/
-    legacy-full.md                      # 12 optimization rules + BoundedInt deep-dive (495 lines)
-    profiling.md                        # Profiling CLI, metrics, troubleshooting (219 lines)
-    anti-pattern-pairs.md               # 5 anti-pattern/optimized-pattern pairs (101 lines)
+    legacy-full.md                      # 12 rules + BoundedInt deep-dive (495 lines)
+    profiling.md                        # Profiling CLI and troubleshooting (219 lines)
+    anti-pattern-pairs.md               # 5 optimization anti-pattern pairs (101 lines)
   workflows/
     default.md                          # 5-phase workflow reference
   scripts/
@@ -67,7 +87,14 @@ cairo-optimization/
 ## Recommended flow
 
 ```
-cairo-contract-authoring → cairo-testing → cairo-optimization → cairo-auditor
+cairo-contract-authoring  →  cairo-testing  →  cairo-optimization  →  cairo-auditor
+         write                   test              optimize               audit
 ```
 
-Write the contract, add tests, optimize hot paths, then audit. Never optimize before tests pass.
+## References
+
+- Skill policy: [SKILL.md](SKILL.md)
+- Workflow: [workflows/default.md](workflows/default.md)
+- Optimization rules: [references/legacy-full.md](references/legacy-full.md)
+- Profiling: [references/profiling.md](references/profiling.md)
+- Anti-patterns: [references/anti-pattern-pairs.md](references/anti-pattern-pairs.md)

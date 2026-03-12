@@ -1,6 +1,15 @@
 # cairo-testing
 
-Write comprehensive tests for Cairo smart contracts on Starknet — unit, integration, fuzz, and regression.
+Write comprehensive tests for Cairo smart contracts — unit, integration, fuzz, fork, and regression.
+
+<p>
+  <img alt="mode unit" src="https://img.shields.io/badge/mode-unit-0969da" />
+  <img alt="mode integration" src="https://img.shields.io/badge/mode-integration-0969da" />
+  <img alt="mode fuzz" src="https://img.shields.io/badge/mode-fuzz-0969da" />
+  <img alt="mode fork" src="https://img.shields.io/badge/mode-fork-0969da" />
+  <img alt="mode regression" src="https://img.shields.io/badge/mode-regression-0969da" />
+  <img alt="coverage rules" src="https://img.shields.io/badge/coverage%20rules-5-2ea043" />
+</p>
 
 Built for:
 
@@ -8,15 +17,13 @@ Built for:
 - **Teams** needing full coverage: success paths, auth failures, event assertions, edge cases
 - **Anyone** turning audit findings into permanent regression tests
 
-Tests the contract before the auditor does.
-
 ## Usage
 
 ```bash
-# Write tests for a contract (full coverage)
+# Full test coverage for a contract
 /cairo-testing
 
-# Ask for specific help
+# Specific requests
 /cairo-testing "add fuzz tests for the deposit function"
 /cairo-testing "write regression test for this access control finding"
 /cairo-testing "integration tests for my ERC20 + AMM interaction"
@@ -26,22 +33,54 @@ Tests the contract before the auditor does.
 
 The skill orchestrates a **4-turn workflow**:
 
-1. **Understand** — read the contract, identify all externals, find existing tests, load snforge references
-2. **Plan** — output test plan (functions, positive/negative paths, events, fuzz targets). Wait for confirmation.
-3. **Implement** — write tests following mandatory coverage rules, verify with `snforge test`
-4. **Verify** — walk coverage checklist, report gaps, suggest `cairo-auditor` for additional test targets
+| Turn | What happens |
+|------|-------------|
+| **1. Understand** | Read the contract, identify all externals, find existing tests, load snforge references |
+| **2. Plan** | Output test plan: functions, positive/negative paths, events, fuzz targets. Wait for confirmation. |
+| **3. Implement** | Write tests following mandatory coverage rules, verify with `snforge test` |
+| **4. Verify** | Walk coverage checklist, report gaps, suggest `cairo-auditor` for additional targets |
 
 ## Coverage rules (always enforced)
 
-Every test suite this skill writes satisfies these non-negotiable rules:
+| # | Rule |
+|---|------|
+| 1 | Every storage-mutating external has both a success and a failure test |
+| 2 | Every access-controlled function tested with authorized and unauthorized callers |
+| 3 | Expected panics use `#[should_panic(expected: '...')]` with the exact message |
+| 4 | Event assertions use `spy_events` + `assert_emitted` with full event data |
+| 5 | Fuzz tests use fixed seeds (`seed: 12345`) for reproducibility |
 
-- Every storage-mutating external has both a success and a failure test
-- Every access-controlled function tested with authorized and unauthorized callers
-- Expected panics use `#[should_panic(expected: '...')]` with the exact message
-- Event assertions use `spy_events` + `assert_emitted` with full event data
-- Fuzz tests use fixed seeds (`seed: 12345`) for reproducibility
+## Example test pattern
 
-## What's included
+```cairo
+#[test]
+fn test_transfer_succeeds() {
+    let contract_address = deploy_contract();
+    let dispatcher = IMyContractDispatcher { contract_address };
+    let mut spy = spy_events();
+
+    start_cheat_caller_address(contract_address, OWNER());
+    dispatcher.transfer(USER(), 100);
+
+    spy.assert_emitted(@array![
+        (contract_address, MyContract::Event::Transfer(
+            MyContract::Transfer { from: OWNER(), to: USER(), amount: 100 }
+        ))
+    ]);
+}
+
+#[test]
+#[should_panic(expected: 'Caller is not the owner')]
+fn test_transfer_non_owner_rejected() {
+    let contract_address = deploy_contract();
+    let dispatcher = IMyContractDispatcher { contract_address };
+
+    start_cheat_caller_address(contract_address, USER());
+    dispatcher.transfer(USER(), 100);  // should panic
+}
+```
+
+## Structure
 
 ```
 cairo-testing/
@@ -55,7 +94,12 @@ cairo-testing/
 ## Recommended flow
 
 ```
-cairo-contract-authoring → cairo-testing → cairo-auditor
+cairo-contract-authoring  →  cairo-testing  →  cairo-auditor
+         write                   test              audit
 ```
 
-Write the contract, add tests, then audit. The testing skill connects both directions — it builds on the contract authoring output and surfaces gaps for the auditor.
+## References
+
+- Skill policy: [SKILL.md](SKILL.md)
+- Workflow: [workflows/default.md](workflows/default.md)
+- snforge patterns: [references/legacy-full.md](references/legacy-full.md)
