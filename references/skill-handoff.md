@@ -1,3 +1,8 @@
+---
+name: cross-skill-handoff
+description: Canonical handoff template and chain mappings between starknet-skills modules.
+---
+
 # Cross-Skill Handoff
 
 When a skill completes its workflow, it outputs a **Handoff Block** — a structured summary the user can pass to the next skill as input context. This replaces the generic "run X next" suggestion with actionable data.
@@ -74,6 +79,17 @@ The handoff includes:
 - **Files touched** — only the files modified during optimization.
 - **Before/after metrics** — step counts per optimized function.
 - **Suggested focus** — "Verify optimizations did not introduce security regressions. Focus on changed arithmetic and storage packing."
+
+### optimization → testing
+
+Source: `cairo-optimization` Turn 4.
+Target: `cairo-testing` Turn 1.
+
+The handoff includes:
+- **Files touched** — optimized contract files.
+- **Behavior-sensitive rewrites** — arithmetic/loop/storage changes that need regression assertions.
+- **Before/after metrics** — step deltas to prioritize perf-regression tests.
+- **Suggested focus** — "Add regression tests around optimized paths and assert outputs/invariants stayed identical."
 
 ## How to Use
 

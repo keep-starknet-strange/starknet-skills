@@ -1,3 +1,8 @@
+---
+name: cairo-testing-legacy-full
+description: Detailed snforge testing reference for Cairo contracts, including unit, integration, fuzz, and fork patterns.
+---
+
 # Cairo Testing
 
 Reference for testing Cairo smart contracts with Starknet Foundry (snforge).

@@ -1,3 +1,8 @@
+---
+name: cairo-toolchain-legacy-full
+description: Deployment and operational reference for Cairo contracts with sncast and Starknet Foundry.
+---
+
 # Cairo Toolchain
 
 Reference for deploying Cairo smart contracts to Starknet using sncast (Starknet Foundry).
