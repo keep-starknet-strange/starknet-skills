@@ -146,3 +146,10 @@ These are non-negotiable. Every test suite you write must satisfy all of them:
 ## Workflow
 
 - Main testing flow: [default workflow](workflows/default.md)
+
+## Eval Gate
+
+When testing/security rules in this skill or its references change, update at least one case in:
+
+- `evals/cases/contract_skill_benchmark.jsonl`
+- `evals/cases/contract_skill_generation_eval.jsonl`

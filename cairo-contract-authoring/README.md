@@ -56,7 +56,7 @@ The skill orchestrates a **4-turn workflow**:
 
 ## Structure
 
-```
+```text
 cairo-contract-authoring/
   SKILL.md                          # 4-turn orchestration
   references/
@@ -70,7 +70,7 @@ cairo-contract-authoring/
 
 ## Recommended flow
 
-```
+```text
 cairo-contract-authoring  →  cairo-testing  →  cairo-auditor
          write                   test              audit
 ```
