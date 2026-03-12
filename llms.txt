@@ -1,16 +1,33 @@
 # starknet-skills
 
-Root router: ./SKILL.md
+> Cairo/Starknet skills for AI coding agents — security review, contract authoring, testing, and optimization.
 
-Modules:
-- ./cairo-auditor/SKILL.md
-- ./cairo-contract-authoring/SKILL.md
-- ./cairo-testing/SKILL.md
-- ./cairo-optimization/SKILL.md
-- ./cairo-toolchain/SKILL.md
-- ./account-abstraction/SKILL.md
-- ./starknet-network-facts/SKILL.md
+## Skills
 
-Data:
-- ./datasets/audits/README.md
-- ./evals/README.md
+- [cairo-auditor](cairo-auditor/SKILL.md): Security review with parallel vector specialists and false-positive gating. 170 attack vectors from 217 real audit findings.
+- [cairo-contract-authoring](cairo-contract-authoring/SKILL.md): Write correct, secure, component-ready Cairo contracts. OpenZeppelin 3.0.0 component wiring. 5 mandatory security rules.
+- [cairo-testing](cairo-testing/SKILL.md): Full test coverage with snforge — unit, integration, fuzz, fork, and regression tests. 5 mandatory coverage rules.
+- [cairo-optimization](cairo-optimization/SKILL.md): Profile-driven optimization with 12 rules including BoundedInt, storage packing, and arithmetic patterns.
+- [cairo-toolchain](cairo-toolchain/SKILL.md): Build, declare, deploy, and verify operations for Starknet.
+- [account-abstraction](account-abstraction/SKILL.md): Account abstraction patterns, session keys, and validation flow risks.
+- [starknet-network-facts](starknet-network-facts/SKILL.md): Starknet network constraints, fee mechanics, and timing semantics.
+
+## Recommended Flow
+
+cairo-contract-authoring → cairo-testing → cairo-optimization → cairo-auditor
+
+## Install
+
+Claude Code: /plugin marketplace add keep-starknet-strange/starknet-skills
+Cursor: Copy .cursor/skills/ directory into your project
+Any agent: Point at https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+
+## Tooling
+
+- Scarb >= 2.14.0 (recommended 2.16.x)
+- Starknet Foundry 0.57.0
+- OpenZeppelin Cairo 3.0.0
+
+## Source
+
+https://github.com/keep-starknet-strange/starknet-skills
