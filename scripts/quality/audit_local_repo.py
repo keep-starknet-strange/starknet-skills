@@ -548,8 +548,9 @@ def _render_sierra_md(sierra: dict[str, object]) -> list[str]:
         u = "confirm" if conf.get("upgrade_ir_confirmed") else ("missing" if conf.get("upgrade_findings") else "—")
         c = "confirm" if conf.get("cei_ir_confirmed") else ("missing" if conf.get("cei_findings") else "—")
         lines += [f"- Upgrade oracle: {u}", f"- CEI oracle: {c}"]
-        if conf.get("cei_example_functions"):
-            fns = ", ".join(f"`{f}`" for f in conf["cei_example_functions"])
+        cei_examples = conf.get("cei_example_functions")
+        if isinstance(cei_examples, (list, tuple)) and cei_examples:
+            fns = ", ".join(f"`{_md_escape_path(str(f))}`" for f in cei_examples)
             lines.append(f"- CEI candidate functions: {fns}")
     for err in sierra.get("errors") or []:
         lines.append(f"- Error: {err}")
@@ -648,11 +649,12 @@ def _render_markdown(
                 rec = f.get("recommendation", "")
                 if rec and confidence >= 75:
                     lines += ["**Recommendation**", rec, ""]
-                tests = f.get("minimum_tests", [])
+                tests_raw = f.get("minimum_tests", [])
+                tests = tests_raw if isinstance(tests_raw, (list, tuple)) else []
                 if tests and confidence >= 75:
                     lines.append("**Required Tests**")
                     for t in tests:
-                        lines.append(f"- {t}")
+                        lines.append(f"- {str(t)}")
                     lines.append("")
                 lines += ["---", ""]
 
@@ -664,13 +666,17 @@ def _render_markdown(
     if findings:
         lines += ["## Findings Index", "", "| # | Severity | Confidence | Title |",
                   "|--:|----------|----------:|------|"]
+        max_index_rows = 250
         idx = 0
-        for f in sorted_findings:
+        for f in sorted_findings[:max_index_rows]:
             idx += 1
             sev = _SEVERITY_LABELS.get(str(f.get("severity", "info")).lower(), "Info")
             conf = _safe_int(f.get("confidence", 75), default=75)
             title = _md_escape_cell(str(f.get("title", f.get("class_id", "Unknown"))))
             lines.append(f"| {idx} | {sev} | {conf} | {title} |")
+        if len(sorted_findings) > max_index_rows:
+            remaining = len(sorted_findings) - max_index_rows
+            lines.append(f"| ... | ... | ... | ... ({remaining} more findings omitted) |")
         lines.append("")
 
     # Disclaimer
