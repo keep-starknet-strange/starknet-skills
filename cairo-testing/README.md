@@ -1,3 +1,8 @@
+---
+name: cairo-testing-readme
+description: User-facing guide for the cairo-testing skill workflow and coverage requirements.
+---
+
 # cairo-testing
 
 Write comprehensive tests for Cairo smart contracts — unit, integration, fuzz, fork, and regression.
@@ -82,7 +87,7 @@ fn test_transfer_non_owner_rejected() {
 
 ## Structure
 
-```
+```text
 cairo-testing/
   SKILL.md                          # 4-turn orchestration
   references/
@@ -93,9 +98,9 @@ cairo-testing/
 
 ## Recommended flow
 
-```
-cairo-contract-authoring  →  cairo-testing  →  cairo-auditor
-         write                   test              audit
+```text
+cairo-contract-authoring → cairo-testing → cairo-auditor
+       write                test            audit
 ```
 
 ## References

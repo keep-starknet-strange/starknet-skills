@@ -1,3 +1,8 @@
+---
+name: cairo-optimization-readme
+description: User-facing guide for the cairo-optimization skill workflow, profiling flow, and optimization rules.
+---
+
 # cairo-optimization
 
 Optimize Cairo smart contracts on Starknet — profile first, optimize second, verify always.
@@ -70,7 +75,7 @@ let (q, r) = DivRem::div_rem(amount, 2);
 
 ## Structure
 
-```
+```text
 cairo-optimization/
   SKILL.md                              # 4-turn orchestration
   references/
@@ -86,9 +91,9 @@ cairo-optimization/
 
 ## Recommended flow
 
-```
-cairo-contract-authoring  →  cairo-testing  →  cairo-optimization  →  cairo-auditor
-         write                   test              optimize               audit
+```text
+cairo-contract-authoring → cairo-testing → cairo-optimization → cairo-auditor
+       write                test             optimize             audit
 ```
 
 ## References

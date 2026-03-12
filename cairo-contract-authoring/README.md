@@ -1,3 +1,8 @@
+---
+name: cairo-contract-authoring-readme
+description: User-facing guide for the cairo-contract-authoring skill workflow and security rules.
+---
+
 # cairo-contract-authoring
 
 Write Cairo smart contracts on Starknet — correct, secure, and component-ready from the start.

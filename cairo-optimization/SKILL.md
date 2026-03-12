@@ -112,7 +112,7 @@ Keep the plan under 30 lines. Wait for user confirmation before implementing.
 - Use BoundedInt types as function inputs AND outputs — never downcast at every call (Rule 10).
 - Use `u128s_from_felt252` + `upcast` for bulk felt252 → BoundedInt conversions (Rule 12).
 - Always use `python3 scripts/bounded_int_calc.py` to compute bounds — never calculate manually.
-- Use the SHIFT pattern for negative dividends in `bounded_int_div_rem`.
+- Use the SHIFT pattern for negative dividends in `bounded_int_div_rem`: `SHIFT = ceil(|min_possible_value| / modulus) * modulus`, then reduce `value + SHIFT`.
 
 After each optimization, run `snforge test` and `python3 scripts/profile.py profile` to verify improvement.
 
