@@ -624,14 +624,14 @@ def _render_markdown(
             lines += [f"### {_SEVERITY_LABELS.get(sev, sev)}", ""]
             for f in sev_findings:
                 finding_num += 1
-                priority = f.get("priority", "P3")
+                priority = _md_escape_heading(str(f.get("priority", "P3")))
                 title = _md_escape_heading(str(f.get("title", f.get("class_id", "Unknown"))))
-                confidence = f.get("confidence", 75)
+                confidence = _safe_int(f.get("confidence", 75), default=75)
                 file_path = f.get("file", "")
                 line_num = f.get("line")
                 safe_path = _md_escape_path(str(file_path))
                 location = f"`{safe_path}:{line_num}`" if line_num else f"`{safe_path}`"
-                cid = f.get("class_id", "")
+                cid = _md_escape_path(str(f.get("class_id", "")))
 
                 lines += [
                     f"#### [{priority}] {finding_num}. {title}",
@@ -668,7 +668,7 @@ def _render_markdown(
         for f in sorted_findings:
             idx += 1
             sev = _SEVERITY_LABELS.get(str(f.get("severity", "info")).lower(), "Info")
-            conf = f.get("confidence", 75)
+            conf = _safe_int(f.get("confidence", 75), default=75)
             title = _md_escape_cell(str(f.get("title", f.get("class_id", "Unknown"))))
             lines.append(f"| {idx} | {sev} | {conf} | {title} |")
         lines.append("")
