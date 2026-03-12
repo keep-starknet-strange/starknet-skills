@@ -162,7 +162,7 @@ def main() -> int:
             doc_has_filter = "--filter" in doc
             if has_exact and forbids_filter and not doc_has_filter:
                 results.append(
-                    CheckResult("snforge-cli-check", "PASS", "docs match snforge 0.56 filter/exact behavior")
+                    CheckResult("snforge-cli-check", "PASS", "docs match snforge 0.57 filter/exact behavior")
                 )
             else:
                 results.append(
@@ -204,7 +204,7 @@ def main() -> int:
 
             if all([has_import, no_add_subcmd, mentions_import, not mentions_add, verifier_ok, docs_mention_both, uses_json]):
                 results.append(
-                    CheckResult("sncast-cli-check", "PASS", "docs match sncast 0.56 account/verify/json patterns")
+                    CheckResult("sncast-cli-check", "PASS", "docs match sncast 0.57 account/verify/json patterns")
                 )
             else:
                 results.append(
