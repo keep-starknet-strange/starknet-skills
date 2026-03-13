@@ -43,7 +43,7 @@ sierra = true
 casm = true
 ```
 
-> **Note:** snforge 0.57.0 requires Scarb >= 2.14.0 (recommended: 2.16.x). Check [scarbs.dev/packages/snforge_std](https://scarbs.dev/packages/snforge_std) for the latest version.
+> **Note:** snforge 0.57.0 requires Scarb >= 2.12.0 (recommended: 2.16.x). Check [scarbs.dev/packages/snforge_std](https://scarbs.dev/packages/snforge_std) for the latest version.
 
 ### Running Tests
 
