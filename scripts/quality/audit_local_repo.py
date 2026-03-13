@@ -367,6 +367,7 @@ def _md_escape_cell(value: str) -> str:
         .replace("<", "&lt;")
         .replace(">", "&gt;")
         .replace("\n", " ")
+        .replace("\r", " ")
     )
 
 
@@ -577,7 +578,8 @@ def _render_sierra_md(sierra: dict[str, object]) -> list[str]:
     errors_raw = sierra.get("errors")
     errors = errors_raw if isinstance(errors_raw, (list, tuple)) else []
     for err in errors:
-        lines.append(f"- Error: {_md_escape_cell(str(err))}")
+        escaped_err = _md_escape_text(str(err)).replace("`", "'")
+        lines.append(f"- Error: {escaped_err}")
     lines.append("")
     return lines
 
