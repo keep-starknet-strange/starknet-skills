@@ -19,7 +19,7 @@ cairo-contract-authoring → cairo-testing → [cairo-optimization (if needed)] 
 ## Install
 
 Claude Code: /plugin marketplace add keep-starknet-strange/starknet-skills
-Cursor: Copy .cursor/skills/ directory into your project
+Cursor: Clone repo and add as workspace directory, or copy individual skill dirs into your project's `.cursor/skills/` folder; routing rules are in `.cursor/rules/starknet-skills.md`
 Any agent: Point at https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
 
 ## Tooling
