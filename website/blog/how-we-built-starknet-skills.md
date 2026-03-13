@@ -11,11 +11,11 @@ Ask an LLM to audit a Cairo contract and you'll get a confident-sounding list of
 
 The problem isn't that LLMs can't reason about code. It's that they don't know *what matters* in Cairo and Starknet. They apply Solidity mental models to a fundamentally different architecture — felt-based arithmetic, the component system, `replace_class_syscall` upgrades, account abstraction validation flows, Sierra IR compilation. Without domain-specific knowledge, agents hallucinate security patterns that don't exist and miss vulnerability classes that do.
 
-We built [starknet-skills](https://github.com/keep-starknet-strange/starknet-skills) to fix this. It's an open-source knowledge layer — plain markdown files that any AI coding agent can read — built from 24 real security audits, 217 normalized findings, and 13 canonical vulnerability classes. The flagship module, `cairo-auditor`, turns a general-purpose LLM into a structured security reviewer that runs 120 attack vectors across four parallel specialists (30 vectors per partition) with false-positive gating, confidence scoring, and optional Sierra IR confirmation.
+We built [starknet-skills](https://github.com/keep-starknet-strange/starknet-skills) to fix this. It's an open-source knowledge layer — plain markdown files that any AI coding agent can read — built from 24 real security audits, 217 normalized findings, and 28 canonical vulnerability classes. The flagship module, `cairo-auditor`, turns a general-purpose LLM into a structured security reviewer that runs 170 attack vectors across four parallel specialists with false-positive gating, confidence scoring, and optional Sierra IR confirmation.
 
 This post explains how it works, why we made the design choices we did, and how you can use it today.
 
-## The Data Foundation: 24 Audits -> 217 Findings -> 13 Classes
+## The Data Foundation: 24 Audits -> 217 Findings -> 28 Classes
 
 Every skill starts with real data. We ingested 24 public security audit reports from 10 firms — Nethermind, Cairo Security Clan, CODESPECT, Blaize, Zellic, zkSecurity, and others — covering DeFi protocols (Vesu, Nostra, StarkDeFi, Kapan Finance), infrastructure (Piltover, Hyperlane, L3 Bridge), and applications (Cartridge, LayerAkira).
 
@@ -40,11 +40,11 @@ Each audit PDF was extracted, segmented into traceable chunks with page bounds f
 }
 ```
 
-The 217 normalized findings break down by severity: 17 critical, 26 high, 30 medium, 60 low, 47 informational, and 37 best-practice. From these, we distilled 13 canonical vulnerability classes currently implemented in the vuln-db — each with a vulnerable pattern, secure pattern, detection heuristics, false-positive caveats, and minimum required tests.
+The 217 normalized findings break down by severity: 17 critical, 26 high, 30 medium, 60 low, 47 informational, and 37 best-practice. From these, we distilled 28 canonical vulnerability classes currently implemented in the vuln-db — each with a vulnerable pattern, secure pattern, detection heuristics, false-positive caveats, and minimum required tests.
 
 These aren't theoretical categories. Every pattern traces back to at least one real audit finding from a real protocol. When the auditor skill tells an agent to check for `IMMEDIATE-UPGRADE-WITHOUT-TIMELOCK`, it's because actual Cairo contracts shipped with exactly that bug.
 
-## The Auditor Architecture: 4 Turns, 120 Vectors, 4 Parallel Specialists
+## The Auditor Architecture: 4 Turns, 170 Vectors, 4 Parallel Specialists
 
 The `cairo-auditor` skill is a prescriptive orchestrator. It doesn't just give the agent context — it tells it exactly what tool calls to make, which files to load, and in what order. The orchestration runs in four turns:
 
@@ -62,7 +62,7 @@ The preflight uses 13 regex-based detectors — fast pattern matching on source 
 
 ### Turn 2: Prepare
 
-The agent loads specialist instructions and builds four bundles. Each bundle contains the full in-scope Cairo code plus one partition of the 120 attack vectors (30 per partition).
+The agent loads specialist instructions and builds four bundles. Each bundle contains the full in-scope Cairo code plus one partition of the 170 attack vectors.
 
 The vectors are split into four thematic groups:
 
@@ -123,6 +123,7 @@ When you pass `--sierra-confirm --allow-build`, the system builds the project wi
 
 
 | Repo                          | Artifacts | ReplaceClass | CEI Oracle |
+|-------------------------------|-----------|--------------|------------|
 | ForgeYields/starknet_vault_kit| 32        | 21           | confirm    |
 | medialane-io/medialane        | 6         | 1            | missing    |
 
@@ -211,8 +212,8 @@ Deterministic benchmarks (smoke/regression gates, not final proof):
 | Benchmark cases | 42 |
 | Precision | 1.000 |
 | Recall | 1.000 |
-| Vulnerability classes covered | 13 (detectors and vuln-db classes) |
-| Attack vectors | 120 across 4 partitions (30 each) |
+| Vulnerability classes covered | 13 deterministic detectors / 28 vuln-db classes |
+| Attack vectors | 170 across 4 partitions |
 | Source audits | 24 from 10 firms |
 | Normalized findings | 217 |
 
