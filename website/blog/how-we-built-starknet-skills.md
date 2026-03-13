@@ -1,3 +1,11 @@
+---
+title: "How We Built cairo-auditor: Teaching AI Agents to Actually Audit Cairo"
+date: 2026-03-13
+authors: [omarespejel]
+tags: [cairo, security, auditing, starknet]
+description: "How cairo-auditor uses a 4-turn orchestration, parallel vector specialists, and a false-positive gate to turn a general LLM into a structured Cairo security reviewer."
+---
+
 # How We Built cairo-auditor: Teaching AI Agents to Actually Audit Cairo
 
 *March 2026*
@@ -24,11 +32,11 @@ The skill is a markdown file. It works with Claude Code, Cursor, OpenAI Codex, G
 
 Every vector in the skill traces back to a real vulnerability in a real Cairo protocol.
 
-We ingested 24 public security audit reports from 10 firms — Nethermind, Cairo Security Clan, CODESPECT, Blaize, Zellic, zkSecurity, and others — covering DeFi protocols (Vesu, Nostra, StarkDeFi, Kapan Finance), infrastructure (Piltover, Hyperlane, L3 Bridge), and applications (Cartridge, LayerAkira).
+We ingested 26 public security audit reports from 10 firms — Nethermind, Cairo Security Clan, CODESPECT, Blaize, Zellic, zkSecurity, and others — covering DeFi protocols (Vesu, Nostra, StarkDeFi, Kapan Finance), infrastructure (Piltover, Hyperlane, L3 Bridge), and applications (Cartridge, LayerAkira).
 
 ```text
 ingest → segment → normalize → distill → skillize
-  24        26         217          9          7
+  26        26         217          9          7
 audits   corpora    findings     assets     skills
 ```
 
@@ -46,7 +54,7 @@ Each audit report was extracted, segmented into traceable chunks with page bound
 }
 ```
 
-The 217 normalized findings break down: 17 critical, 26 high, 30 medium, 60 low, 47 informational, 37 best-practice. From these we distilled 29 canonical vulnerability classes — each with a vulnerable pattern, secure pattern, detection heuristics, false-positive caveats, and minimum required tests.
+The 217 normalized findings break down: 17 critical, 26 high, 30 medium, 60 low, 47 informational, 37 best-practice. From these we distilled 28 canonical vulnerability classes — each with a vulnerable pattern, secure pattern, detection heuristics, false-positive caveats, and minimum required tests.
 
 When the auditor tells an agent to check for `IMMEDIATE-UPGRADE-WITHOUT-TIMELOCK`, it's because actual Cairo contracts shipped with that exact bug, caught by human auditors at real security firms, in real audit engagements.
 
@@ -69,7 +77,7 @@ python scripts/quality/audit_local_repo.py \
   --repo-root /path/to/repo --scan-id local-audit
 ```
 
-The preflight uses 13 regex-based detectors — fast pattern matching that flags likely vulnerability classes in seconds. These detectors cover the most recurrent patterns across our 24-audit corpus: `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK`, `NO_ACCESS_CONTROL_MUTATION`, `CEI_VIOLATION_ERC1155`, `UNPROTECTED_INITIALIZER`, and 9 others.
+The preflight uses 13 regex-based detectors — fast pattern matching that flags likely vulnerability classes in seconds. These detectors cover the most recurrent patterns across our 26-audit corpus: `IMMEDIATE_UPGRADE_WITHOUT_TIMELOCK`, `NO_ACCESS_CONTROL_MUTATION`, `CEI_VIOLATION_ERC1155`, `UNPROTECTED_INITIALIZER`, and 9 others.
 
 This isn't the final analysis. It's a triage signal — which classes are likely present, so the deep pass knows where to focus.
 
@@ -268,7 +276,7 @@ Sierra confirmation is a secondary signal. It strengthens or weakens source-leve
 
 ## The Vulnerability Database
 
-Behind the 170 attack vectors sits a structured database of 29 canonical vulnerability classes. Each class has its own reference file with a consistent format:
+Behind the 170 attack vectors sits a structured database of 28 canonical vulnerability classes. Each class has its own reference file with a consistent format:
 
 ```markdown
 # UNPROTECTED-INITIALIZER
@@ -299,7 +307,7 @@ authorization, enabling front-run or hostile initialization.
 - repeated initialization reverts
 ```
 
-The 29 classes cover the full taxonomy we've seen across 24 audits: access control failures (6 classes), upgrade safety (3), arithmetic/precision (3), state management (4), external interactions (3), economic logic (4), storage layout (3), and specialized patterns (3).
+The 28 classes cover the full taxonomy we've seen across 26 audits: access control failures, upgrade safety, arithmetic/precision, state management, external interactions, economic logic, storage layout, and specialized patterns.
 
 Each class links back to the normalized findings that motivated it. The skill's evidence priority hierarchy makes this explicit:
 
@@ -325,14 +333,7 @@ The honest framing: the skill makes agents reliably better at catching Cairo-spe
 
 ## Try It
 
-Install in Claude Code:
-
-```bash
-/plugin marketplace add keep-starknet-strange/starknet-skills
-/plugin install starknet-skills
-```
-
-Or paste this URL into any agent:
+Paste this URL into any agent:
 
 ```text
 https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md
@@ -346,7 +347,9 @@ Audit src/vault.cairo for security issues using cairo-auditor
 
 The agent reads the skill, follows the 4-turn orchestration, spawns parallel specialists, applies the FP gate, and produces structured findings with fix diffs and regression tests.
 
-The [full skill](https://github.com/keep-starknet-strange/starknet-skills/tree/main/cairo-auditor), [vulnerability database](https://github.com/keep-starknet-strange/starknet-skills/tree/main/cairo-auditor/references/vulnerability-db), and [24-audit dataset](https://github.com/keep-starknet-strange/starknet-skills/tree/main/datasets) are MIT-licensed. If you've found a Cairo vulnerability class that isn't covered, [open a PR](https://github.com/keep-starknet-strange/starknet-skills/blob/main/CONTRIBUTING.md). Every new pattern makes every agent that uses the skill better.
+If you're using Claude Code plugin installs, use the latest commands from the [README Install & Use](https://github.com/keep-starknet-strange/starknet-skills#install--use) section.
+
+The [full skill](https://github.com/keep-starknet-strange/starknet-skills/tree/main/cairo-auditor), [vulnerability database](https://github.com/keep-starknet-strange/starknet-skills/tree/main/cairo-auditor/references/vulnerability-db), and [26-audit dataset](https://github.com/keep-starknet-strange/starknet-skills/tree/main/datasets) are MIT-licensed. If you've found a Cairo vulnerability class that isn't covered, [open a PR](https://github.com/keep-starknet-strange/starknet-skills/blob/main/CONTRIBUTING.md). Every new pattern makes every agent that uses the skill better.
 
 ---
 
