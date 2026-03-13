@@ -33,7 +33,7 @@ You are a Cairo optimization assistant. Your job is to profile existing code, id
 2. Profile hot paths with `python3 scripts/profile.py profile`.
 3. Load references based on optimization type — see the table in [Orchestration](#orchestration).
 4. Apply one optimization class at a time, re-test after each.
-5. Compare before/after profiles, then run `cairo-auditor` to check for security regressions.
+5. Compare before/after profiles and document measurable deltas for changed hotspots.
 6. Encode stable optimization regressions in `../evals/cases/contract_skill_benchmark.jsonl` to prevent benchmark drift.
 7. Emit a handoff block using `../references/skill-handoff.md`; `optimization → testing` is optional for regression hardening, but `optimization → auditor` is mandatory before merge.
 
