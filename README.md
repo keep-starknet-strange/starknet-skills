@@ -100,10 +100,14 @@ gemini --skill https://raw.githubusercontent.com/keep-starknet-strange/starknet-
 
 ### VS Code (GitHub Copilot)
 
-Clone the repo into your workspace. Copilot reads `AGENTS.md` automatically:
+Clone the repo into your workspace, then provide the router URL in Copilot chat via `@workspace` (or add it as custom context in VS Code settings):
 
 ```bash
 git clone https://github.com/keep-starknet-strange/starknet-skills.git
+```
+
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
 ```
 
 ### OpenAI Codex
