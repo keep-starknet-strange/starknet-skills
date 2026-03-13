@@ -612,7 +612,7 @@ def _render_sierra_md(sierra: dict[str, object]) -> list[str]:
     errors_raw = sierra.get("errors")
     errors = errors_raw if isinstance(errors_raw, (list, tuple)) else []
     for err in errors:
-        escaped_err = _md_escape_text(str(err)).replace("`", "'")
+        escaped_err = _md_escape_text(str(err))
         lines.append(f"- Error: {escaped_err}")
     lines.append("")
     return lines
@@ -661,12 +661,16 @@ def _render_markdown(
     for f in findings:
         sev = str(f.get("severity", "info")).lower()
         sev_counts[sev] = sev_counts.get(sev, 0) + 1
+    known_severity_set = set(_SEVERITY_ORDER)
+    unknown_count = sum(count for sev, count in sev_counts.items() if sev not in known_severity_set)
     total = sum(sev_counts.values())
     lines += ["## Summary", "", "| Severity | Count |", "|----------|------:|"]
     for sev in _SEVERITY_ORDER:
         count = sev_counts.get(sev, 0)
         if count > 0:
             lines.append(f"| {_SEVERITY_LABELS.get(sev, sev)} | {count} |")
+    if unknown_count > 0:
+        lines.append(f"| Other/Unknown | {unknown_count} |")
     lines += [f"| **Total** | **{total}** |", ""]
 
     sorted_findings: list[dict[str, object]] = []
@@ -688,45 +692,58 @@ def _render_markdown(
             remaining = len(sorted_findings) - max_findings_rows
             lines.append(f"_Showing first {max_findings_rows} findings ({remaining} omitted)._")
             lines.append("")
+
+        def _append_finding_entry(finding: dict[str, object], idx: int) -> int:
+            idx += 1
+            priority = _md_escape_heading(str(finding.get("priority", "P3")))
+            title = _md_escape_heading(str(finding.get("title", finding.get("class_id", "Unknown"))))
+            confidence = _safe_int(finding.get("confidence", 75), default=75)
+            file_path = finding.get("file", "")
+            line_num = finding.get("line")
+            safe_path = _md_escape_path(str(file_path))
+            location = f"`{safe_path}:{line_num}`" if line_num else f"`{safe_path}`"
+            cid = _md_escape_path(str(finding.get("class_id", "")))
+
+            lines.extend(
+                [
+                    f"#### [{priority}] {idx}. {title}",
+                    "",
+                    f"`{cid}` · {location} · Confidence: {confidence}",
+                    "",
+                ]
+            )
+            desc = _md_escape_text(str(finding.get("description", "")))
+            if desc:
+                lines += ["**Description**", desc, ""]
+            exploit = _md_escape_text(str(finding.get("exploit_path", "")))
+            if exploit:
+                lines += ["**Exploit Path**", exploit, ""]
+            rec = _md_escape_text(str(finding.get("recommendation", "")))
+            if rec and confidence >= 75:
+                lines += ["**Recommendation**", rec, ""]
+            tests_raw = finding.get("minimum_tests", [])
+            tests = tests_raw if isinstance(tests_raw, (list, tuple)) else []
+            if tests and confidence >= 75:
+                lines.append("**Required Tests**")
+                for t in tests:
+                    lines.append(f"- {_md_escape_text(str(t))}")
+                lines.append("")
+            lines += ["---", ""]
+            return idx
+
         for sev in _SEVERITY_ORDER:
             sev_findings = [f for f in detailed_findings if str(f.get("severity", "info")).lower() == sev]
             if not sev_findings:
                 continue
             lines += [f"### {_SEVERITY_LABELS.get(sev, sev)}", ""]
             for f in sev_findings:
-                finding_num += 1
-                priority = _md_escape_heading(str(f.get("priority", "P3")))
-                title = _md_escape_heading(str(f.get("title", f.get("class_id", "Unknown"))))
-                confidence = _safe_int(f.get("confidence", 75), default=75)
-                file_path = f.get("file", "")
-                line_num = f.get("line")
-                safe_path = _md_escape_path(str(file_path))
-                location = f"`{safe_path}:{line_num}`" if line_num else f"`{safe_path}`"
-                cid = _md_escape_path(str(f.get("class_id", "")))
+                finding_num = _append_finding_entry(f, finding_num)
 
-                lines += [
-                    f"#### [{priority}] {finding_num}. {title}",
-                    "",
-                    f"`{cid}` · {location} · Confidence: {confidence}",
-                    "",
-                ]
-                desc = f.get("description", "")
-                if desc:
-                    lines += ["**Description**", desc, ""]
-                exploit = _md_escape_text(str(f.get("exploit_path", "")))
-                if exploit:
-                    lines += ["**Exploit Path**", exploit, ""]
-                rec = _md_escape_text(str(f.get("recommendation", "")))
-                if rec and confidence >= 75:
-                    lines += ["**Recommendation**", rec, ""]
-                tests_raw = f.get("minimum_tests", [])
-                tests = tests_raw if isinstance(tests_raw, (list, tuple)) else []
-                if tests and confidence >= 75:
-                    lines.append("**Required Tests**")
-                    for t in tests:
-                        lines.append(f"- {_md_escape_text(str(t))}")
-                    lines.append("")
-                lines += ["---", ""]
+        unknown_findings = [f for f in detailed_findings if str(f.get("severity", "info")).lower() not in known_severity_set]
+        if unknown_findings:
+            lines += ["### Other/Unknown", ""]
+            for f in unknown_findings:
+                finding_num = _append_finding_entry(f, finding_num)
 
     # Sierra confirmation
     if sierra:
