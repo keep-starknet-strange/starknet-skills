@@ -28,6 +28,7 @@ Exit codes:
     4  cairo-profiler build failed
     5  pprof PNG export failed
     6  Missing external tool (snforge, scarb, cairo-profiler, pprof)
+    7  pprof hotspot summary export failed
 """
 
 import argparse
@@ -273,9 +274,9 @@ def _step_export_summary_text(profile_path: str, summary_path: str, pprof_sample
     if result.returncode != 0:
         stderr = result.stderr.strip()
         extra = f"\n  stderr: {stderr}" if stderr else ""
-        _fail(5, f"pprof hotspot summary export failed with exit code {result.returncode}{extra}")
+        _fail(7, f"pprof hotspot summary export failed with exit code {result.returncode}{extra}")
     if not result.stdout.strip():
-        _fail(5, "pprof hotspot summary export produced empty output")
+        _fail(7, "pprof hotspot summary export produced empty output")
     with open(summary_path, "w", encoding="utf-8") as handle:
         handle.write(result.stdout)
 
