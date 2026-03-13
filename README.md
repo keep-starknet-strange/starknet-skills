@@ -91,14 +91,16 @@ git clone https://github.com/keep-starknet-strange/starknet-skills.git
 
 Option 1: add the cloned repo as a context directory in Cursor settings.
 
-Option 2: copy the rule file and selected skills into your project:
+Option 2: copy the rule file and selected skills into your project.
+Run the following from your project root and replace `/path/to/starknet-skills` with your clone path:
 
 ```bash
+cd /path/to/your/project
 mkdir -p .cursor/rules .cursor/skills
-cp starknet-skills/.cursor/rules/starknet-skills.md .cursor/rules/
-cp -r starknet-skills/cairo-auditor .cursor/skills/cairo-auditor
-cp -r starknet-skills/cairo-testing .cursor/skills/cairo-testing
-cp -r starknet-skills/cairo-contract-authoring .cursor/skills/cairo-contract-authoring
+cp /path/to/starknet-skills/.cursor/rules/starknet-skills.md .cursor/rules/
+cp -r /path/to/starknet-skills/cairo-auditor .cursor/skills/cairo-auditor
+cp -r /path/to/starknet-skills/cairo-testing .cursor/skills/cairo-testing
+cp -r /path/to/starknet-skills/cairo-contract-authoring .cursor/skills/cairo-contract-authoring
 ```
 
 Then try:
