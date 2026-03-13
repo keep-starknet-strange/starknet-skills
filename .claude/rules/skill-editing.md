@@ -16,4 +16,4 @@ When editing skill files:
 - Must include at least one local Markdown link for progressive disclosure (for example `./workflow.md` or `./reference.md`)
 - Keep SKILL.md under 500 lines; keep deep details in `references/` and `workflows/`
 - One level of linking depth only (no chained references)
-- Run `python scripts/quality/validate_skills.py` after changes
+- Run `python3 scripts/quality/validate_skills.py` after changes

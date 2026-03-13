@@ -12,6 +12,7 @@ Cairo/Starknet reasoning skills for agents. 7 modules, evaluation-backed.
 ## Hard Rules
 
 - No operational SDK content — only correctness, security, eval-backed guidance
+- Boundary changes MUST call out impacted repos: `keep-starknet-strange/starknet-agentic` and `keep-starknet-strange/starkclaw`
 - Detection/remediation changes MUST include eval case updates
 - Skill files require: "When to Use", "When NOT to Use"; security skills also: "Rationalizations to Reject"
 - Keep SKILL.md concise; details go in `references/` and `workflows/`
@@ -19,9 +20,9 @@ Cairo/Starknet reasoning skills for agents. 7 modules, evaluation-backed.
 ## Commands
 
 ```bash
-python scripts/quality/validate_skills.py      # structure check
-python scripts/quality/validate_marketplace.py  # marketplace metadata
-python scripts/quality/parity_check.py          # optional, needs snforge+sncast
+python3 scripts/quality/validate_skills.py     # structure check
+python3 scripts/quality/validate_marketplace.py # marketplace metadata
+python3 scripts/quality/parity_check.py         # optional, needs snforge+sncast
 ruff check scripts/                             # Python lint
 ```
 
@@ -32,7 +33,7 @@ Python 3.12 · Scarb 2.16.1 · Starknet Foundry 0.57.0 · ruff · shellcheck
 ## Style
 
 - Python: ruff defaults
-- Markdown: YAML frontmatter required (`name`, `description`)
+- Skill Markdown: YAML frontmatter required (`name`, `description`)
 - JSONL: one JSON object per line, validate against `datasets/manifests/` and `datasets/normalized/` schemas
 
 ## Compact instructions
