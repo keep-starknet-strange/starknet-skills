@@ -346,8 +346,9 @@ def _find_relevant_line(code: str, class_id: str) -> int | None:
         "ONE_SHOT_REGISTRATION": [r"\bfn\s+register_"],
         "FEES_RECIPIENT_ZERO_DOS": [r"\bfees_recipient\b"],
     }
+    lines = code.splitlines()
     for pattern in line_patterns.get(class_id, []):
-        for i, line in enumerate(code.splitlines(), 1):
+        for i, line in enumerate(lines, 1):
             if re.search(pattern, line, re.IGNORECASE):
                 return i
     return None
@@ -360,7 +361,13 @@ def _md_escape_path(path: str) -> str:
 
 def _md_escape_cell(value: str) -> str:
     """Escape generic markdown table cell content."""
-    return value.replace("|", "&#124;").replace("`", "'").replace("\n", " ")
+    return (
+        value.replace("|", "&#124;")
+        .replace("`", "'")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\n", " ")
+    )
 
 
 def _md_escape_text(value: str) -> str:
@@ -580,6 +587,7 @@ def _render_markdown(
     sierra: dict[str, object] | None,
 ) -> str:
     lines: list[str] = []
+    max_findings_rows = 250
     repo_name = _md_escape_cell(str(summary.get("repo", "unknown")))
 
     # Header
@@ -635,8 +643,13 @@ def _render_markdown(
                 str(x.get("title", x.get("class_id", "Unknown"))),
             ),
         )
+        detailed_findings = sorted_findings[:max_findings_rows]
+        if len(sorted_findings) > max_findings_rows:
+            remaining = len(sorted_findings) - max_findings_rows
+            lines.append(f"_Showing first {max_findings_rows} findings ({remaining} omitted)._")
+            lines.append("")
         for sev in _SEVERITY_ORDER:
-            sev_findings = [f for f in sorted_findings if str(f.get("severity", "info")).lower() == sev]
+            sev_findings = [f for f in detailed_findings if str(f.get("severity", "info")).lower() == sev]
             if not sev_findings:
                 continue
             lines += [f"### {_SEVERITY_LABELS.get(sev, sev)}", ""]
@@ -683,16 +696,15 @@ def _render_markdown(
     if findings:
         lines += ["## Findings Index", "", "| # | Severity | Confidence | Title |",
                   "|--:|----------|----------:|------|"]
-        max_index_rows = 250
         idx = 0
-        for f in sorted_findings[:max_index_rows]:
+        for f in sorted_findings[:max_findings_rows]:
             idx += 1
             sev = _SEVERITY_LABELS.get(str(f.get("severity", "info")).lower(), "Info")
             conf = _safe_int(f.get("confidence", 75), default=75)
             title = _md_escape_cell(str(f.get("title", f.get("class_id", "Unknown"))))
             lines.append(f"| {idx} | {sev} | {conf} | {title} |")
-        if len(sorted_findings) > max_index_rows:
-            remaining = len(sorted_findings) - max_index_rows
+        if len(sorted_findings) > max_findings_rows:
+            remaining = len(sorted_findings) - max_findings_rows
             lines.append(f"| ... | ... | ... | ... ({remaining} more findings omitted) |")
         lines.append("")
 
