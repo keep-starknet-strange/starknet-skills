@@ -48,7 +48,15 @@
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./**/.env)",
-      "Read(./**/.env.*)"
+      "Read(./**/.env.*)",
+      "Edit(./.env)",
+      "Edit(./.env.*)",
+      "Edit(./**/.env)",
+      "Edit(./**/.env.*)",
+      "Write(./.env)",
+      "Write(./.env.*)",
+      "Write(./**/.env)",
+      "Write(./**/.env.*)"
     ],
     "allow": [
       "Read",
@@ -108,7 +116,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; FILE=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE\" | grep -qiE '(\\.bashrc|\\.zshrc|/\\.ssh/|/\\.aws/|/\\.gnupg/|/\\.git-credentials|/\\.docker/config|/\\.kube/|/\\.npmrc|/\\.pypirc|/\\.config/gh/)'; then echo \"BLOCKED: Editing shell config or credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
+            "command": "command -v jq >/dev/null 2>&1 || { echo 'BLOCKED: jq is required for safety hooks but is not installed.' >&2; exit 2; }; FILE=$(jq -r '.tool_input.file_path // empty'); if echo \"$FILE\" | grep -qiE '(\\.bashrc|\\.zshrc|/\\.ssh/|/\\.aws/|/\\.gnupg/|/\\.git-credentials|/\\.docker/config|/\\.kube/|/\\.npmrc|/\\.pypirc|/\\.config/gh/|\\.env$|\\.env\\.)'; then echo \"BLOCKED: Editing shell config or credentials ($FILE) is not allowed.\" >&2; exit 2; fi"
           }
         ]
       }
