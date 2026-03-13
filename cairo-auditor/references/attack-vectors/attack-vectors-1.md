@@ -119,3 +119,51 @@
 **90. Internal privileged helper exposed externally**
 - **D:** helper intended for privileged internal use is reachable through unguarded external wrapper.
 - **FP:** every external wrapper enforces the same auth invariant as the helper contract.
+
+**121. Constructor assumes deployer role without explicit grant**
+- **D:** constructor logic assumes deployer already holds a specific role (governor, admin) without granting it, causing post-deploy auth failures or requiring external setup.
+- **FP:** role is explicitly granted in constructor or documented as a pre-deployment requirement with verified setup script.
+
+**122. Ownership transfer to non-deployed or zero-class contract**
+- **D:** `transfer_ownership` or admin transfer accepts any `ContractAddress` without validating the target is a deployed contract or non-zero.
+- **FP:** transfer validates target is non-zero and optionally confirms deployment via class hash check.
+
+**123. Forced shutdown override precedence inversion**
+- **D:** contract has inferred mode plus forced/shutdown override, but inferred-mode branch returns early before forced override check, leaving critical paths active when forced shutdown is set.
+- **FP:** forced override is checked first (or centralized) before any inferred-mode branch logic.
+
+**124. Extension or module parity failure on new capability**
+- **D:** new state override or mode (e.g., overwrite shutdown) implemented in core but not propagated to extension/oracle/adapter modules that also enforce the same state.
+- **FP:** all extensions implement or delegate to the same capability surface as core.
+
+**125. Non-atomic upgrade-then-configure race window**
+- **D:** upgrade (`replace_class_syscall`) and post-upgrade configuration happen in separate transactions, creating a window where new code runs with stale config.
+- **FP:** upgrade and migration are atomic (same transaction) or new class is backward-compatible by design.
+
+**126. Multi-sig threshold set below safe minimum**
+- **D:** multi-sig or quorum threshold can be set to zero or one, allowing single-signer execution of privileged actions.
+- **FP:** threshold setter enforces minimum floor (e.g., `threshold >= 2`) or is immutable.
+
+**127. Factory-deployed contract inherits deployer privilege**
+- **D:** factory deploys child contracts that inherit factory address as admin/owner, but factory itself has broad access or is upgradeable.
+- **FP:** child contracts use explicit admin parameter independent of factory, or factory is immutable with constrained interface.
+
+**128. Upgrade migration resets or drops permission state**
+- **D:** post-upgrade migration overwrites or fails to carry forward role/permission mappings from previous class, silently dropping access control state.
+- **FP:** migration explicitly preserves or re-validates all permission state, with post-migration invariant checks.
+
+**129. Self-revocation of sole admin locks governance**
+- **D:** sole admin can call `revoke_role` or `renounce_ownership` on themselves with no remaining admin, permanently locking privileged functions.
+- **FP:** revocation checks that at least one admin remains, or renounce requires pending transfer to be accepted first.
+
+**130. Arbitrary declared class hash accepted without compatibility verification**
+- **D:** upgrade or registry path accepts any declared class hash without validating expected interface, storage-layout compatibility, or migration invariants, allowing incompatible implementations to be installed.
+- **FP:** class hash is allowlisted or validated for interface/version/storage compatibility before upgrade, with migration invariants checked explicitly.
+
+**131. Proxy storage layout collision after class replacement**
+- **D:** new implementation class uses storage slots that collide with proxy-level state (admin slot, implementation slot), corrupting proxy metadata.
+- **FP:** implementation uses explicit non-overlapping Starknet storage namespaces/substorage roots and preserves proxy-reserved metadata invariants.
+
+**132. Authorization/policy check occurs after state mutation on non-reverting error path**
+- **D:** function writes critical state before auth/policy check or before a non-reverting `Err` return branch, allowing inconsistent state when the operation reports failure without transaction revert.
+- **FP:** auth/policy checks execute before any state write and failure paths do not persist partial mutations.

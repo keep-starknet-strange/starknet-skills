@@ -119,3 +119,51 @@
 **100. Error-logging without rollback in privileged path**
 - **D:** privileged flow catches/logs external error but keeps partial state updates.
 - **FP:** privileged path either reverts or atomically compensates all partial state.
+
+**133. Safe-dispatcher panic data drives privileged fallback logic**
+- **D:** call through a safe dispatcher returns `Result::Err(panic_data)` and caller parses attacker-controlled `panic_data` to choose a privileged fallback path, effectively turning error payload into authorization/config input.
+- **FP:** `Err` branches treat panic payload as opaque diagnostics only; privileged decisions never depend on panic-data content.
+
+**134. Safe-dispatcher fallback assumes catchability of non-catchable syscall failures**
+- **D:** fallback logic assumes all external call failures are catchable, but cases like non-existent contract/class hash or Cairo 0 edge paths revert the entire transaction and bypass fallback.
+- **FP:** fallback logic is limited to documented catchable failure modes and pre-validates contract/class existence where needed.
+
+**135. Deserialization failure in try_* syscall wrapper causes unexpected revert**
+- **D:** `try_call_contract` or similar wrapper reverts on deserialization failure of the return value instead of returning an error, breaking fallback logic.
+- **FP:** wrapper handles both call failure and decode failure paths, or return type is guaranteed by target ABI.
+
+**136. L1/L2 message ordering gap enables blocking attack**
+- **D:** `update_state` or L1 handler processes messages sequentially; a single malformed or oversized message blocks all subsequent messages in the batch.
+- **FP:** messages are processed independently with per-message error isolation, or batch validation rejects invalid entries before processing.
+
+**137. Race condition in multi-step token activation**
+- **D:** token bridge activation requires multiple transactions (deploy + register + configure); between steps, another actor can front-run or interfere with an incomplete activation.
+- **FP:** activation is atomic or protected by a pending-state lock that blocks interference.
+
+**138. Optional token metadata/interface assumption without capability check**
+- **D:** protocol assumes optional token metadata/interface functions (for example `decimals()`) are present and trusted, causing runtime failure or incorrect normalization on non-standard tokens.
+- **FP:** token capability is validated at registration and missing optional interfaces are handled explicitly.
+
+**139. Cross-chain bridge missing rate limit or circuit breaker**
+- **D:** single bridge transaction can drain the entire locked pool with no per-transaction cap or pause mechanism.
+- **FP:** bridge enforces per-tx and per-period caps with automatic pause on anomalous volume.
+
+**140. Batch executor reuses stale external-state cache across legs**
+- **D:** batched execution caches external state (allowance/balance/config) from an early leg and reuses it after intervening calls mutate that state, so even fixed call ordering can execute against invalid assumptions.
+- **FP:** each leg refreshes external state at point-of-use or invalidates cache on every state-changing leg.
+
+**141. Excessive message or output size causes DoS in state update**
+- **D:** bridge `update_state` or message handler does not validate input array sizes; excessively large payloads cause out-of-gas or computation overflow.
+- **FP:** handler enforces maximum array/message size bounds before processing.
+
+**142. Registry-to-dispatch TOCTOU on class-hash validation**
+- **D:** class hash is validated only at registration time, but dispatch uses a mutable registry value later without re-validating against current allowlist/snapshot.
+- **FP:** dispatch re-validates class hash against immutable snapshot/allowlist at execution time.
+
+**143. Callback during token transfer enables cross-protocol reentrancy**
+- **D:** ERC721/ERC1155 safe transfer triggers receiver callback; receiving contract re-enters a different protocol function that reads stale state from the transferring contract.
+- **FP:** cross-protocol reentrancy guard or effects-before-interaction pattern across all dependent state.
+
+**144. Bridge message hash collision via non-canonical preimage encoding**
+- **D:** bridge participants hash semantically identical messages with different field packing/serialization rules (felt vs bytes layout, padding, or array framing), creating hash mismatches or collisions across domains.
+- **FP:** bridge defines one canonical preimage encoding shared by all participants and enforces it with cross-implementation test vectors.
