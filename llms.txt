@@ -14,7 +14,7 @@
 
 ## Recommended Flow
 
-cairo-contract-authoring → cairo-testing → cairo-optimization → cairo-auditor
+cairo-contract-authoring → cairo-testing → [cairo-optimization (if needed)] → cairo-auditor
 
 ## Install
 
