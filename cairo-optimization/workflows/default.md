@@ -13,7 +13,7 @@ Where `{skill_dir}` is the directory containing this workflow's parent skill (`c
 
 - Run `snforge test` to confirm all tests pass. Stop if any fail.
 - Profile target paths with `python3 {skill_dir}/scripts/profile.py profile`.
-- Capture a machine-readable hotspot summary (table/text report) and use it as the ranking source of truth; PNGs are optional visual aids.
+- Use the emitted `<timestamp>_<package>_<name>_<metric>_<commit>.summary.txt` as the canonical hotspot ranking source. PNGs are optional visual aids.
 - Record baseline metrics for later comparison.
 
 ## Phase 2 — Plan

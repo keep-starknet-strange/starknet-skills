@@ -263,6 +263,23 @@ def _step_export_png(
         _fail(5, f"pprof completed but PNG not found: {png_path}")
 
 
+def _step_export_summary_text(profile_path: str, summary_path: str, pprof_sample_index: str) -> None:
+    """Export machine-readable hotspot summary (pprof text table)."""
+    _check_tool("pprof")
+    print(f"\n[5/5] Exporting hotspot summary: {os.path.basename(summary_path)}")
+    cmd = ["pprof", "-top", f"-sample_index={pprof_sample_index}", profile_path]
+    print(f"  $ {' '.join(cmd)}")
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    if result.returncode != 0:
+        stderr = result.stderr.strip()
+        extra = f"\n  stderr: {stderr}" if stderr else ""
+        _fail(5, f"pprof hotspot summary export failed with exit code {result.returncode}{extra}")
+    if not result.stdout.strip():
+        _fail(5, "pprof hotspot summary export produced empty output")
+    with open(summary_path, "w", encoding="utf-8") as handle:
+        handle.write(result.stdout)
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -333,6 +350,7 @@ def main() -> int:
     # Generate output filenames
     pb_path = _profile_filename(output_dir, args.package, args.name, args.metric, commit, "pb.gz")
     png_path = _profile_filename(output_dir, args.package, args.name, args.metric, commit, "png")
+    summary_path = _profile_filename(output_dir, args.package, args.name, args.metric, commit, "summary.txt")
 
     print("Cairo Profiling Pipeline")
     print(f"  Mode:    {args.mode}")
@@ -363,11 +381,13 @@ def main() -> int:
     # Step 4: Export PNG
     _step_export_png(pb_path, png_path, metric_cfg["pprof_sample_index"],
                      nodefraction=args.nodefraction, edgefraction=args.edgefraction)
+    _step_export_summary_text(pb_path, summary_path, metric_cfg["pprof_sample_index"])
 
     # Summary
     print(f"\n{'='*60}")
     print(f"Profile: {pb_path}")
     print(f"PNG:     {png_path}")
+    print(f"Summary: {summary_path}")
     print(f"{'='*60}")
 
     return 0
