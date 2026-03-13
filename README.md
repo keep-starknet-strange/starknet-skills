@@ -98,6 +98,7 @@ mkdir -p .cursor/rules .cursor/skills
 cp starknet-skills/.cursor/rules/starknet-skills.md .cursor/rules/
 cp -r starknet-skills/cairo-auditor .cursor/skills/cairo-auditor
 cp -r starknet-skills/cairo-testing .cursor/skills/cairo-testing
+cp -r starknet-skills/cairo-contract-authoring .cursor/skills/cairo-contract-authoring
 ```
 
 Then try:
