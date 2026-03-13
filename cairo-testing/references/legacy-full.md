@@ -35,6 +35,9 @@ For security regression tests, prefer templates under:
 [dev-dependencies]
 snforge_std = "0.57.0"
 
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
+
 [[target.starknet-contract]]
 sierra = true
 casm = true
@@ -51,7 +54,10 @@ snforge test
 # Run specific test by name
 snforge test test_transfer
 
-# Run tests matching a pattern
+# Run tests matching a pattern (if your snforge build supports --filter)
+snforge test --filter test_erc20
+
+# Run tests matching a pattern (positional fallback)
 snforge test test_erc20
 
 # Filter to a single test function (exact match)

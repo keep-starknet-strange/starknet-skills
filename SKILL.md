@@ -32,4 +32,4 @@ For new contract work, use this sequence:
 3. [cairo-optimization](cairo-optimization/SKILL.md) (if performance matters)
 4. [cairo-auditor](cairo-auditor/SKILL.md)
 
-Each skill outputs a **Handoff Block** at the end of its workflow — a structured summary (files touched, security posture, test status) that can be passed as input to the next skill. See [references/skill-handoff.md](references/skill-handoff.md) for the format.
+`cairo-contract-authoring`, `cairo-testing`, and `cairo-optimization` output a **Handoff Block** at the end of their workflows — a structured summary (files touched, security posture, test status) that can be passed as input to the next skill. See [references/skill-handoff.md](references/skill-handoff.md) for the format.
