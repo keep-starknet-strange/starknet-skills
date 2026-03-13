@@ -57,6 +57,17 @@ The handoff includes:
 - **Security posture table** — every external function with its access posture, so testing knows what auth paths to cover.
 - **Suggested focus** — "Write negative tests for each guarded function. Add fuzz tests for functions with numeric inputs. Verify events with spy_events."
 
+### authoring → auditor
+
+Source: `cairo-contract-authoring` Turn 4.
+Target: `cairo-auditor` Turn 1.
+
+The handoff includes:
+- **Files touched** — all newly authored or modified `.cairo` files.
+- **Security posture table** — every external function with guard/public rationale.
+- **Upgrade/timelock summary** — explicit list of upgrade paths and time sources used.
+- **Suggested focus** — "Prioritize privileged mutation paths, upgrade guards, and constructor initialization checks."
+
 ### testing → optimization
 
 Source: `cairo-testing` Turn 4.
