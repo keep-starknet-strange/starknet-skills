@@ -119,3 +119,51 @@
 **110. Reciprocal pricing missing zero/underflow guards**
 - **D:** inverse price math executes without zero-floor and bound checks.
 - **FP:** reciprocal path validates non-zero numerator/denominator and bounds.
+
+**145. Felt252 range violation via unbounded parameter**
+- **D:** parameter passed to cryptographic function, bit operation, or storage derivation is not bounds-checked against safe range below felt252 field prime, enabling wrap-around or invalid proof inputs.
+- **FP:** explicit range assertion (e.g., `value < 2^64`, `bit_size < 252`) enforced before use.
+
+**146. Modulo arithmetic edge case causing index wrap or overwrite**
+- **D:** index derived via modulo (`value % CAPACITY`) wraps to a previously used slot, overwriting pending state (e.g., root history ring buffer).
+- **FP:** modulo-derived index checked for collision with occupied slot, or monotonic index prevents overwrite.
+
+**147. Collected fee balance stuck with no withdrawal mechanism**
+- **D:** contract collects fees (transfer-in on operations) but exposes no function to withdraw accumulated fee balance, permanently locking funds.
+- **FP:** dedicated fee withdrawal function exists with appropriate access control.
+
+**148. Fee hook or callback always reverts blocking operation**
+- **D:** fee collection path delegates to hook/callback that unconditionally reverts (wrong interface, missing implementation, or incorrect return value), blocking all fee-bearing operations.
+- **FP:** fee hook is validated at registration or has a bypass/fallback for misconfigured hooks.
+
+**149. First-depositor vault share inflation attack**
+- **D:** first depositor mints minimal shares then donates assets directly, inflating share price so subsequent depositors receive zero shares for non-trivial deposits.
+- **FP:** vault enforces minimum initial deposit, uses virtual shares/assets offset, or dead shares mechanism.
+
+**150. Instruction sequence interaction causing negative balance state**
+- **D:** specific combination of batch instructions (borrow + swap + repay) creates intermediate negative balance that either reverts unexpectedly or underflows storage.
+- **FP:** batch executor validates intermediate invariants between instructions, or instruction ordering is constrained.
+
+**151. Staking reward front-run by new depositor before checkpoint**
+- **D:** reward distribution checkpoint occurs after new stake is recorded, allowing just-in-time depositor to claim share of pending rewards without contributing to the earning period.
+- **FP:** checkpoint/accumulator updated before new stake is recorded, or time-weighted distribution prevents instantaneous dilution.
+
+**152. Cross-market timestamp-key alias contaminates accrual state**
+- **D:** two market/reward streams resolve to the same timestamp storage key (aliasing bug), so updates in one stream silently mutate accrual baseline of another.
+- **FP:** each stream has a unique storage key namespace and invariant tests prove no cross-market key aliasing.
+
+**153. Route-level slippage check omitted despite per-leg checks**
+- **D:** each leg in a batched route satisfies local min/max checks, but no final route-level min-out/slippage assertion is enforced at settlement, allowing harmful composite paths.
+- **FP:** protocol enforces both per-leg checks and a final route-level aggregate slippage/invariant check.
+
+**154. Emergency withdrawal fails due to insufficient contract balance**
+- **D:** emergency withdrawal path assumes contract holds sufficient assets, but partial withdrawals or external drains leave insufficient balance, causing revert when users need funds most.
+- **FP:** emergency path handles partial fulfillment or has priority claim mechanism with clear accounting.
+
+**155. Deficit handling branch reachable but debt accounting not persisted**
+- **D:** settlement reaches the deficit/socialization path but fails to persist updated debt/socialization state before exit, causing repeated deficit handling or inconsistent recovery accounting.
+- **FP:** deficit branch atomically persists debt/socialization state and integration tests cover consecutive negative-settlement cycles.
+
+**156. Fee override path bypasses canonical normalization**
+- **D:** primary setter normalizes fee inputs correctly, but admin/import/override path writes raw fee values directly, letting consumers apply mixed-scale state.
+- **FP:** every fee write path goes through the same normalization helper, and override/import routes are tested against the canonical stored unit.
