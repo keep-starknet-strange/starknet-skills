@@ -756,7 +756,8 @@ def _render_markdown(
         idx = 0
         for f in sorted_findings[:max_findings_rows]:
             idx += 1
-            sev = _SEVERITY_LABELS.get(str(f.get("severity", "info")).lower(), "Info")
+            sev_key = str(f.get("severity", "info")).lower()
+            sev = _SEVERITY_LABELS.get(sev_key, "Other/Unknown")
             conf = _safe_int(f.get("confidence", 75), default=75)
             title = _md_escape_cell(str(f.get("title", f.get("class_id", "Unknown"))))
             lines.append(f"| {idx} | {sev} | {conf} | {title} |")
