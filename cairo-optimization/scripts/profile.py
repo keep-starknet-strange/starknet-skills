@@ -140,7 +140,7 @@ def _find_package_dir(repo_root: str, package: str) -> str:
 def _step_snforge(pkg_dir: str, test_filter: str, tracked_resource: str) -> None:
     """Run snforge test with trace generation."""
     _check_tool("snforge")
-    print(f"\n[1/4] Running snforge test (filter: {test_filter}, resource: {tracked_resource})")
+    print(f"\n[1/5] Running snforge test (filter: {test_filter}, resource: {tracked_resource})")
     result = _run(
         ["snforge", "test", test_filter,
          "--save-trace-data", "--tracked-resource", tracked_resource],
@@ -154,7 +154,7 @@ def _step_snforge(pkg_dir: str, test_filter: str, tracked_resource: str) -> None
 def _step_scarb(pkg_dir: str, executable: str, args_file: str) -> None:
     """Run scarb execute with trace generation."""
     _check_tool("scarb")
-    print(f"\n[1/4] Running scarb execute (executable: {executable})")
+    print(f"\n[1/5] Running scarb execute (executable: {executable})")
     cmd = [
         "scarb", "execute",
         "--executable-name", executable,
@@ -215,7 +215,7 @@ def _find_trace_scarb(pkg_dir: str, package: str) -> str:
 def _step_build_profile(trace_path: str, output_path: str) -> None:
     """Build pprof profile from trace JSON."""
     _check_tool("cairo-profiler")
-    print(f"\n[3/4] Building profile: {os.path.basename(output_path)}")
+    print(f"\n[3/5] Building profile: {os.path.basename(output_path)}")
     result = _run([
         "cairo-profiler", "build-profile", trace_path,
         "--show-libfuncs",
@@ -246,7 +246,7 @@ def _step_export_png(
 ) -> None:
     """Export PNG call graph via pprof."""
     _check_tool("pprof")
-    print(f"\n[4/4] Exporting PNG: {os.path.basename(png_path)}")
+    print(f"\n[4/5] Exporting PNG: {os.path.basename(png_path)}")
     result = _run([
         "pprof", "-png",
         f"-sample_index={pprof_sample_index}",
@@ -368,7 +368,7 @@ def main() -> int:
         _step_scarb(pkg_dir, args.executable, args.args_file)
 
     # Step 2: Find trace
-    print("\n[2/4] Locating trace file")
+    print("\n[2/5] Locating trace file")
     if args.mode == "snforge":
         trace_path = _find_trace_snforge(pkg_dir, args.test)
     else:
