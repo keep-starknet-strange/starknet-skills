@@ -123,7 +123,7 @@ These are non-negotiable. Every contract you write must satisfy all of them:
 - Language fundamentals: [language.md](references/language.md)
 - Contract patterns and OZ components: [legacy-full.md](references/legacy-full.md)
 - Anti-pattern/secure-pattern pairs: [anti-pattern-pairs.md](references/anti-pattern-pairs.md)
-- Cross-skill handoff format: [../references/skill-handoff.md](../references/skill-handoff.md)
+- Cross-skill handoff format: `../references/skill-handoff.md`
 - Authoring to audit handoff: [audit-handoff.md](references/audit-handoff.md)
 - Module index: [references/README.md](references/README.md)
 

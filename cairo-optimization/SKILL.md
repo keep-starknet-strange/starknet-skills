@@ -141,7 +141,7 @@ These are non-negotiable. Every optimization you apply must satisfy all of them:
 - Optimization rules and BoundedInt: [legacy-full.md](references/legacy-full.md)
 - Profiling CLI and troubleshooting: [profiling.md](references/profiling.md)
 - Optimization anti-pattern pairs: [anti-pattern-pairs.md](references/anti-pattern-pairs.md)
-- Cross-skill handoff format: [../references/skill-handoff.md](../references/skill-handoff.md)
+- Cross-skill handoff format: `../references/skill-handoff.md`
 - Module index: [references/README.md](references/README.md)
 
 ## Workflow

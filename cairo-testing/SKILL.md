@@ -141,7 +141,7 @@ These are non-negotiable. Every test suite you write must satisfy all of them:
 ## References
 
 - Testing patterns and snforge API: [legacy-full.md](references/legacy-full.md)
-- Cross-skill handoff format: [../references/skill-handoff.md](../references/skill-handoff.md)
+- Cross-skill handoff format: `../references/skill-handoff.md`
 - Module index: [references/README.md](references/README.md)
 - Security regression recipes: `../datasets/distilled/test-recipes/`
 
