@@ -28,6 +28,7 @@ Exit codes:
     4  cairo-profiler build failed
     5  pprof PNG export failed
     6  Missing external tool (snforge, scarb, cairo-profiler, pprof)
+    7  pprof hotspot summary export failed
 """
 
 import argparse
@@ -140,7 +141,7 @@ def _find_package_dir(repo_root: str, package: str) -> str:
 def _step_snforge(pkg_dir: str, test_filter: str, tracked_resource: str) -> None:
     """Run snforge test with trace generation."""
     _check_tool("snforge")
-    print(f"\n[1/4] Running snforge test (filter: {test_filter}, resource: {tracked_resource})")
+    print(f"\n[1/5] Running snforge test (filter: {test_filter}, resource: {tracked_resource})")
     result = _run(
         ["snforge", "test", test_filter,
          "--save-trace-data", "--tracked-resource", tracked_resource],
@@ -154,7 +155,7 @@ def _step_snforge(pkg_dir: str, test_filter: str, tracked_resource: str) -> None
 def _step_scarb(pkg_dir: str, executable: str, args_file: str) -> None:
     """Run scarb execute with trace generation."""
     _check_tool("scarb")
-    print(f"\n[1/4] Running scarb execute (executable: {executable})")
+    print(f"\n[1/5] Running scarb execute (executable: {executable})")
     cmd = [
         "scarb", "execute",
         "--executable-name", executable,
@@ -215,7 +216,7 @@ def _find_trace_scarb(pkg_dir: str, package: str) -> str:
 def _step_build_profile(trace_path: str, output_path: str) -> None:
     """Build pprof profile from trace JSON."""
     _check_tool("cairo-profiler")
-    print(f"\n[3/4] Building profile: {os.path.basename(output_path)}")
+    print(f"\n[3/5] Building profile: {os.path.basename(output_path)}")
     result = _run([
         "cairo-profiler", "build-profile", trace_path,
         "--show-libfuncs",
@@ -246,7 +247,7 @@ def _step_export_png(
 ) -> None:
     """Export PNG call graph via pprof."""
     _check_tool("pprof")
-    print(f"\n[4/4] Exporting PNG: {os.path.basename(png_path)}")
+    print(f"\n[4/5] Exporting PNG: {os.path.basename(png_path)}")
     result = _run([
         "pprof", "-png",
         f"-sample_index={pprof_sample_index}",
@@ -261,6 +262,23 @@ def _step_export_png(
                  f"  Hint: Is graphviz (dot) installed? Run: apt install graphviz")
     if not os.path.isfile(png_path):
         _fail(5, f"pprof completed but PNG not found: {png_path}")
+
+
+def _step_export_summary_text(profile_path: str, summary_path: str, pprof_sample_index: str) -> None:
+    """Export machine-readable hotspot summary (pprof text table)."""
+    _check_tool("pprof")
+    print(f"\n[5/5] Exporting hotspot summary: {os.path.basename(summary_path)}")
+    cmd = ["pprof", "-top", f"-sample_index={pprof_sample_index}", profile_path]
+    print(f"  $ {' '.join(cmd)}")
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+    if result.returncode != 0:
+        stderr = result.stderr.strip()
+        extra = f"\n  stderr: {stderr}" if stderr else ""
+        _fail(7, f"pprof hotspot summary export failed with exit code {result.returncode}{extra}")
+    if not result.stdout.strip():
+        _fail(7, "pprof hotspot summary export produced empty output")
+    with open(summary_path, "w", encoding="utf-8") as handle:
+        handle.write(result.stdout)
 
 
 # ---------------------------------------------------------------------------
@@ -333,6 +351,7 @@ def main() -> int:
     # Generate output filenames
     pb_path = _profile_filename(output_dir, args.package, args.name, args.metric, commit, "pb.gz")
     png_path = _profile_filename(output_dir, args.package, args.name, args.metric, commit, "png")
+    summary_path = _profile_filename(output_dir, args.package, args.name, args.metric, commit, "summary.txt")
 
     print("Cairo Profiling Pipeline")
     print(f"  Mode:    {args.mode}")
@@ -350,7 +369,7 @@ def main() -> int:
         _step_scarb(pkg_dir, args.executable, args.args_file)
 
     # Step 2: Find trace
-    print("\n[2/4] Locating trace file")
+    print("\n[2/5] Locating trace file")
     if args.mode == "snforge":
         trace_path = _find_trace_snforge(pkg_dir, args.test)
     else:
@@ -363,11 +382,13 @@ def main() -> int:
     # Step 4: Export PNG
     _step_export_png(pb_path, png_path, metric_cfg["pprof_sample_index"],
                      nodefraction=args.nodefraction, edgefraction=args.edgefraction)
+    _step_export_summary_text(pb_path, summary_path, metric_cfg["pprof_sample_index"])
 
     # Summary
     print(f"\n{'='*60}")
     print(f"Profile: {pb_path}")
     print(f"PNG:     {png_path}")
+    print(f"Summary: {summary_path}")
     print(f"{'='*60}")
 
     return 0
