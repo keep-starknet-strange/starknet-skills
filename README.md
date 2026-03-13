@@ -49,6 +49,9 @@ Built on the <a href="https://agentskills.io">Agent Skills</a> open standard —
 <img alt="Emdash" src="https://img.shields.io/badge/-Emdash-334155" />
 <img alt="VT Code" src="https://img.shields.io/badge/-VT%20Code-334155" />
 <img alt="Agentman" src="https://img.shields.io/badge/-Agentman-334155" />
+<img alt="Autohand" src="https://img.shields.io/badge/-Autohand-334155" />
+<img alt="Command Code" src="https://img.shields.io/badge/-Command%20Code-334155" />
+<img alt="Ona" src="https://img.shields.io/badge/-Ona-334155" />
 </p>
 </details>
 
@@ -69,21 +72,21 @@ Built on the <a href="https://agentskills.io">Agent Skills</a> open standard —
 
 Then try:
 
-```
+```text
 Audit src/contract.cairo using the cairo-auditor skill
 ```
 
 ### Cursor
 
-Clone the repo and Cursor auto-discovers rules from `.cursor/rules/`:
+Clone the repo and add it as a context directory in Cursor settings (or load the router URL directly):
 
 ```bash
 git clone https://github.com/keep-starknet-strange/starknet-skills.git
 ```
 
-Open the cloned directory in Cursor (or add it as a context directory in settings). Skills load automatically. Then try:
+Open the cloned directory in Cursor (or add it as a context directory in settings). Then try:
 
-```
+```text
 Write an ERC20 token contract following the cairo-contract-authoring skill
 ```
 
@@ -141,7 +144,7 @@ After installing, try these in any agent:
 | What you want | What to type |
 |---------------|-------------|
 | Audit a contract | `Audit src/vault.cairo for security issues using cairo-auditor` |
-| Write a new contract | `Write an upgradeable ERC721 contract with Ownable using cairo-contract-authoring` |
+| Write a new contract | `Write an upgradeable ERC721 with Ownable using cairo-contract-authoring` |
 | Add tests | `Add unit and fuzz tests for src/vault.cairo using cairo-testing` |
 | Optimize gas | `Profile and optimize the transfer function using cairo-optimization` |
 | Full pipeline | `Write a staking contract, test it, then audit it` |
