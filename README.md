@@ -83,13 +83,24 @@ Audit src/contract.cairo using the cairo-auditor skill
 
 ### Cursor
 
-Clone the repo and add it as a context directory in Cursor settings (or load the router URL directly):
+Clone the repo:
 
 ```bash
 git clone https://github.com/keep-starknet-strange/starknet-skills.git
 ```
 
-Open the cloned directory in Cursor (or add it as a context directory in settings). Then try:
+Option 1: add the cloned repo as a context directory in Cursor settings.
+
+Option 2: copy the rule file and selected skills into your project:
+
+```bash
+mkdir -p .cursor/rules .cursor/skills
+cp starknet-skills/.cursor/rules/starknet-skills.md .cursor/rules/
+cp -r starknet-skills/cairo-auditor .cursor/skills/cairo-auditor
+cp -r starknet-skills/cairo-testing .cursor/skills/cairo-testing
+```
+
+Then try:
 
 ```text
 Write an ERC20 token contract following the cairo-contract-authoring skill
