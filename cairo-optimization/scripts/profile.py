@@ -270,7 +270,7 @@ def _step_export_summary_text(profile_path: str, summary_path: str, pprof_sample
     print(f"\n[5/5] Exporting hotspot summary: {os.path.basename(summary_path)}")
     cmd = ["pprof", "-top", f"-sample_index={pprof_sample_index}", profile_path]
     print(f"  $ {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
     if result.returncode != 0:
         stderr = result.stderr.strip()
         extra = f"\n  stderr: {stderr}" if stderr else ""
