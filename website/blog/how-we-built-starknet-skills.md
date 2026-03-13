@@ -196,7 +196,7 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKI
 
 Then try:
 
-```text
+```bash
 Audit src/vault.cairo for security issues using cairo-auditor
 ```
 
