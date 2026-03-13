@@ -1,3 +1,8 @@
+---
+name: how-we-built-starknet-skills
+description: Technical deep dive on the Starknet Skills architecture, data pipeline, and benchmark methodology.
+---
+
 # How We Built Starknet Skills: Teaching AI Agents to Actually Audit Cairo
 
 *March 2026*
@@ -6,11 +11,11 @@ Ask an LLM to audit a Cairo contract and you'll get a confident-sounding list of
 
 The problem isn't that LLMs can't reason about code. It's that they don't know *what matters* in Cairo and Starknet. They apply Solidity mental models to a fundamentally different architecture — felt-based arithmetic, the component system, `replace_class_syscall` upgrades, account abstraction validation flows, Sierra IR compilation. Without domain-specific knowledge, agents hallucinate security patterns that don't exist and miss vulnerability classes that do.
 
-We built [starknet-skills](https://github.com/keep-starknet-strange/starknet-skills) to fix this. It's an open-source knowledge layer — plain markdown files that any AI coding agent can read — built from 24 real security audits, 217 normalized findings, and 29 canonical vulnerability patterns. The flagship module, `cairo-auditor`, turns a general-purpose LLM into a structured security reviewer that runs 170 attack vectors across four parallel specialists with false-positive gating, confidence scoring, and optional Sierra IR confirmation.
+We built [starknet-skills](https://github.com/keep-starknet-strange/starknet-skills) to fix this. It's an open-source knowledge layer — plain markdown files that any AI coding agent can read — built from 24 real security audits, 217 normalized findings, and 13 canonical vulnerability classes. The flagship module, `cairo-auditor`, turns a general-purpose LLM into a structured security reviewer that runs 120 attack vectors across four parallel specialists (30 vectors per partition) with false-positive gating, confidence scoring, and optional Sierra IR confirmation.
 
 This post explains how it works, why we made the design choices we did, and how you can use it today.
 
-## The Data Foundation: 24 Audits → 217 Findings → 29 Patterns
+## The Data Foundation: 24 Audits -> 217 Findings -> 13 Classes
 
 Every skill starts with real data. We ingested 24 public security audit reports from 10 firms — Nethermind, Cairo Security Clan, CODESPECT, Blaize, Zellic, zkSecurity, and others — covering DeFi protocols (Vesu, Nostra, StarkDeFi, Kapan Finance), infrastructure (Piltover, Hyperlane, L3 Bridge), and applications (Cartridge, LayerAkira).
 
@@ -35,11 +40,11 @@ Each audit PDF was extracted, segmented into traceable chunks with page bounds f
 }
 ```
 
-The 217 normalized findings break down by severity: 17 critical, 26 high, 30 medium, 60 low, 47 informational, and 37 best-practice. From these, we distilled 29 canonical vulnerability classes — each with a vulnerable pattern, secure pattern, detection heuristics, false-positive caveats, and minimum required tests.
+The 217 normalized findings break down by severity: 17 critical, 26 high, 30 medium, 60 low, 47 informational, and 37 best-practice. From these, we distilled 13 canonical vulnerability classes currently implemented in the vuln-db — each with a vulnerable pattern, secure pattern, detection heuristics, false-positive caveats, and minimum required tests.
 
 These aren't theoretical categories. Every pattern traces back to at least one real audit finding from a real protocol. When the auditor skill tells an agent to check for `IMMEDIATE-UPGRADE-WITHOUT-TIMELOCK`, it's because actual Cairo contracts shipped with exactly that bug.
 
-## The Auditor Architecture: 4 Turns, 170 Vectors, 4 Parallel Specialists
+## The Auditor Architecture: 4 Turns, 120 Vectors, 4 Parallel Specialists
 
 The `cairo-auditor` skill is a prescriptive orchestrator. It doesn't just give the agent context — it tells it exactly what tool calls to make, which files to load, and in what order. The orchestration runs in four turns:
 
@@ -57,7 +62,7 @@ The preflight uses 13 regex-based detectors — fast pattern matching on source 
 
 ### Turn 2: Prepare
 
-The agent loads specialist instructions and builds four bundles. Each bundle contains the full in-scope Cairo code plus one partition of the 170 attack vectors.
+The agent loads specialist instructions and builds four bundles. Each bundle contains the full in-scope Cairo code plus one partition of the 120 attack vectors (30 per partition).
 
 The vectors are split into four thematic groups:
 
@@ -82,7 +87,7 @@ Four vector-scan specialists run in parallel — one per bundle. Each specialist
 
 **Deep pass**: Only for `Survive` vectors. Trace the concrete caller → entrypoint → state change → impact path. Confirm attacker reachability. Confirm no existing guard blocks the exploit. Output in structured format:
 
-```
+```text
 V15 | path: entry() -> helper() -> sink() | guard: none | verdict: CONFIRM [85]
 ```
 
@@ -116,11 +121,11 @@ When you pass `--sierra-confirm --allow-build`, the system builds the project wi
 
 2. **CEI confirmation**: Does any function call an external contract (`call_contract_syscall`) before writing state (`storage_write_syscall`)? This confirms checks-effects-interactions violations at the IR level, where inlining and optimization may have changed the execution order from what the source suggests.
 
-```
+
 | Repo                          | Artifacts | ReplaceClass | CEI Oracle |
 | ForgeYields/starknet_vault_kit| 32        | 21           | confirm    |
 | medialane-io/medialane        | 6         | 1            | missing    |
-```
+
 
 Sierra confirmation is a secondary signal, not a verdict engine. The skill architecture treats it as evidence that strengthens or weakens source-level findings — not as standalone detection.
 
@@ -177,18 +182,21 @@ This lets agents chain skills without losing context.
 The skills are plain markdown — they work with any tool that reads files. We've tested with Claude Code, Cursor, OpenAI Codex, GitHub Copilot, Gemini CLI, JetBrains Junie, VS Code, and 20+ other tools that support the [Agent Skills](https://agentskills.io) open standard.
 
 Install in Claude Code:
+
 ```bash
 /plugin marketplace add keep-starknet-strange/starknet-skills
 /plugin install starknet-skills
 ```
 
 Install anywhere else — paste the router URL:
-```
+
+```text
 https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
 ```
 
 Then try:
-```
+
+```text
 Audit src/vault.cairo for security issues using cairo-auditor
 ```
 
@@ -203,8 +211,8 @@ Deterministic benchmarks (smoke/regression gates, not final proof):
 | Benchmark cases | 42 |
 | Precision | 1.000 |
 | Recall | 1.000 |
-| Vulnerability classes covered | 13 (detectors) / 29 (vuln-db patterns) |
-| Attack vectors | 170 across 4 partitions |
+| Vulnerability classes covered | 13 (detectors and vuln-db classes) |
+| Attack vectors | 120 across 4 partitions (30 each) |
 | Source audits | 24 from 10 firms |
 | Normalized findings | 217 |
 
@@ -214,7 +222,7 @@ These numbers are informational. They tell us the skill is working directionally
 
 ## What's Next
 
-- **Tier-C skill upgrades**: `cairo-toolchain`, `account-abstraction`, and `starknet-network-facts` are still skeleton-level. They'll get the same prescriptive orchestrator treatment.
+- **Tier-C skill expansion**: `cairo-toolchain`, `account-abstraction`, and `starknet-network-facts` are functional today and will keep getting deeper references, eval coverage, and stricter handoff contracts.
 - **More vulnerability patterns**: The vuln-db grows with each new audit ingested. We're tracking emerging patterns in Starknet DeFi and cross-chain messaging.
 - **Community contributions**: The repo is MIT-licensed. If you've found a Cairo vulnerability class that isn't covered, open a PR. Every new pattern makes every agent that uses the skill better.
 
