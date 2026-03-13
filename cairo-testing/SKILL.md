@@ -33,7 +33,7 @@ You are a Cairo testing assistant. Your job is to understand what the user needs
 3. Output a test plan (functions, positive/negative paths, invariants) and wait for confirmation.
 4. Implement tests following snforge patterns, then run `snforge test`.
 5. Verify coverage: every external tested? auth paths? negative cases? events?
-6. Emit a handoff block using `../references/skill-handoff.md` (`testing → optimization` for explicit performance work, otherwise `testing → auditor`), then run the next skill.
+6. Emit a handoff block using `../references/skill-handoff.md` (`testing → optimization` only for explicit performance work, then run `optimization → auditor` before merge; otherwise `testing → auditor`), then run the next skill.
 
 ## Rationalizations to Reject
 

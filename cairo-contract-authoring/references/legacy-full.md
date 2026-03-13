@@ -81,6 +81,7 @@ starknet = "^2.14.0"
 openzeppelin_access = "3.0.0"
 openzeppelin_token = "3.0.0"
 openzeppelin_upgrades = "3.0.0"
+openzeppelin_security = "3.0.0"
 
 [dev-dependencies]
 snforge_std = "0.57.0"
@@ -346,7 +347,7 @@ mod MyComponent {
 
 ```toml
 [dependencies]
-starknet = ">=2.14.0"
+starknet = "^2.14.0"
 openzeppelin_access = "3.0.0"
 openzeppelin_token = "3.0.0"
 openzeppelin_upgrades = "3.0.0"
