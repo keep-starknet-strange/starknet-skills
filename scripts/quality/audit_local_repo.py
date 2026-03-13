@@ -680,7 +680,7 @@ def _render_markdown(
                 exploit = _md_escape_text(str(f.get("exploit_path", "")))
                 if exploit:
                     lines += ["**Exploit Path**", exploit, ""]
-                rec = f.get("recommendation", "")
+                rec = _md_escape_text(str(f.get("recommendation", "")))
                 if rec and confidence >= 75:
                     lines += ["**Recommendation**", rec, ""]
                 tests_raw = f.get("minimum_tests", [])
