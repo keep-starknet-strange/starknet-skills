@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -59,6 +60,13 @@ def load_cases(path: Path) -> list[Case]:
             )
         )
     return cases
+
+
+def display_path(path: Path, root: Path) -> Path:
+    try:
+        return path.relative_to(root)
+    except ValueError:
+        return path
 
 
 def detect_aa_self_call_session(code: str) -> bool:
@@ -938,10 +946,24 @@ def main() -> int:
     parser.add_argument("--min-precision", type=float, default=0.9)
     parser.add_argument("--min-recall", type=float, default=0.9)
     parser.add_argument("--min-class-recall", type=float, default=0.0)
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        help="Copy output markdown to evals/scorecards/<basename(output)>.",
+    )
     args = parser.parse_args()
 
+    repo_root = Path(__file__).resolve().parents[2]
     cases_path = Path(args.cases)
     output_path = Path(args.output)
+    if not cases_path.is_absolute():
+        cases_path = (repo_root / cases_path).resolve()
+    else:
+        cases_path = cases_path.resolve()
+    if not output_path.is_absolute():
+        output_path = (repo_root / output_path).resolve()
+    else:
+        output_path = output_path.resolve()
 
     cases = load_cases(cases_path)
     results, totals = run_benchmark(cases)
@@ -957,7 +979,7 @@ def main() -> int:
         f"{args.version} {cases_path.stem.replace('_', ' ').replace('-', ' ').title()}"
     )
     markdown = render_markdown(
-        cases_path=cases_path,
+        cases_path=display_path(cases_path, repo_root),
         version=args.version,
         title=title,
         results=results,
@@ -967,6 +989,14 @@ def main() -> int:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(markdown + "\n", encoding="utf-8")
+    saved_output: str | None = None
+    if args.save:
+        scorecards_dir = repo_root / "evals" / "scorecards"
+        scorecards_dir.mkdir(parents=True, exist_ok=True)
+        target = scorecards_dir / output_path.name
+        if output_path.resolve() != target.resolve():
+            shutil.copy2(output_path, target)
+        saved_output = target.as_posix()
 
     print(
         json.dumps(
@@ -975,6 +1005,7 @@ def main() -> int:
                 "precision": round(overall_precision, 6),
                 "recall": round(overall_recall, 6),
                 "output": output_path.as_posix(),
+                "saved_output": saved_output,
             },
             ensure_ascii=True,
         )
