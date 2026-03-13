@@ -116,7 +116,7 @@ The handoff includes:
 
 ## How to Use
 
-The handoff block is output by the source skill at the end of its Turn 4. The user can:
+The handoff block is output at each source skill's explicit Quick Start handoff step (step 6 for authoring/testing, step 7 for optimization), after verification is complete. The user can:
 
 1. **Copy-paste it** as input when invoking the next skill: `/cairo-testing "Here's the handoff from authoring: ..."`.
 2. **Edit it** to add or remove focus areas before passing it along.
