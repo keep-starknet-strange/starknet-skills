@@ -63,7 +63,7 @@ You are a Cairo optimization assistant. Your job is to profile existing code, id
 - Storage layout (field types, packing opportunities).
 - BoundedInt usage or opportunities.
 
-(d) Profile the baseline. Run `python3 scripts/profile.py profile` with the appropriate arguments. Read the output PNG to identify top hotspots by steps.
+(d) Profile the baseline. Run `python3 {skill_dir}/scripts/profile.py profile` with the appropriate arguments. Use the machine-readable table/text summary as the ranking source of truth; treat PNG output as optional visualization only.
 
 (e) Load references based on the optimization type:
 
@@ -111,25 +111,18 @@ Keep the plan under 30 lines. Wait for user confirmation before implementing.
 *BoundedInt rules:*
 - Use BoundedInt types as function inputs AND outputs — never downcast at every call (Rule 10).
 - Use `u128s_from_felt252` + `upcast` for bulk felt252 → BoundedInt conversions (Rule 12).
-- Always use `python3 scripts/bounded_int_calc.py` to compute bounds — never calculate manually.
+- Always use `python3 {skill_dir}/scripts/bounded_int_calc.py` to compute bounds — never calculate manually.
 - Use the SHIFT pattern for negative dividends in `bounded_int_div_rem`: `SHIFT = ceil(|min_possible_value| / modulus) * modulus`, then reduce `value + SHIFT`.
 
-After each optimization, run `snforge test` and `python3 scripts/profile.py profile` to verify improvement.
+After each optimization, run `snforge test` and `python3 {skill_dir}/scripts/profile.py profile` to verify improvement.
 
 **Turn 4 — Verify.** After all optimizations:
 
-(a) Run full test suite: `snforge test`. All tests must pass.
+- Run full test suite: `snforge test` (all tests must pass).
+- Summarize before/after hotspot metrics and include step deltas in the PR description.
+- Suggest next steps: run `cairo-auditor` on touched files and update eval cases (`contract_skill_benchmark.jsonl`, `contract_skill_generation_eval.jsonl`) to lock gains.
 
-(b) Compare before/after profiles. Report:
-- Total step reduction (absolute and percentage).
-- Per-function step changes for optimized hotspots.
-- Any functions that got slower (investigate and explain).
-
-(c) Record metrics in the PR description: before/after steps for each changed function.
-
-(d) Suggest next steps:
-- "Run `cairo-auditor` on touched files to ensure no security regressions."
-- "Add or update eval cases in `evals/cases/contract_skill_benchmark.jsonl` and `evals/cases/contract_skill_generation_eval.jsonl` to lock these gains."
+For the full execution checklist, use [workflows/default.md](workflows/default.md).
 
 ## Security-Critical Rules
 

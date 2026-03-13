@@ -40,7 +40,7 @@ Orchestrated by [SKILL.md](../SKILL.md). This is the reference for each phase.
 - Run `snforge test` if tests exist.
 - Suggest: `cairo-testing` for test coverage, then `cairo-auditor` for security review.
 
-## Phase 5 — Handoff (optional)
+## Phase 5 — Handoff and Eval Lock
 
 - Run `references/audit-handoff.md` flow if security-sensitive.
 - Execute local deterministic preflight:
