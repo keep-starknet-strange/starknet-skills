@@ -714,13 +714,13 @@ def _render_markdown(
             )
             desc = _md_escape_text(str(finding.get("description", "")))
             if desc:
-                lines += ["**Description**", desc, ""]
+                lines.extend(["**Description**", desc, ""])
             exploit = _md_escape_text(str(finding.get("exploit_path", "")))
             if exploit:
-                lines += ["**Exploit Path**", exploit, ""]
+                lines.extend(["**Exploit Path**", exploit, ""])
             rec = _md_escape_text(str(finding.get("recommendation", "")))
             if rec and confidence >= 75:
-                lines += ["**Recommendation**", rec, ""]
+                lines.extend(["**Recommendation**", rec, ""])
             tests_raw = finding.get("minimum_tests", [])
             tests = tests_raw if isinstance(tests_raw, (list, tuple)) else []
             if tests and confidence >= 75:
@@ -728,7 +728,7 @@ def _render_markdown(
                 for t in tests:
                     lines.append(f"- {_md_escape_text(str(t))}")
                 lines.append("")
-            lines += ["---", ""]
+            lines.extend(["---", ""])
             return idx
 
         for sev in _SEVERITY_ORDER:
