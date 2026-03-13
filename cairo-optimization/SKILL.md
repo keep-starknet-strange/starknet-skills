@@ -147,3 +147,4 @@ These are non-negotiable. Every optimization you apply must satisfy all of them:
 ## Workflow
 
 - Main optimization flow: [default workflow](workflows/default.md)
+- Mandatory pre-merge chain: `optimization → auditor` (with `optimization → testing` only as an optional regression-hardening pass before auditor).

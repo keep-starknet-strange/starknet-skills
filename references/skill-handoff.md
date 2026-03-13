@@ -66,6 +66,7 @@ The handoff includes:
 - **Files touched** — all newly authored or modified `.cairo` files.
 - **Security posture table** — every external function with guard/public rationale.
 - **Upgrade/timelock summary** — explicit list of upgrade paths and time sources used.
+- **Test-coverage signal** — explicit `snforge test` status (`not-run`, `pass`, or `fail`) plus known uncovered paths so auditor can prioritize untested critical flows.
 - **Suggested focus** — "Prioritize privileged mutation paths, upgrade guards, and constructor initialization checks."
 
 ### testing → optimization
