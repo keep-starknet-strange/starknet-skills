@@ -1,3 +1,8 @@
+---
+name: starknet-skills
+description: Cairo/Starknet skills for AI coding agents with router and module links.
+---
+
 # starknet-skills
 
 <p align="center">
