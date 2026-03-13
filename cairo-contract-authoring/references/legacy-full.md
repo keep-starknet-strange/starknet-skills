@@ -77,7 +77,7 @@ version = "0.1.0"
 edition = "2024_07"
 
 [dependencies]
-starknet = "^2.14.0"
+starknet = "^2.16.0"
 openzeppelin_access = "3.0.0"
 openzeppelin_introspection = "3.0.0"
 openzeppelin_token = "3.0.0"
@@ -96,7 +96,7 @@ sierra-replace-ids = true
 allow-prebuilt-plugins = ["snforge_std"]
 ```
 
-> **Version pinning:** OZ 3.0.0 is the latest stable release. snforge 0.57.0 requires Scarb >= 2.14.0 (recommended: 2.16.x). Check [scarbs.dev](https://scarbs.dev) for updates.
+> **Version pinning:** This template targets Scarb **2.16.x** with `starknet = "^2.16.0"` and `snforge_std = "0.57.0"`. If you use an older toolchain, pin compatible versions from the release matrix before production use. Check [scarbs.dev](https://scarbs.dev) for updates.
 
 ## Contract Structure
 
