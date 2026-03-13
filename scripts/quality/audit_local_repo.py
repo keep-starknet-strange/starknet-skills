@@ -612,7 +612,7 @@ def _render_markdown(
 ) -> str:
     lines: list[str] = []
     max_findings_rows = 250
-    repo_name = _md_escape_cell(str(summary.get("repo", "unknown")))
+    repo_name = _md_escape_heading(str(summary.get("repo", "unknown")))
 
     # Header
     lines.append(f"# Security Review — {repo_name}")
