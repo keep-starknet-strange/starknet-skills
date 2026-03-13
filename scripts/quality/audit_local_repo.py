@@ -381,6 +381,7 @@ def _md_escape_text(value: str) -> str:
     def _escape_plain(segment: str) -> str:
         return (
             segment.replace("\\", "\\\\")
+            .replace("`", "\\`")
             .replace("*", "\\*")
             .replace("_", "\\_")
             .replace("<", "&lt;")
@@ -394,13 +395,28 @@ def _md_escape_text(value: str) -> str:
     if "`" not in value:
         return _escape_plain(value)
 
-    parts = value.split("`")
     escaped_parts: list[str] = []
-    for idx, part in enumerate(parts):
-        if idx % 2 == 0:
-            escaped_parts.append(_escape_plain(part))
-        else:
-            escaped_parts.append(f"`{part.replace('\n', ' ').replace('\r', ' ')}`")
+    idx = 0
+    while idx < len(value):
+        if value[idx] != "`":
+            next_tick = value.find("`", idx)
+            if next_tick == -1:
+                next_tick = len(value)
+            escaped_parts.append(_escape_plain(value[idx:next_tick]))
+            idx = next_tick
+            continue
+
+        # Preserve only paired inline-code spans; treat dangling backticks as plain text.
+        end_tick = value.find("`", idx + 1)
+        if end_tick == -1:
+            escaped_parts.append(_escape_plain(value[idx]))
+            idx += 1
+            continue
+
+        code = value[idx + 1 : end_tick].replace("\n", " ").replace("\r", " ")
+        escaped_parts.append(f"`{code}`")
+        idx = end_tick + 1
+
     return "".join(escaped_parts)
 
 
@@ -636,7 +652,7 @@ def _render_markdown(
         "| **Line mapping** | best-effort (first regex match per class) |",
         "| **Confidence threshold** | 75 |",
         f"| **Generated** | {generated_at} |",
-        f"| **Commit** | `{summary.get('ref', 'unknown')}` |",
+        f"| **Commit** | `{_md_escape_cell(str(summary.get('ref', 'unknown')))}` |",
         "",
     ]
 
@@ -708,7 +724,7 @@ def _render_markdown(
                 if tests and confidence >= 75:
                     lines.append("**Required Tests**")
                     for t in tests:
-                        lines.append(f"- {str(t)}")
+                        lines.append(f"- {_md_escape_text(str(t))}")
                     lines.append("")
                 lines += ["---", ""]
 
