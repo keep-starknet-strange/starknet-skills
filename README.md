@@ -92,10 +92,10 @@ Write an ERC20 token contract following the cairo-contract-authoring skill
 
 ### Gemini CLI
 
-Pass the router URL when you start a session:
+Paste the router URL into Gemini CLI chat as context:
 
-```bash
-gemini --skill https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
 ```
 
 ### VS Code (GitHub Copilot)
@@ -116,10 +116,14 @@ Auto-discovered via `AGENTS.md` at the repo root. Clone and open — Codex reads
 
 ### JetBrains (Junie)
 
-Clone the repo into your project. Junie reads `SKILL.md` files from the workspace:
+Clone the repo into your project, then paste the router URL in Junie chat/context:
 
 ```bash
 git clone https://github.com/keep-starknet-strange/starknet-skills.git
+```
+
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
 ```
 
 ### Any agent (universal)
