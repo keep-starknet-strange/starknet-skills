@@ -96,7 +96,6 @@ Each vector has two parts. **D** is the deterministic vulnerable pattern — the
 > **V1 — Immediate upgrade without delay**
 > D: privileged `upgrade` path calls `replace_class_syscall` or `upgradeable.upgrade` in one transaction with no schedule/execute split.
 > FP: explicit timelock state with pending hash and `now >= scheduled + delay` check.
-
 > **V21 — CEI violation on ERC1155 transfer path**
 > D: `safe_transfer_from` calls external receiver callback before internal balance accounting completes.
 > FP: reentrancy guard wraps the full transfer scope.
@@ -115,7 +114,8 @@ Four vector-scan specialists run simultaneously — one per bundle. Each follows
 - `Survive`: construct or exploit concept is clearly present in code.
 
 Output format:
-```
+
+```text
 Skip: V3, V7, V11, V12, V14
 Borderline: V8 (helper delegates to unguarded internal)
 Survive: V1, V2, V5, V6, V9, V10, V13
@@ -129,7 +129,8 @@ Total: 14 classified
 3. Confirm no existing guard blocks the exploit.
 
 One-line verdict format before the full finding:
-```
+
+```text
 V1 | path: upgrade() -> replace_class_syscall() | guard: none | verdict: CONFIRM [90]
 V6 | path: set_config() -> storage_write() | guard: assert_only_owner | verdict: DROP (guarded)
 ```
@@ -165,7 +166,7 @@ The final report is sorted by priority:
 
 Every finding follows an exact template:
 
-```
+```text
 [P1] **Immediate upgrade without timelock**
 
 Location: src/upgrade.cairo:42
@@ -253,7 +254,7 @@ Two confirmation checks:
 
 Real results from our 7-repo evaluation:
 
-```
+```text
 | Repo                            | Built | Artifacts | ReplaceClass | Ext→Write | Upgrade | CEI     |
 | ForgeYields/starknet_vault_kit  | 3/3   | 32        | 21           | 0         | confirm | —       |
 | kiroshi-market/kiroshi-protocol | 2/2   | 6         | 2            | 0         | confirm | —       |
@@ -325,18 +326,21 @@ The honest framing: the skill makes agents reliably better at catching Cairo-spe
 ## Try It
 
 Install in Claude Code:
+
 ```bash
 /plugin marketplace add keep-starknet-strange/starknet-skills
 /plugin install starknet-skills
 ```
 
 Or paste this URL into any agent:
-```
+
+```text
 https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md
 ```
 
 Then:
-```
+
+```text
 Audit src/vault.cairo for security issues using cairo-auditor
 ```
 
