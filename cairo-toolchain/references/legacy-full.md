@@ -1,3 +1,8 @@
+---
+name: cairo-toolchain-legacy-full
+description: Deployment and operational reference for Cairo contracts with sncast and Starknet Foundry.
+---
+
 # Cairo Toolchain
 
 Reference for deploying Cairo smart contracts to Starknet using sncast (Starknet Foundry).
@@ -22,8 +27,8 @@ Reference for deploying Cairo smart contracts to Starknet using sncast (Starknet
 ```bash
 # Install via asdf (recommended for version pinning)
 asdf plugin add starknet-foundry
-asdf install starknet-foundry 0.56.0
-asdf global starknet-foundry 0.56.0
+asdf install starknet-foundry 0.57.0
+asdf global starknet-foundry 0.57.0
 ```
 
 ### .tool-versions
@@ -31,11 +36,11 @@ asdf global starknet-foundry 0.56.0
 Pin versions for reproducible builds:
 
 ```text
-scarb 2.15.1
-starknet-foundry 0.56.0
+scarb 2.16.1
+starknet-foundry 0.57.0
 ```
 
-> **Note:** Starknet Foundry 0.56.0 requires Scarb >= 2.12.0. Check [github.com/foundry-rs/starknet-foundry/releases](https://github.com/foundry-rs/starknet-foundry/releases) for the latest.
+> **Note:** Starknet Foundry 0.57.0 requires Scarb >= 2.14.0 (recommended: 2.16.x). Check [github.com/foundry-rs/starknet-foundry/releases](https://github.com/foundry-rs/starknet-foundry/releases) for the latest.
 
 ## Build
 
@@ -248,7 +253,7 @@ Verify source code on Voyager or Starkscan:
 # https://app.walnut.dev
 ```
 
-> **Note:** In Starknet Foundry 0.56.0+, `sncast verify` supports both Walnut and Voyager backends (for example, `sncast verify --verifier voyager`). Starkscan verification still uses its web UI.
+> **Note:** In Starknet Foundry 0.57.0+, `sncast verify` supports both Walnut and Voyager backends (for example, `sncast verify --verifier voyager`). Starkscan verification still uses its web UI.
 
 ## Upgradeable Contracts
 

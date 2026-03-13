@@ -15,6 +15,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+\.md)\)")
+SEMVER_RE = re.compile(r"\b(\d+\.\d+\.\d+)\b")
 
 
 @dataclass
@@ -88,6 +89,17 @@ def is_missing_binary(result: subprocess.CompletedProcess[str]) -> bool:
     return result.returncode == 127 and "No such file or directory" in (result.stderr or "")
 
 
+def detect_cli_version(binary: str) -> str | None:
+    probe = run([binary, "--version"])
+    if is_missing_binary(probe) or probe.returncode != 0:
+        return None
+    text = f"{probe.stdout}\n{probe.stderr}".strip()
+    match = SEMVER_RE.search(text)
+    if match is None:
+        return None
+    return match.group(1)
+
+
 def main() -> int:
     results: list[CheckResult] = []
 
@@ -147,6 +159,7 @@ def main() -> int:
     if is_missing_binary(snforge):
         results.append(CheckResult("snforge-cli-check", "SKIP", "snforge unavailable"))
     else:
+        snforge_version = detect_cli_version("snforge") or "unknown"
         if snforge.returncode != 0:
             results.append(
                 CheckResult(
@@ -158,18 +171,35 @@ def main() -> int:
         else:
             doc = (ROOT / "cairo-testing/references/legacy-full.md").read_text(encoding="utf-8")
             has_exact = "--exact" in snforge.stdout
-            forbids_filter = "--filter" not in snforge.stdout
+            has_filter = "--filter" in snforge.stdout
+            doc_has_exact = "--exact" in doc
             doc_has_filter = "--filter" in doc
-            if has_exact and forbids_filter and not doc_has_filter:
+            # Newer snforge builds expose --filter; older builds rely on positional test-name filtering.
+            doc_has_positional_filter = "snforge test test_" in doc
+            filter_form_ok = doc_has_filter if has_filter else doc_has_positional_filter
+
+            if has_exact and doc_has_exact and filter_form_ok:
                 results.append(
-                    CheckResult("snforge-cli-check", "PASS", "docs match snforge 0.56 filter/exact behavior")
+                    CheckResult(
+                        "snforge-cli-check",
+                        "PASS",
+                        (
+                            f"docs match snforge {snforge_version} help and include exact/filter forms "
+                            f"(cli_exact={has_exact}, cli_filter={has_filter}, doc_exact={doc_has_exact}, "
+                            f"doc_filter={doc_has_filter}, doc_positional_filter={doc_has_positional_filter})"
+                        ),
+                    )
                 )
             else:
                 results.append(
                     CheckResult(
                         "snforge-cli-check",
                         "FAIL",
-                        f"has_exact={has_exact}, forbids_filter={forbids_filter}, doc_has_filter={doc_has_filter}",
+                        (
+                            f"snforge_version={snforge_version}, cli_exact={has_exact}, cli_filter={has_filter}, "
+                            f"doc_exact={doc_has_exact}, doc_filter={doc_has_filter}, "
+                            f"doc_positional_filter={doc_has_positional_filter}"
+                        ),
                     )
                 )
 
@@ -179,6 +209,7 @@ def main() -> int:
     if is_missing_binary(sncast_account) or is_missing_binary(sncast_verify):
         results.append(CheckResult("sncast-cli-check", "SKIP", "sncast unavailable"))
     else:
+        sncast_version = detect_cli_version("sncast") or "unknown"
         if sncast_account.returncode != 0 or sncast_verify.returncode != 0:
             stderr = "\n".join(
                 part.strip()
@@ -204,7 +235,11 @@ def main() -> int:
 
             if all([has_import, no_add_subcmd, mentions_import, not mentions_add, verifier_ok, docs_mention_both, uses_json]):
                 results.append(
-                    CheckResult("sncast-cli-check", "PASS", "docs match sncast 0.56 account/verify/json patterns")
+                    CheckResult(
+                        "sncast-cli-check",
+                        "PASS",
+                        f"docs match sncast {sncast_version} account/verify/json patterns",
+                    )
                 )
             else:
                 results.append(

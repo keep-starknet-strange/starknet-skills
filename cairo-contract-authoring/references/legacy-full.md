@@ -1,3 +1,8 @@
+---
+name: cairo-contract-authoring-legacy-full
+description: Comprehensive reference for Cairo contract structure, components, and security hardening patterns.
+---
+
 # Cairo Contract Authoring
 
 Reference for writing Cairo smart contracts on Starknet. Covers structure, storage, events, interfaces, components, and OpenZeppelin v3 patterns.
@@ -60,6 +65,38 @@ Reject zero class hash in both schedule and immediate-upgrade flows:
 ```cairo
 assert!(new_class_hash != 0, "class_hash_zero");
 ```
+
+## Recommended Scarb.toml
+
+Use these versions for new projects (as of March 2026):
+
+```toml
+[package]
+name = "my_contract"
+version = "0.1.0"
+edition = "2024_07"
+
+[dependencies]
+starknet = "^2.16.0"
+openzeppelin_access = "3.0.0"
+openzeppelin_introspection = "3.0.0"
+openzeppelin_token = "3.0.0"
+openzeppelin_upgrades = "3.0.0"
+openzeppelin_security = "3.0.0"
+
+[dev-dependencies]
+snforge_std = "0.57.0"
+
+[cairo]
+sierra-replace-ids = true
+
+[[target.starknet-contract]]
+
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
+```
+
+> **Version pinning:** This template targets Scarb **2.16.x** with `starknet = "^2.16.0"` and `snforge_std = "0.57.0"`. If you use an older toolchain, pin compatible versions from the release matrix before production use. Check [scarbs.dev](https://scarbs.dev) for updates.
 
 ## Contract Structure
 
@@ -311,7 +348,7 @@ mod MyComponent {
 
 ```toml
 [dependencies]
-starknet = ">=2.12.0"
+starknet = "^2.16.0"
 openzeppelin_access = "3.0.0"
 openzeppelin_token = "3.0.0"
 openzeppelin_upgrades = "3.0.0"

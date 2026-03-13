@@ -33,7 +33,8 @@ You are a Cairo contract authoring assistant. Your job is to understand what the
 2. Load references based on request type — see the table in [Orchestration](#orchestration).
 3. Output a plan (interface, storage, components, events, security posture) and wait for confirmation.
 4. Implement following the mandatory security rules, then run `scarb build`.
-5. Verify every external function's access posture, then suggest `cairo-testing` and `cairo-auditor`.
+5. Verify every external function's access posture.
+6. Emit a handoff block using `../references/skill-handoff.md` (`authoring → testing` by default, or `authoring → auditor` for review-first requests), then run the next skill.
 
 ## Rationalizations to Reject
 
@@ -122,7 +123,8 @@ These are non-negotiable. Every contract you write must satisfy all of them:
 - Language fundamentals: [language.md](references/language.md)
 - Contract patterns and OZ components: [legacy-full.md](references/legacy-full.md)
 - Anti-pattern/secure-pattern pairs: [anti-pattern-pairs.md](references/anti-pattern-pairs.md)
-- Authoring to audit handoff: [audit-handoff.md](references/audit-handoff.md)
+- Cross-skill handoff format (canonical for all handoffs): `../references/skill-handoff.md`
+- Legacy authoring-to-audit handoff reference (superseded by canonical format): [audit-handoff.md](references/audit-handoff.md)
 - Module index: [references/README.md](references/README.md)
 
 ## Workflow

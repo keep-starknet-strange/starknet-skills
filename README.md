@@ -1,3 +1,8 @@
+---
+name: starknet-skills
+description: Cairo/Starknet skills for AI coding agents with router and module links.
+---
+
 # starknet-skills
 
 <p align="center">
@@ -78,13 +83,27 @@ Audit src/contract.cairo using the cairo-auditor skill
 
 ### Cursor
 
-Clone the repo and add it as a context directory in Cursor settings (or load the router URL directly):
+Clone the repo:
 
 ```bash
 git clone https://github.com/keep-starknet-strange/starknet-skills.git
 ```
 
-Open the cloned directory in Cursor (or add it as a context directory in settings). Then try:
+Option 1: add the cloned repo as a context directory in Cursor settings.
+
+Option 2: copy the rule file and selected skills into your project.
+Run the following from your project root and replace `/path/to/starknet-skills` with your clone path:
+
+```bash
+cd /path/to/your/project
+mkdir -p .cursor/rules .cursor/skills
+cp /path/to/starknet-skills/.cursor/rules/starknet-skills.md .cursor/rules/
+cp -r /path/to/starknet-skills/cairo-auditor .cursor/skills/cairo-auditor
+cp -r /path/to/starknet-skills/cairo-testing .cursor/skills/cairo-testing
+cp -r /path/to/starknet-skills/cairo-contract-authoring .cursor/skills/cairo-contract-authoring
+```
+
+Then try:
 
 ```text
 Write an ERC20 token contract following the cairo-contract-authoring skill

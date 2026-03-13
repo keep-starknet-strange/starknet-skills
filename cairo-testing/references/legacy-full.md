@@ -1,3 +1,8 @@
+---
+name: cairo-testing-legacy-full
+description: Detailed snforge testing reference for Cairo contracts, including unit, integration, fuzz, and fork patterns.
+---
+
 # Cairo Testing
 
 Reference for testing Cairo smart contracts with Starknet Foundry (snforge).
@@ -28,14 +33,17 @@ For security regression tests, prefer templates under:
 
 ```toml
 [dev-dependencies]
-snforge_std = "0.56.0"
+snforge_std = "0.57.0"
+
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
 
 [[target.starknet-contract]]
 sierra = true
 casm = true
 ```
 
-> **Note:** snforge 0.56.0 requires Scarb >= 2.12.0. Check [scarbs.dev/packages/snforge_std](https://scarbs.dev/packages/snforge_std) for the latest version.
+> **Note:** snforge 0.57.0 requires Scarb >= 2.12.0 (recommended: 2.16.x). Check [scarbs.dev/packages/snforge_std](https://scarbs.dev/packages/snforge_std) for the latest version.
 
 ### Running Tests
 
@@ -46,7 +54,10 @@ snforge test
 # Run specific test by name
 snforge test test_transfer
 
-# Run tests matching a pattern
+# Run tests matching a pattern (if your snforge build supports --filter)
+snforge test --filter test_erc20
+
+# Run tests matching a pattern (positional fallback)
 snforge test test_erc20
 
 # Filter to a single test function (exact match)
