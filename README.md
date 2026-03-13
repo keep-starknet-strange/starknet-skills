@@ -14,50 +14,150 @@
   <img alt="smoke" src="https://img.shields.io/badge/deterministic%20smoke-pass-2ea043" />
 </p>
 
-<p align="center"><strong>Cairo/Starknet skills for agents</strong></p>
+<p align="center">
+  <img alt="Claude Code" src="https://img.shields.io/badge/works%20with-Claude%20Code-7c3aed" />
+  <img alt="Cursor" src="https://img.shields.io/badge/works%20with-Cursor-0969da" />
+  <img alt="Codex" src="https://img.shields.io/badge/works%20with-OpenAI%20Codex-10a37f" />
+  <img alt="GitHub Copilot" src="https://img.shields.io/badge/works%20with-GitHub%20Copilot-000" />
+  <img alt="Gemini CLI" src="https://img.shields.io/badge/works%20with-Gemini%20CLI-4285f4" />
+  <img alt="Junie" src="https://img.shields.io/badge/works%20with-Junie%20(JetBrains)-fe315d" />
+  <img alt="VS Code" src="https://img.shields.io/badge/works%20with-VS%20Code-007acc" />
+  <img alt="Agent Skills" src="https://img.shields.io/badge/format-Agent%20Skills-f59e0b" />
+</p>
 
-Cairo/Starknet skill modules for agent reliability: security review, contract authoring, testing, optimization, toolchain, account abstraction, and network facts.
+<details>
+<summary><strong>All 30+ compatible tools</strong></summary>
+<p align="center">
+Built on the <a href="https://agentskills.io">Agent Skills</a> open standard — works with any tool that reads markdown.<br/>
+<img alt="Roo Code" src="https://img.shields.io/badge/-Roo%20Code-6366f1" />
+<img alt="Goose" src="https://img.shields.io/badge/-Goose-1a1a1a" />
+<img alt="OpenHands" src="https://img.shields.io/badge/-OpenHands-e11d48" />
+<img alt="Amp" src="https://img.shields.io/badge/-Amp-8b5cf6" />
+<img alt="Mistral Vibe" src="https://img.shields.io/badge/-Mistral%20Vibe-ff7000" />
+<img alt="TRAE" src="https://img.shields.io/badge/-TRAE-0ea5e9" />
+<img alt="Firebender" src="https://img.shields.io/badge/-Firebender-ef4444" />
+<img alt="Factory" src="https://img.shields.io/badge/-Factory-6366f1" />
+<img alt="Databricks" src="https://img.shields.io/badge/-Databricks-ff3621" />
+<img alt="Spring AI" src="https://img.shields.io/badge/-Spring%20AI-6db33f" />
+<img alt="OpenCode" src="https://img.shields.io/badge/-OpenCode-334155" />
+<img alt="Qodo" src="https://img.shields.io/badge/-Qodo-2563eb" />
+<img alt="Letta" src="https://img.shields.io/badge/-Letta-a855f7" />
+<img alt="Snowflake" src="https://img.shields.io/badge/-Snowflake-29b5e8" />
+<img alt="Mux" src="https://img.shields.io/badge/-Mux-1a1a1a" />
+<img alt="Piebald" src="https://img.shields.io/badge/-Piebald-334155" />
+<img alt="Laravel Boost" src="https://img.shields.io/badge/-Laravel%20Boost-ff2d20" />
+<img alt="Emdash" src="https://img.shields.io/badge/-Emdash-334155" />
+<img alt="VT Code" src="https://img.shields.io/badge/-VT%20Code-334155" />
+<img alt="Agentman" src="https://img.shields.io/badge/-Agentman-334155" />
+<img alt="Autohand" src="https://img.shields.io/badge/-Autohand-334155" />
+<img alt="Command Code" src="https://img.shields.io/badge/-Command%20Code-334155" />
+<img alt="Ona" src="https://img.shields.io/badge/-Ona-334155" />
+</p>
+</details>
 
-> Reasoning + security knowledge layer. For operational tooling, see [starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic) and [starkzap](https://github.com/keep-starknet-strange/starkzap).
+<p align="center"><strong>Cairo/Starknet skills for AI coding agents</strong></p>
+
+> Security + reasoning knowledge layer for any agent that reads markdown.
+> Built on the [Agent Skills](https://agentskills.io) open standard — works with 30+ tools.
+> For operational tooling, see [starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic).
 
 ## Install & Use
 
-### Router URL (fastest)
+### Claude Code
+
+```bash
+/plugin marketplace add keep-starknet-strange/starknet-skills
+/plugin install starknet-skills
+```
+
+Then try:
+
+```text
+Audit src/contract.cairo using the cairo-auditor skill
+```
+
+### Cursor
+
+Clone the repo and add it as a context directory in Cursor settings (or load the router URL directly):
+
+```bash
+git clone https://github.com/keep-starknet-strange/starknet-skills.git
+```
+
+Open the cloned directory in Cursor (or add it as a context directory in settings). Then try:
+
+```text
+Write an ERC20 token contract following the cairo-contract-authoring skill
+```
+
+### Gemini CLI
+
+Paste the router URL into Gemini CLI chat as context:
 
 ```text
 https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
 ```
 
-### Claude Code Plugin
+### VS Code (GitHub Copilot)
 
-```bash
-/plugin marketplace add keep-starknet-strange/starknet-skills
-/plugin menu
-/plugin install starknet-skills
-# Optional: install only the flagship audit module
-/plugin install cairo-auditor@starknet-skills
-```
-
-### Maintainer Publish Checklist
-
-```bash
-# 1) Validate manifests (root marketplace + module plugin)
-claude plugin validate .
-claude plugin validate cairo-auditor
-python3 scripts/quality/validate_marketplace.py
-
-# 2) Merge to main, then cut release
-VERSION="<sync with .claude-plugin/marketplace.json metadata.version>"
-git tag "v${VERSION}"
-git push origin "v${VERSION}"
-gh release create "v${VERSION}" --generate-notes
-```
-
-### Local clone
+Clone the repo into your workspace, then provide the router URL in Copilot chat via `@workspace` (or add it as custom context in VS Code settings):
 
 ```bash
 git clone https://github.com/keep-starknet-strange/starknet-skills.git
 ```
+
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+```
+
+### OpenAI Codex
+
+Auto-discovered via `AGENTS.md` at the repo root. Clone and open — Codex reads agent instructions automatically.
+
+### JetBrains (Junie)
+
+Clone the repo into your project, then paste the router URL in Junie chat/context:
+
+```bash
+git clone https://github.com/keep-starknet-strange/starknet-skills.git
+```
+
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+```
+
+### Any agent (universal)
+
+Paste this URL into your agent's chat or config — it auto-routes to the right skill:
+
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+```
+
+Or load a specific skill directly:
+
+```text
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md
+```
+
+Machine-readable index: [`llms.txt`](llms.txt)
+
+## Example Prompts
+
+After installing, try these in any agent:
+
+| What you want | What to type |
+|---------------|-------------|
+| Audit a contract | `Audit src/vault.cairo for security issues using cairo-auditor` |
+| Write a new contract | `Write an upgradeable ERC721 with Ownable using cairo-contract-authoring` |
+| Add tests | `Add unit and fuzz tests for src/vault.cairo using cairo-testing` |
+| Optimize gas | `Profile and optimize the transfer function using cairo-optimization` |
+| Full pipeline | `Write a staking contract, test it, then audit it` |
+
+The agent reads the skill, follows its orchestration steps, and produces structured output (findings report, test suite, optimized code, etc.).
 
 ## First Local Audit (60s)
 
@@ -83,16 +183,6 @@ Use build mode only on trusted code, or run in an isolated environment.
 Reports are written under `<repo-root>/evals/reports/local/` by default (`.md`, `.json`).
 Add `--write-findings-jsonl` to emit `.findings.jsonl`.
 If a target filename already exists, the script appends `-N` to avoid overwrite.
-
-## How It Works
-
-Each skill is plain markdown. Point an agent at a `SKILL.md` URL and it loads focused Cairo/Starknet context.
-
-```text
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md
-```
 
 ## Skill Modules
 
