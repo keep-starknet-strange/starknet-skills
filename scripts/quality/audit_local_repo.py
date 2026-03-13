@@ -372,18 +372,36 @@ def _md_escape_cell(value: str) -> str:
 
 
 def _md_escape_text(value: str) -> str:
-    """Escape markdown control chars in paragraph/list text."""
-    return (
-        value.replace("\\", "\\\\")
-        .replace("*", "\\*")
-        .replace("_", "\\_")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("[", "\\[")
-        .replace("]", "\\]")
-        .replace("\n", " ")
-        .replace("\r", " ")
-    )
+    """Escape markdown control chars in paragraph/list text.
+
+    Preserves inline code spans wrapped in backticks so code formatting is not
+    corrupted by escaping characters like `_` inside `` `...` `` blocks.
+    """
+
+    def _escape_plain(segment: str) -> str:
+        return (
+            segment.replace("\\", "\\\\")
+            .replace("*", "\\*")
+            .replace("_", "\\_")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("[", "\\[")
+            .replace("]", "\\]")
+            .replace("\n", " ")
+            .replace("\r", " ")
+        )
+
+    if "`" not in value:
+        return _escape_plain(value)
+
+    parts = value.split("`")
+    escaped_parts: list[str] = []
+    for idx, part in enumerate(parts):
+        if idx % 2 == 0:
+            escaped_parts.append(_escape_plain(part))
+        else:
+            escaped_parts.append(f"`{part.replace('\n', ' ').replace('\r', ' ')}`")
+    return "".join(escaped_parts)
 
 
 def _md_escape_heading(value: str) -> str:
