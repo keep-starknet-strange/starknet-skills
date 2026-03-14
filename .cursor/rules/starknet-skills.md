@@ -17,7 +17,7 @@ Each skill is at `<skill-name>/SKILL.md`. Read it and follow its orchestration s
 | Add tests to a contract | `cairo-testing/SKILL.md` |
 | Optimize gas/steps | `cairo-optimization/SKILL.md` |
 | Security review | `cairo-auditor/SKILL.md` |
-| Deploy/declare/verify | `cairo-toolchain/SKILL.md` |
+| Deploy/declare/verify | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-deploy/SKILL.md` |
 
 ## Current Tooling (March 2026)
 
