@@ -16,6 +16,7 @@ python3 scripts/site/build_site.py --domain starkskills.org
 Optional link-target overrides:
 
 ```bash
+# --repo-slug override points generated links at the canonical repo.
 python3 scripts/site/build_site.py \
   --domain starkskills.org \
   --repo-slug keep-starknet-strange/starknet-agentic \

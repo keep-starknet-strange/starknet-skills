@@ -8,6 +8,7 @@ description: Cairo/Starknet skills for AI coding agents with router and module l
 > [!WARNING]
 > This repository is **deprecated** and in transition to archive.
 > Canonical skills now live in **[keep-starknet-strange/starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic)** under `skills/`.
+> Impacted sibling repo: **[keep-starknet-strange/starkclaw](https://github.com/keep-starknet-strange/starkclaw)**.
 > Migration guide: [DEPRECATED.md](DEPRECATED.md).
 
 <p align="center">

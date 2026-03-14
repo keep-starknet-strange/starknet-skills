@@ -1,6 +1,6 @@
 ---
 name: repo-agent-instructions
-description: Top-level guidance for agents using starknet-skills modules.
+description: Deprecated. Redirects to starknet-agentic for Cairo/Starknet skills.
 ---
 
 # Agent Instructions

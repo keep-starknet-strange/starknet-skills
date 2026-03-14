@@ -1,7 +1,7 @@
 {
   "name": "starknet-skills",
   "version": "0.2.1",
-  "description": "Deprecated skills bundle. Canonical source moved to keep-starknet-strange/starknet-agentic (starknet-agentic-skills).",
+  "description": "Deprecated skills bundle. Canonical source moved to keep-starknet-strange/starknet-agentic (starknet-agentic-skills). Impacted sibling repo: keep-starknet-strange/starkclaw.",
   "author": {
     "name": "keep-starknet-strange",
     "url": "https://github.com/keep-starknet-strange"
