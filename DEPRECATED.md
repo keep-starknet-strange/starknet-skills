@@ -6,6 +6,7 @@ Canonical repository:
 
 - https://github.com/keep-starknet-strange/starknet-agentic
 - Skills path: `starknet-agentic/skills/`
+- Impacted sibling repo: https://github.com/keep-starknet-strange/starkclaw
 
 ## Install (Canonical)
 

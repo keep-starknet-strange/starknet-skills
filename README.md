@@ -102,12 +102,12 @@ git clone https://github.com/keep-starknet-strange/starknet-agentic.git
 
 Option 1: add the cloned repo as a context directory in Cursor settings.
 
-Option 2: copy the rule file and selected skills into your project.
+Option 2: copy selected skills into your project.
 Run the following from your project root and replace `/path/to/starknet-agentic` with your clone path:
 
 ```bash
 cd /path/to/your/project
-mkdir -p .cursor/rules .cursor/skills
+mkdir -p .cursor/skills
 cp -r /path/to/starknet-agentic/skills/cairo-auditor .cursor/skills/cairo-auditor
 cp -r /path/to/starknet-agentic/skills/cairo-testing .cursor/skills/cairo-testing
 cp -r /path/to/starknet-agentic/skills/cairo-contract-authoring .cursor/skills/cairo-contract-authoring
@@ -217,13 +217,13 @@ If a target filename already exists, the script appends `-N` to avoid overwrite.
 
 | Module | What LLMs Commonly Miss |
 | --- | --- |
-| [cairo-auditor](cairo-auditor/SKILL.md) | Misses Starknet upgrade/account edge cases and weak FP gates |
-| [cairo-contract-authoring](cairo-contract-authoring/SKILL.md) | Applies Solidity structure directly to Cairo components |
-| [cairo-testing](cairo-testing/SKILL.md) | Stops at unit tests and skips invariants/adversarial regression coverage |
-| [cairo-optimization](cairo-optimization/SKILL.md) | Optimizes wrong paths without trace/Sierra context |
-| [cairo-toolchain](cairo-toolchain/SKILL.md) | Uses stale Scarb/snforge/sncast workflows |
-| [account-abstraction](account-abstraction/SKILL.md) | Misses session-key/self-call and validation-flow pitfalls |
-| [starknet-network-facts](starknet-network-facts/SKILL.md) | Hallucinates network semantics and fee/timing assumptions |
+| [cairo-auditor](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-auditor/SKILL.md) | Misses Starknet upgrade/account edge cases and weak FP gates |
+| [cairo-contract-authoring](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-contract-authoring/SKILL.md) | Applies Solidity structure directly to Cairo components |
+| [cairo-testing](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-testing/SKILL.md) | Stops at unit tests and skips invariants/adversarial regression coverage |
+| [cairo-optimization](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-optimization/SKILL.md) | Optimizes wrong paths without trace/Sierra context |
+| [cairo-deploy](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-deploy/SKILL.md) | Uses stale Scarb/snforge/sncast workflows |
+| [account-abstraction](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/account-abstraction/SKILL.md) | Misses session-key/self-call and validation-flow pitfalls |
+| [starknet-network-facts](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/starknet-network-facts/SKILL.md) | Hallucinates network semantics and fee/timing assumptions |
 
 Recommended sequence for new contracts: `cairo-contract-authoring` -> `cairo-testing` -> `cairo-auditor`.
 

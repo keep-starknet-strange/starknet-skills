@@ -1,7 +1,7 @@
 {
   "name": "cairo-auditor",
   "version": "0.2.1",
-  "description": "Flagship Cairo/Starknet audit skill for vulnerability discovery with strict FP gating and confidence scoring.",
+  "description": "Deprecated cairo-auditor plugin. Canonical source moved to keep-starknet-strange/starknet-agentic (starknet-agentic-skills).",
   "author": {
     "name": "keep-starknet-strange",
     "url": "https://github.com/keep-starknet-strange"

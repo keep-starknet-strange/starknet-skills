@@ -5,13 +5,13 @@
 
 ## Skills
 
-- [cairo-auditor](cairo-auditor/SKILL.md): Security review with parallel vector specialists and false-positive gating. 170 attack vectors from 217 real audit findings.
-- [cairo-contract-authoring](cairo-contract-authoring/SKILL.md): Write correct, secure, component-ready Cairo contracts. OpenZeppelin 3.0.0 component wiring. 5 mandatory security rules.
-- [cairo-testing](cairo-testing/SKILL.md): Full test coverage with snforge — unit, integration, fuzz, fork, and regression tests. 5 mandatory coverage rules.
-- [cairo-optimization](cairo-optimization/SKILL.md): Profile-driven optimization with 12 rules including BoundedInt, storage packing, and arithmetic patterns.
-- [cairo-toolchain](cairo-toolchain/SKILL.md): Build, declare, deploy, and verify operations for Starknet.
-- [account-abstraction](account-abstraction/SKILL.md): Account abstraction patterns, session keys, and validation flow risks.
-- [starknet-network-facts](starknet-network-facts/SKILL.md): Starknet network constraints, fee mechanics, and timing semantics.
+- [cairo-auditor](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-auditor/SKILL.md): Security review with parallel vector specialists and false-positive gating. 170 attack vectors from 217 real audit findings.
+- [cairo-contract-authoring](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-contract-authoring/SKILL.md): Write correct, secure, component-ready Cairo contracts. OpenZeppelin 3.0.0 component wiring. 5 mandatory security rules.
+- [cairo-testing](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-testing/SKILL.md): Full test coverage with snforge — unit, integration, fuzz, fork, and regression tests. 5 mandatory coverage rules.
+- [cairo-optimization](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-optimization/SKILL.md): Profile-driven optimization with 12 rules including BoundedInt, storage packing, and arithmetic patterns.
+- [cairo-deploy](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-deploy/SKILL.md): Build, declare, deploy, and verify operations for Starknet.
+- [account-abstraction](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/account-abstraction/SKILL.md): Account abstraction patterns, session keys, and validation flow risks.
+- [starknet-network-facts](https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/starknet-network-facts/SKILL.md): Starknet network constraints, fee mechanics, and timing semantics.
 
 ## Recommended Flow
 
@@ -20,7 +20,7 @@ cairo-contract-authoring → cairo-testing → [cairo-optimization (if needed)] 
 ## Install
 
 Claude Code: /plugin marketplace add keep-starknet-strange/starknet-agentic
-Cursor: Clone repo and add as workspace directory, or copy individual skill dirs into your project's `.cursor/skills/` folder; routing rules are in `.cursor/rules/starknet-skills.md`
+Cursor: Clone repo and add as workspace directory, or copy individual skill dirs into your project's `.cursor/skills/` folder
 Any agent: Point at https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/SKILL.md
 
 ## Tooling
