@@ -1,6 +1,7 @@
-# starknet-skills
+# starknet-skills (Deprecated)
 
-> Cairo/Starknet skills for AI coding agents — security review, contract authoring, testing, and optimization.
+> This repository is deprecated. Canonical Cairo/Starknet skills now live in `keep-starknet-strange/starknet-agentic` under `skills/`.
+> Migration guide: `DEPRECATED.md`.
 
 ## Skills
 
@@ -18,9 +19,9 @@ cairo-contract-authoring → cairo-testing → [cairo-optimization (if needed)] 
 
 ## Install
 
-Claude Code: /plugin marketplace add keep-starknet-strange/starknet-skills
+Claude Code: /plugin marketplace add keep-starknet-strange/starknet-agentic
 Cursor: Clone repo and add as workspace directory, or copy individual skill dirs into your project's `.cursor/skills/` folder; routing rules are in `.cursor/rules/starknet-skills.md`
-Any agent: Point at https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+Any agent: Point at https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/SKILL.md
 
 ## Tooling
 
@@ -30,4 +31,4 @@ Any agent: Point at https://raw.githubusercontent.com/keep-starknet-strange/star
 
 ## Source
 
-https://github.com/keep-starknet-strange/starknet-skills
+https://github.com/keep-starknet-strange/starknet-agentic

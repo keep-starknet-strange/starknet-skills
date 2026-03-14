@@ -5,19 +5,23 @@ description: Top-level guidance for agents using starknet-skills modules.
 
 # Agent Instructions
 
+> [!WARNING]
+> This repository is deprecated. Use `keep-starknet-strange/starknet-agentic` as canonical source for skills.
+> Migration details: `DEPRECATED.md`.
+
 This repository contains Cairo/Starknet skills for AI coding agents. Each skill is a prescriptive orchestrator — it tells you exactly what to load, what to check, and in what order.
 
 ## Available Skills
 
 | Skill | Use when | Entry point |
 |-------|----------|-------------|
-| **cairo-auditor** | Security review of Cairo contracts | `cairo-auditor/SKILL.md` |
-| **cairo-contract-authoring** | Writing new contracts or modifying existing ones | `cairo-contract-authoring/SKILL.md` |
-| **cairo-testing** | Writing unit, integration, fuzz, or regression tests | `cairo-testing/SKILL.md` |
-| **cairo-optimization** | Profiling and optimizing gas/steps | `cairo-optimization/SKILL.md` |
-| **cairo-toolchain** | Build, declare, deploy, verify operations | `cairo-toolchain/SKILL.md` |
-| **account-abstraction** | Account abstraction patterns and risks | `account-abstraction/SKILL.md` |
-| **starknet-network-facts** | Starknet network constraints and semantics | `starknet-network-facts/SKILL.md` |
+| **cairo-auditor** | Security review of Cairo contracts | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-auditor/SKILL.md` |
+| **cairo-contract-authoring** | Writing new contracts or modifying existing ones | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-contract-authoring/SKILL.md` |
+| **cairo-testing** | Writing unit, integration, fuzz, or regression tests | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-testing/SKILL.md` |
+| **cairo-optimization** | Profiling and optimizing gas/steps | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-optimization/SKILL.md` |
+| **cairo-deploy** | Build, declare, deploy, verify operations | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-deploy/SKILL.md` |
+| **account-abstraction** | Account abstraction patterns and risks | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/account-abstraction/SKILL.md` |
+| **starknet-network-facts** | Starknet network constraints and semantics | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/starknet-network-facts/SKILL.md` |
 
 ## Recommended Flow
 

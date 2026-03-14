@@ -5,6 +5,11 @@ description: Cairo/Starknet skills for AI coding agents with router and module l
 
 # starknet-skills
 
+> [!WARNING]
+> This repository is **deprecated** and in transition to archive.
+> Canonical skills now live in **[keep-starknet-strange/starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic)** under `skills/`.
+> Migration guide: [DEPRECATED.md](DEPRECATED.md).
+
 <p align="center">
   <img alt="starknet-skills hero" src="assets/readme-hero.png" width="100%" />
 </p>
@@ -62,17 +67,16 @@ Built on the <a href="https://agentskills.io">Agent Skills</a> open standard —
 
 <p align="center"><strong>Cairo/Starknet skills for AI coding agents</strong></p>
 
-> Security + reasoning knowledge layer for any agent that reads markdown.
-> Built on the [Agent Skills](https://agentskills.io) open standard — works with 30+ tools.
-> For operational tooling, see [starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic).
+> Legacy security + reasoning layer preserved for transition.
+> Canonical source is now [starknet-agentic](https://github.com/keep-starknet-strange/starknet-agentic).
 
 ## Install & Use
 
 ### Claude Code
 
 ```bash
-/plugin marketplace add keep-starknet-strange/starknet-skills
-/plugin install starknet-skills
+/plugin marketplace add keep-starknet-strange/starknet-agentic
+/plugin install starknet-agentic-skills@keep-starknet-strange-starknet-agentic
 ```
 
 Then try:
@@ -86,21 +90,20 @@ Audit src/contract.cairo using the cairo-auditor skill
 Clone the repo:
 
 ```bash
-git clone https://github.com/keep-starknet-strange/starknet-skills.git
+git clone https://github.com/keep-starknet-strange/starknet-agentic.git
 ```
 
 Option 1: add the cloned repo as a context directory in Cursor settings.
 
 Option 2: copy the rule file and selected skills into your project.
-Run the following from your project root and replace `/path/to/starknet-skills` with your clone path:
+Run the following from your project root and replace `/path/to/starknet-agentic` with your clone path:
 
 ```bash
 cd /path/to/your/project
 mkdir -p .cursor/rules .cursor/skills
-cp /path/to/starknet-skills/.cursor/rules/starknet-skills.md .cursor/rules/
-cp -r /path/to/starknet-skills/cairo-auditor .cursor/skills/cairo-auditor
-cp -r /path/to/starknet-skills/cairo-testing .cursor/skills/cairo-testing
-cp -r /path/to/starknet-skills/cairo-contract-authoring .cursor/skills/cairo-contract-authoring
+cp -r /path/to/starknet-agentic/skills/cairo-auditor .cursor/skills/cairo-auditor
+cp -r /path/to/starknet-agentic/skills/cairo-testing .cursor/skills/cairo-testing
+cp -r /path/to/starknet-agentic/skills/cairo-contract-authoring .cursor/skills/cairo-contract-authoring
 ```
 
 Then try:
@@ -114,7 +117,7 @@ Write an ERC20 token contract following the cairo-contract-authoring skill
 Paste the router URL into Gemini CLI chat as context:
 
 ```text
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/SKILL.md
 ```
 
 ### VS Code (GitHub Copilot)
@@ -122,11 +125,11 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKI
 Clone the repo into your workspace, then provide the router URL in Copilot chat via `@workspace` (or add it as custom context in VS Code settings):
 
 ```bash
-git clone https://github.com/keep-starknet-strange/starknet-skills.git
+git clone https://github.com/keep-starknet-strange/starknet-agentic.git
 ```
 
 ```text
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/SKILL.md
 ```
 
 ### OpenAI Codex
@@ -138,11 +141,11 @@ Auto-discovered via `AGENTS.md` at the repo root. Clone and open — Codex reads
 Clone the repo into your project, then paste the router URL in Junie chat/context:
 
 ```bash
-git clone https://github.com/keep-starknet-strange/starknet-skills.git
+git clone https://github.com/keep-starknet-strange/starknet-agentic.git
 ```
 
 ```text
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/SKILL.md
 ```
 
 ### Any agent (universal)
@@ -150,16 +153,16 @@ https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKI
 Paste this URL into your agent's chat or config — it auto-routes to the right skill:
 
 ```text
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/SKILL.md
 ```
 
 Or load a specific skill directly:
 
 ```text
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/SKILL.md
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-contract-authoring/SKILL.md
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-testing/SKILL.md
-https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-optimization/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-auditor/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-contract-authoring/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-testing/SKILL.md
+https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-optimization/SKILL.md
 ```
 
 Machine-readable index: [`llms.txt`](llms.txt)
