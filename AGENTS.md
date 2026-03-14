@@ -7,6 +7,7 @@ description: Deprecated. Redirects to starknet-agentic for Cairo/Starknet skills
 
 > [!WARNING]
 > This repository is deprecated. Use `keep-starknet-strange/starknet-agentic` as canonical source for skills.
+> Impacted sibling repo: `keep-starknet-strange/starkclaw`.
 > Migration details: `DEPRECATED.md`.
 
 This repository contains Cairo/Starknet skills for AI coding agents. Each skill is a prescriptive orchestrator — it tells you exactly what to load, what to check, and in what order.
