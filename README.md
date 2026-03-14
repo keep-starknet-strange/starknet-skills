@@ -79,6 +79,13 @@ Built on the <a href="https://agentskills.io">Agent Skills</a> open standard —
 /plugin install starknet-agentic-skills@keep-starknet-strange-starknet-agentic
 ```
 
+Legacy package (deprecated, kept only for compatibility checks):
+
+```bash
+/plugin marketplace add keep-starknet-strange/starknet-skills
+/plugin install starknet-skills
+```
+
 Then try:
 
 ```text
