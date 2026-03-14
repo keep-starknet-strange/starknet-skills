@@ -13,11 +13,11 @@ Each skill is at `<skill-name>/SKILL.md`. Read it and follow its orchestration s
 
 | Task | Skill to load |
 |------|---------------|
-| Write a new Cairo contract | `cairo-contract-authoring/SKILL.md` |
-| Add tests to a contract | `cairo-testing/SKILL.md` |
-| Optimize gas/steps | `cairo-optimization/SKILL.md` |
-| Security review | `cairo-auditor/SKILL.md` |
-| Deploy/declare/verify | `cairo-toolchain/SKILL.md` |
+| Write a new Cairo contract | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-contract-authoring/SKILL.md` |
+| Add tests to a contract | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-testing/SKILL.md` |
+| Optimize gas/steps | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-optimization/SKILL.md` |
+| Security review | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-auditor/SKILL.md` |
+| Deploy/declare/verify | `https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-deploy/SKILL.md` |
 
 ## Current Tooling (March 2026)
 

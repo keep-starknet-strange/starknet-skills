@@ -4,15 +4,15 @@
     "name": "keep-starknet-strange"
   },
   "metadata": {
-    "version": "0.2.0",
-    "description": "Cairo/Starknet reasoning and audit-quality skills for secure contract authoring, testing, and review."
+    "version": "0.2.1",
+    "description": "Deprecated skills bundle. Canonical source moved to keep-starknet-strange/starknet-agentic (starknet-agentic-skills). Impacted sibling repo: keep-starknet-strange/starkclaw."
   },
   "plugins": [
     {
       "name": "starknet-skills",
       "source": "./",
-      "version": "0.2.0",
-      "description": "Cairo/Starknet reasoning and audit-quality skills for secure contract authoring, testing, and review.",
+      "version": "0.2.1",
+      "description": "Deprecated skills bundle. Canonical source moved to keep-starknet-strange/starknet-agentic (starknet-agentic-skills). Impacted sibling repo: keep-starknet-strange/starkclaw.",
       "author": {
         "name": "keep-starknet-strange"
       }
@@ -20,8 +20,8 @@
     {
       "name": "cairo-auditor",
       "source": "./cairo-auditor",
-      "version": "0.2.0",
-      "description": "Flagship Cairo/Starknet audit skill for vulnerability discovery with strict FP gating and confidence scoring.",
+      "version": "0.2.1",
+      "description": "Deprecated cairo-auditor plugin. Canonical source moved to keep-starknet-strange/starknet-agentic (starknet-agentic-skills).",
       "author": {
         "name": "keep-starknet-strange"
       }

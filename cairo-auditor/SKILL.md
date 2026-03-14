@@ -197,16 +197,18 @@ Before doing anything else, print this exactly:
 
 ## Version Check
 
-After printing the banner, run two parallel tool calls: (a) Read the local `VERSION` file from the same directory as this skill, (b) Bash `curl -sf --connect-timeout 5 --max-time 10 https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/VERSION`. If the remote fetch succeeds and the versions differ, print:
+After printing the banner, run two parallel tool calls: (a) Read the local `VERSION` file from the same directory as this skill, (b) Bash `curl -sf --connect-timeout 5 --max-time 10 https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-auditor/VERSION`. If the remote fetch succeeds and the versions differ, print:
 
-> You are not using the latest version. Run `/plugin marketplace update keep-starknet-strange/starknet-skills` for best security coverage.
+> You are not using the latest version. Migrate to the canonical source:
+> 1. Run `/plugin marketplace add keep-starknet-strange/starknet-agentic`
+> 2. Run `/plugin install starknet-agentic-skills@keep-starknet-strange-starknet-agentic`
 
 Then continue normally. If the fetch fails (offline, timeout), skip silently.
 
 Use this command for the remote check:
 
 ```bash
-curl -sf --connect-timeout 5 --max-time 10 https://raw.githubusercontent.com/keep-starknet-strange/starknet-skills/main/cairo-auditor/VERSION
+curl -sf --connect-timeout 5 --max-time 10 https://raw.githubusercontent.com/keep-starknet-strange/starknet-agentic/main/skills/cairo-auditor/VERSION
 ```
 
 ## Limitations

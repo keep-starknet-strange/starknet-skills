@@ -2,6 +2,9 @@
 
 Static site generator for the `website/` landing page and vulnerability browser.
 
+> [!WARNING]
+> This site pipeline is legacy because `starknet-skills` is deprecated. Canonical skills live in `keep-starknet-strange/starknet-agentic`.
+
 ## Usage
 
 From repo root:
@@ -13,9 +16,10 @@ python3 scripts/site/build_site.py --domain starkskills.org
 Optional link-target overrides:
 
 ```bash
+# --repo-slug override points generated links at the canonical repo.
 python3 scripts/site/build_site.py \
   --domain starkskills.org \
-  --repo-slug keep-starknet-strange/starknet-skills \
+  --repo-slug keep-starknet-strange/starknet-agentic \
   --repo-ref main
 ```
 

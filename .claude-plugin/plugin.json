@@ -1,13 +1,13 @@
 {
   "name": "starknet-skills",
-  "version": "0.2.0",
-  "description": "Cairo/Starknet reasoning and audit-quality skills for secure contract authoring, testing, and review.",
+  "version": "0.2.1",
+  "description": "Deprecated skills bundle. Canonical source moved to keep-starknet-strange/starknet-agentic (starknet-agentic-skills). Impacted sibling repo: keep-starknet-strange/starkclaw.",
   "author": {
     "name": "keep-starknet-strange",
     "url": "https://github.com/keep-starknet-strange"
   },
-  "homepage": "https://github.com/keep-starknet-strange/starknet-skills",
-  "repository": "https://github.com/keep-starknet-strange/starknet-skills",
+  "homepage": "https://github.com/keep-starknet-strange/starknet-agentic",
+  "repository": "https://github.com/keep-starknet-strange/starknet-agentic",
   "license": "MIT",
   "keywords": [
     "starknet",
