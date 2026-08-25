@@ -37,12 +37,12 @@ class Seg:
 def detect_heading(line: str) -> tuple[str, str] | None:
     m = ID_HEADING.match(line)
     if m:
-        if "..." in line or ". . ." in line:
+        if re.search(r"(?:\.{3,}|(?:\.\s+){3,})\s*\d+\s*$", line):
             return None
         return (m.group(1), m.group(2).strip())
     m = NUMERIC_HEADING.match(line)
     if m:
-        if "..." in line or ". . ." in line or re.search(r"\.\s+\d+\s*$", line):
+        if re.search(r"(?:\.{3,}|(?:\.\s+){3,})\s*\d+\s*$", line):
             return None
         return (m.group(1), m.group(2).strip())
     return None
@@ -105,6 +105,8 @@ def is_toc_noise(seg: dict) -> bool:
     has_detail_markers = any(
         marker in content for marker in ("File(s):", "Description:", "Recommendation", "Status:")
     )
+    if early_page and re.match(r"^6\.\d+(?:\.\d+)?$", seg["heading_key"]) and not has_detail_markers:
+        return True
     return dotted_title and short_content and early_page and not has_detail_markers
 
 

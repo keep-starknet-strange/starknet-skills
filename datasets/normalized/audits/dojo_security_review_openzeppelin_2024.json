@@ -1,0 +1,43 @@
+{
+  "audit_id": "dojo_security_review_openzeppelin_2024",
+  "project": "Dojo Security Review",
+  "auditor": "OpenZeppelin",
+  "date": "2024-11-12",
+  "source_url": "https://www.openzeppelin.com/news/dojo-security-review",
+  "repository": "https://github.com/dojoengine/dojo",
+  "scope_files": [
+    "base_contract.cairo",
+    "contract.cairo",
+    "upgradeable.cairo",
+    "lib.cairo",
+    "introspect.cairo",
+    "layout.cairo",
+    "metadata.cairo",
+    "model.cairo",
+    "database.cairo",
+    "packing.cairo",
+    "storage.cairo",
+    "utils.cairo",
+    "config.cairo",
+    "errors.cairo",
+    "update.cairo",
+    "world_contract.cairo"
+  ],
+  "finding_count": 11,
+  "finding_label_semantics": "reported_findings_present",
+  "negative_label_scope": "none",
+  "safety_claim": "not_proven",
+  "severity_counts": {
+    "best_practice": 4,
+    "critical": 1,
+    "high": 1,
+    "low": 4,
+    "medium": 1
+  },
+  "status_summary": {
+    "acknowledged": 2,
+    "not_an_issue": 1,
+    "resolved": 8
+  },
+  "notes": "Structured coverage pass with report-declared finding-count verification; not human-adjudicated gold data."
+}

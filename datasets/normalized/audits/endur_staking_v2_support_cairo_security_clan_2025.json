@@ -1,0 +1,40 @@
+{
+  "audit_id": "endur_staking_v2_support_cairo_security_clan_2025",
+  "project": "Endur Staking V2 Support",
+  "auditor": "Cairo Security Clan",
+  "date": "2025-05-02",
+  "source_url": "https://drive.google.com/file/d/17A4ivPm55aRCJvUQ5D17PhUpsxjKsLoc/view",
+  "repository": "https://github.com/endurfi",
+  "scope_files": [
+    "src/lib.cairo",
+    "src/test_utils.cairo",
+    "src/delegator/delegator.cairo",
+    "src/delegator/interface.cairo",
+    "src/lst/interface.cairo",
+    "src/lst/lst.cairo",
+    "src/timelock/timelock.cairo",
+    "src/utils/access_control.cairo",
+    "src/utils/math.cairo",
+    "src/withdrawal_queue/interface.cairo",
+    "src/withdrawal_queue/withdrawal_queue.cairo",
+    "/home/runner/work/059-Endur-LST-UPDATE/059-Endur-LST-UPDATE/contracts/src/lst/tests/test_integration.cairo",
+    "test_withdrawal_queue.cairo",
+    "/home/runner/work/059-Endur-LST-UPDATE/059-Endur-LST-UPDATE/contracts/src/timelock/tests/test_timelock.cairo",
+    "/home/runner/work/059-Endur-LST-UPDATE/059-Endur-LST-UPDATE/contracts/src/test_utils.cairo",
+    "/home/runner/work/059-Endur-LST-UPDATE/059-Endur-LST-UPDATE/contracts/src/tests/system/endur.cairo",
+    "/home/runner/work/059-Endur-LST-UPDATE/059-Endur-LST-UPDATE/contracts/src/tests/system/staking.cairo",
+    "/home/runner/work/059-Endur-LST-UPDATE/059-Endur-LST-UPDATE/contracts/src/tests/migration_v2/test.cairo"
+  ],
+  "finding_count": 2,
+  "finding_label_semantics": "reported_findings_present",
+  "negative_label_scope": "none",
+  "safety_claim": "not_proven",
+  "severity_counts": {
+    "best_practice": 1,
+    "medium": 1
+  },
+  "status_summary": {
+    "resolved": 2
+  },
+  "notes": "Structured coverage pass with report-declared finding-count verification; not human-adjudicated gold data."
+}

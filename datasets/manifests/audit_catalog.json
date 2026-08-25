@@ -55,11 +55,20 @@
   },
   {
     "project": "Carmine (Spotnet)",
-    "source_url": "https://docs.carmine.finance/carmine-options-amm/audit",
-    "auditor": "Hackachain, Nethermind",
-    "date": null,
+    "source_url": "https://1360602361-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2F0ap7Rr4WjGY7OvFI4uba%2Fuploads%2Fl1DmDwIZQTVoQMYKKk5S%2FNM0153-FINAL_CARMINE.pdf?alt=media&token=38dfeacd-fafd-4ecf-b7f5-33f6910cce08",
+    "auditor": "Nethermind",
+    "date": "2024-01-08",
     "repository": "https://github.com/CarmineOptions",
-    "notes": "2 audits (Nethermind + Hackachain)",
+    "notes": "Current Cairo 1 AMM audit; final report NM0153",
+    "status": "✅ Audited"
+  },
+  {
+    "project": "Carmine (Spotnet)",
+    "source_url": "https://carmine.finance/audit/hack-a-chain",
+    "auditor": "Hackachain",
+    "date": null,
+    "repository": "https://github.com/CarmineOptions/carmine-protocol",
+    "notes": "Old Cairo 0.10 audit; historical public URL is now 404 and the PDF binary is unavailable",
     "status": "✅ Audited"
   },
   {
@@ -83,7 +92,7 @@
   {
     "project": "Spline",
     "source_url": "https://github.com/SplineFinance/spline-v0/blob/main/audits/openzeppelin.pdf",
-    "auditor": "Nethermind, OpenZeppelin",
+    "auditor": "OpenZeppelin",
     "date": "2025",
     "repository": "https://github.com/SplineFinance/spline-v0/tree/main/audits",
     "notes": "Cairo DeFi audit",
@@ -126,12 +135,12 @@
     "status": "✅ Audited"
   },
   {
-    "project": "Atomiq Exchange Reaudit",
-    "source_url": "https://github.com/atomiqlabs/atomiq-readme/blob/main/csc-starknet_cairo-atomiq-audit.pdf",
+    "project": "Atomiq Exchange Update",
+    "source_url": "https://github.com/atomiqlabs/atomiq-readme/blob/main/audits/csc-starknet_cairo-atomiq-audit-update.pdf",
     "auditor": "Cairo Security Clan",
-    "date": null,
+    "date": "2025-06-18",
     "repository": "https://github.com/atomiqlabs/atomiq-contracts-starknet/",
-    "notes": "Re-audit after fixes",
+    "notes": "Security review of pull requests 9, 10, and 11; distinct from the initial audit",
     "status": "✅ Audited"
   },
   {
@@ -176,7 +185,8 @@
     "auditor": "Zellic",
     "date": null,
     "repository": "https://github.com/hyperlane-xyz",
-    "notes": "Second audit",
+    "notes": "Alternate HTML presentation of the July 9, 2024 report; not a second engagement",
+    "duplicate_of": "hyperlane_starknet_audit_1_zellic_unknown",
     "status": "✅ Audited"
   },
   {
@@ -219,7 +229,7 @@
     "project": "Dojo Security Review",
     "source_url": "https://www.openzeppelin.com/news/dojo-security-review",
     "auditor": "OpenZeppelin",
-    "date": null,
+    "date": "2024-11-12",
     "repository": "https://github.com/dojoengine/dojo",
     "notes": "Initial security review",
     "status": "✅ Audited"
@@ -237,7 +247,7 @@
     "project": "Dojo Namespace Diff",
     "source_url": "https://www.openzeppelin.com/news/dojo-namespace-diff-audit",
     "auditor": "OpenZeppelin",
-    "date": null,
+    "date": "2024-11-12",
     "repository": "https://github.com/dojoengine/dojo",
     "notes": "Namespace changes",
     "status": "✅ Audited"
@@ -248,7 +258,7 @@
     "auditor": "Nethermind",
     "date": null,
     "repository": "https://github.com/cartridge-gg",
-    "notes": null,
+    "notes": "Draft security review; no final report date and two unresolved issues",
     "status": "✅ Audited"
   },
   {
@@ -257,7 +267,8 @@
     "auditor": "Cairo Security Clan",
     "date": null,
     "repository": null,
-    "notes": null,
+    "notes": "Alternate label for the STRKFarm Vesu and Ekubo strategies report",
+    "duplicate_of": "strkfarm_cairo_security_clan_unknown",
     "status": "✅ Audited"
   },
   {
@@ -302,7 +313,8 @@
     "auditor": "Zenith",
     "date": null,
     "repository": null,
-    "notes": null,
+    "notes": "Alternate label for the ForgeYields Zenith report",
+    "duplicate_of": "forgeyields_zenith_zenith_unknown",
     "status": "✅ Audited"
   },
   {

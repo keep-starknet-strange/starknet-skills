@@ -1,0 +1,28 @@
+{
+  "audit_id": "atomiq_exchange_update_cairo_security_clan_2025",
+  "project": "Atomiq Exchange Update",
+  "auditor": "Cairo Security Clan",
+  "date": "2025-06-18",
+  "source_url": "https://github.com/atomiqlabs/atomiq-readme/blob/main/audits/csc-starknet_cairo-atomiq-audit-update.pdf",
+  "repository": "https://github.com/atomiqlabs/atomiq-contracts-starknet/",
+  "scope_files": [
+    "packages/spv_swap_vault/src/events.cairo",
+    "packages/spv_swap_vault/src/lib.cairo",
+    "packages/spv_swap_vault/tests/utils/spv_vault.cairo",
+    "packages/escrow_manager/src/lib.cairo",
+    "packages/escrow_manager/src/structs/escrow.cairo",
+    "packages/escrow_manager/src/utils.cairo",
+    "packages/escrow_manager/src/utils/option_hash.cairo"
+  ],
+  "finding_count": 1,
+  "finding_label_semantics": "reported_findings_present",
+  "negative_label_scope": "none",
+  "safety_claim": "not_proven",
+  "severity_counts": {
+    "medium": 1
+  },
+  "status_summary": {
+    "resolved": 1
+  },
+  "notes": "Structured coverage pass with report-declared finding-count verification; not human-adjudicated gold data."
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "extraction_method": "structured_count_gated",
+  "reports": 8,
+  "findings": 69,
+  "counts": {
+    "endur_v1_launch_cairo_security_clan_2024": 8,
+    "endur_withdrawal_queue_upgrade_cairo_security_clan_2025": 1,
+    "endur_staking_v2_support_cairo_security_clan_2025": 2,
+    "endur_btc_staking_multi_validator_cairo_security_clan_2025": 12,
+    "carmine_spotnet_nethermind_2024": 28,
+    "atomiq_exchange_update_cairo_security_clan_2025": 1,
+    "dojo_security_review_openzeppelin_2024": 11,
+    "dojo_namespace_diff_openzeppelin_2024": 6
+  },
+  "coverage_gate": "passed",
+  "label_semantics": "Confirmed report findings are positive evidence. Unmentioned code is unlabeled, not safe. Audit-level zero-finding reports are represented in audit metadata, not as per-function negatives."
+}
