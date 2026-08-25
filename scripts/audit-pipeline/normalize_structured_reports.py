@@ -15,7 +15,6 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-
 NUMERIC_REPORTS: dict[str, dict[str, Any]] = {
     "endur_v1_launch_cairo_security_clan_2024": {
         "expected": 8,

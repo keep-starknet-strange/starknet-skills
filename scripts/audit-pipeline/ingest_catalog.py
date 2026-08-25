@@ -18,7 +18,6 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any, ClassVar
 
-
 USER_AGENT = "starknet-skills-audit-ingest/1.0 (+https://github.com/keep-starknet-strange/starknet-skills)"
 DEFAULT_TIMEOUT_SECONDS = 45
 EXTRACTOR_VERSION = "ingest_catalog.py@v1"
