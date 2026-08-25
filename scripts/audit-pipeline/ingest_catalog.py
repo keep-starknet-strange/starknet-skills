@@ -10,13 +10,13 @@ import re
 import shutil
 import socket
 import subprocess
-import urllib.parse
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 
 USER_AGENT = "starknet-skills-audit-ingest/1.0 (+https://github.com/keep-starknet-strange/starknet-skills)"
@@ -42,8 +42,12 @@ class CatalogRow:
 class MainContentHTMLParser(HTMLParser):
     """Extract readable, heading-preserving text from a public audit page."""
 
-    BLOCK_TAGS = {"h1", "h2", "h3", "h4", "p", "li", "pre", "blockquote", "tr"}
-    SKIP_TAGS = {"script", "style", "svg", "nav", "footer", "noscript"}
+    BLOCK_TAGS: ClassVar[frozenset[str]] = frozenset(
+        {"h1", "h2", "h3", "h4", "p", "li", "pre", "blockquote", "tr"}
+    )
+    SKIP_TAGS: ClassVar[frozenset[str]] = frozenset(
+        {"script", "style", "svg", "nav", "footer", "noscript"}
+    )
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -171,12 +175,12 @@ def is_audited(status: str) -> bool:
 def load_catalog(path: Path) -> list[CatalogRow]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, list):
-        raise ValueError("catalog file must contain a JSON array")
+        raise TypeError("catalog file must contain a JSON array")
 
     rows: list[CatalogRow] = []
     for idx, item in enumerate(data, start=1):
         if not isinstance(item, dict):
-            raise ValueError(f"catalog row {idx} must be a JSON object")
+            raise TypeError(f"catalog row {idx} must be a JSON object")
         project = str(item.get("project", "")).strip()
         auditor = str(item.get("auditor", "")).strip()
         status = str(item.get("status", "")).strip()
@@ -229,7 +233,7 @@ def load_existing_manifest_records(path: Path) -> list[dict[str, Any]]:
             continue
         rec = json.loads(line)
         if not isinstance(rec, dict):
-            raise ValueError(f"{path}: line {i} must be object")
+            raise TypeError(f"{path}: line {i} must be object")
         records.append(rec)
     return records
 

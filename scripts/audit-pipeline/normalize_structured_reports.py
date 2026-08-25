@@ -255,9 +255,11 @@ def build_numeric_findings(audit: dict[str, Any], spec: dict[str, Any], segments
     selected: list[dict[str, Any]] = []
     for segment in segments:
         key = segment["heading_key"]
-        if spec["mode"] == "nested" and re.fullmatch(r"6\.\d+\.\d+", key):
-            selected.append(segment)
-        elif spec["mode"] == "bracketed" and re.fullmatch(r"6\.\d+", key):
+        if (
+            spec["mode"] == "nested" and re.fullmatch(r"6\.\d+\.\d+", key)
+        ) or (
+            spec["mode"] == "bracketed" and re.fullmatch(r"6\.\d+", key)
+        ):
             selected.append(segment)
     if len(selected) != spec["expected"]:
         raise ValueError(
