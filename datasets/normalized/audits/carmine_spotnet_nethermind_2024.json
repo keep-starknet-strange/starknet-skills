@@ -1,0 +1,50 @@
+{
+  "audit_id": "carmine_spotnet_nethermind_2024",
+  "project": "Carmine (Spotnet)",
+  "auditor": "Nethermind",
+  "date": "2024-01-08",
+  "source_url": "https://1360602361-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2F0ap7Rr4WjGY7OvFI4uba%2Fuploads%2Fl1DmDwIZQTVoQMYKKk5S%2FNM0153-FINAL_CARMINE.pdf?alt=media&token=38dfeacd-fafd-4ecf-b7f5-33f6910cce08",
+  "repository": "https://github.com/CarmineOptions",
+  "scope_files": [
+    "erc20_interface.cairo",
+    "lib.cairo",
+    "amm_interface.cairo",
+    "types/option_.cairo",
+    "types/pool.cairo",
+    "types/basic.cairo",
+    "amm_core/trading.cairo",
+    "amm_core/helpers.cairo",
+    "amm_core/state.cairo",
+    "amm_core/constants.cairo",
+    "amm_core/amm.cairo",
+    "amm_core/options.cairo",
+    "amm_core/liquidity_pool.cairo",
+    "amm_core/oracles/agg.cairo",
+    "amm_core/oracles/oracle_helpers.cairo",
+    "amm_core/oracles/pragma.cairo",
+    "amm_core/pricing/option_pricing.cairo",
+    "amm_core/pricing/option_pricing_helpers.cairo",
+    "amm_core/pricing/fees.cairo",
+    "tokens/my_token.cairo",
+    "tokens/option_token.cairo",
+    "tokens/lptoken.cairo",
+    "state.cairo"
+  ],
+  "finding_count": 28,
+  "finding_label_semantics": "reported_findings_present",
+  "negative_label_scope": "none",
+  "safety_claim": "not_proven",
+  "severity_counts": {
+    "best_practice": 8,
+    "critical": 2,
+    "high": 3,
+    "info": 8,
+    "low": 3,
+    "medium": 4
+  },
+  "status_summary": {
+    "acknowledged": 1,
+    "resolved": 27
+  },
+  "notes": "Structured coverage pass with report-declared finding-count verification; not human-adjudicated gold data."
+}

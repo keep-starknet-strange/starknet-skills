@@ -22,7 +22,10 @@
     "src/pool/interface.cairo"
   ],
   "finding_count": 0,
+  "finding_label_semantics": "report_declared_zero_findings",
+  "negative_label_scope": "audit_scope_only",
+  "safety_claim": "not_proven",
   "severity_counts": {},
   "status_summary": {},
-  "notes": "Auto-normalized from ingest manifest and extracted report text."
+  "notes": "The report explicitly states that no issues were found in the reviewed scope. This is audit-level zero-finding evidence, not proof that every file or function is safe; code units remain unlabeled for vulnerability training."
 }

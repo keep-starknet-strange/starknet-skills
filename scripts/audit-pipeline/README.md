@@ -37,7 +37,10 @@ python3 scripts/audit-pipeline/ingest_catalog.py \
 Notes:
 
 - Only rows marked audited are attempted.
-- Unsupported sources (e.g., HTML index pages, Drive links) are recorded in the report with explicit skip reasons.
+- Public Google Drive PDFs are converted to direct-download URLs.
+- HTML audit pages are ingested when they expose a semantic `<main id="main-content">` report body.
+- Catalog rows may set `duplicate_of` when the same report is published through a second presentation URL.
+- Use `--fresh` only for intentional canonical-ID migrations; ordinary incremental runs reuse the prior manifest.
 - Content duplicates are deduplicated before seed generation (`duplicate_content_of:<audit_id>` in report).
 
 ## 2) Segment extracted text
@@ -86,6 +89,27 @@ Notes:
 
 - This pass is heuristic and intended to bootstrap broad coverage quickly.
 - Follow-up manual curation remains required for high-confidence distillation.
+
+## 3c) Normalize count-structured reports
+
+```bash
+python3 scripts/audit-pipeline/normalize_structured_reports.py
+```
+
+This importer covers the structured Endur, Carmine, Atomiq, and OpenZeppelin
+reports. It fails closed unless every source-declared finding is present and
+writes `datasets/manifests/structured_extraction_report.json` as a coverage
+receipt. These records are moderate-evidence weak supervision until a human
+checks the causal description against code.
+
+### Zero-finding reports and negative labels
+
+An audit that explicitly reports zero findings is useful audit-level evidence,
+but it is not a per-function `safe` label. Represent it with
+`finding_label_semantics: report_declared_zero_findings`,
+`negative_label_scope: audit_scope_only`, and `safety_claim: not_proven`.
+Unmentioned code remains unlabeled. Only a verified fix, executable regression
+test, or human refutation should create a strong code-unit negative.
 
 ## 4) Verify no held-out leakage in datasets
 

@@ -1,0 +1,41 @@
+{
+  "audit_id": "dojo_namespace_diff_openzeppelin_2024",
+  "project": "Dojo Namespace Diff",
+  "auditor": "OpenZeppelin",
+  "date": "2024-11-12",
+  "source_url": "https://www.openzeppelin.com/news/dojo-namespace-diff-audit",
+  "repository": "https://github.com/dojoengine/dojo",
+  "scope_files": [
+    "upgradeable.cairo",
+    "world_provider.cairo",
+    "contract.cairo",
+    "interface.cairo",
+    "event.cairo",
+    "storage.cairo",
+    "lib.cairo",
+    "component.cairo",
+    "definition.cairo",
+    "entity.cairo",
+    "members.cairo",
+    "metadata.cairo",
+    "model.cairo",
+    "model_value.cairo",
+    "descriptor.cairo",
+    "hash.cairo",
+    "naming.cairo",
+    "errors.cairo",
+    "iworld.cairo",
+    "world_contract.cairo"
+  ],
+  "finding_count": 6,
+  "finding_label_semantics": "reported_findings_present",
+  "negative_label_scope": "none",
+  "safety_claim": "not_proven",
+  "severity_counts": {
+    "best_practice": 6
+  },
+  "status_summary": {
+    "resolved": 6
+  },
+  "notes": "Structured coverage pass with report-declared finding-count verification; not human-adjudicated gold data."
+}

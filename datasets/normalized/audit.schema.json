@@ -21,6 +21,22 @@
     "repository": { "type": "string", "minLength": 1 },
     "scope_files": { "type": "array", "items": { "type": "string" } },
     "finding_count": { "type": "integer", "minimum": 0 },
+    "finding_label_semantics": {
+      "type": "string",
+      "enum": [
+        "reported_findings_present",
+        "report_declared_zero_findings",
+        "not_yet_extracted"
+      ]
+    },
+    "negative_label_scope": {
+      "type": "string",
+      "enum": ["none", "audit_scope_only", "verified_code_unit"]
+    },
+    "safety_claim": {
+      "type": "string",
+      "enum": ["not_proven", "bounded_by_evidence"]
+    },
     "severity_counts": {
       "type": "object",
       "additionalProperties": { "type": "integer", "minimum": 0 }

@@ -14,6 +14,7 @@ import urllib.parse
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,70 @@ class CatalogRow:
     license: str | None
     usage_rights: str | None
     redaction_status: str | None
+    duplicate_of: str | None
+
+
+class MainContentHTMLParser(HTMLParser):
+    """Extract readable, heading-preserving text from a public audit page."""
+
+    BLOCK_TAGS = {"h1", "h2", "h3", "h4", "p", "li", "pre", "blockquote", "tr"}
+    SKIP_TAGS = {"script", "style", "svg", "nav", "footer", "noscript"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.in_main = False
+        self.main_depth = 0
+        self.skip_depth = 0
+        self.current: list[str] = []
+        self.lines: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attrs_map = dict(attrs)
+        if tag == "main" and attrs_map.get("id") == "main-content":
+            self.in_main = True
+            self.main_depth = 1
+            return
+        if self.in_main and tag == "main":
+            self.main_depth += 1
+        if not self.in_main:
+            return
+        if tag in self.SKIP_TAGS:
+            self.skip_depth += 1
+            return
+        if self.skip_depth == 0 and tag in self.BLOCK_TAGS:
+            self._flush()
+
+    def handle_endtag(self, tag: str) -> None:
+        if not self.in_main:
+            return
+        if tag in self.SKIP_TAGS and self.skip_depth:
+            self.skip_depth -= 1
+            return
+        if self.skip_depth == 0 and tag in self.BLOCK_TAGS:
+            self._flush()
+        if tag == "main":
+            self.main_depth -= 1
+            if self.main_depth == 0:
+                self._flush()
+                self.in_main = False
+
+    def handle_data(self, data: str) -> None:
+        if self.in_main and self.skip_depth == 0:
+            cleaned = re.sub(r"\s+", " ", data).strip()
+            if cleaned:
+                self.current.append(cleaned)
+
+    def _flush(self) -> None:
+        if not self.current:
+            return
+        line = re.sub(r"\s+", " ", " ".join(self.current)).strip()
+        if line and (not self.lines or self.lines[-1] != line):
+            self.lines.append(line)
+        self.current = []
+
+    def text(self) -> str:
+        self._flush()
+        return "\n".join(self.lines) + "\n"
 
 
 def slugify(value: str) -> str:
@@ -68,6 +133,13 @@ def optional_text(value: object) -> str | None:
 
 def normalize_url(url: str) -> str:
     cleaned = url.strip()
+    drive_match = re.search(r"drive\.google\.com/file/d/([^/?]+)", cleaned)
+    if drive_match:
+        file_id = urllib.parse.quote(drive_match.group(1), safe="")
+        return (
+            "https://drive.usercontent.google.com/download"
+            f"?id={file_id}&export=download&confirm=t"
+        )
     if cleaned.startswith("https://github.com/") and "/blob/" in cleaned:
         separator = "&" if "?" in cleaned else "?"
         cleaned = f"{cleaned}{separator}raw=1"
@@ -81,7 +153,7 @@ def classify_source_type(original_url: str, normalized_url: str) -> str:
         return "github_blob"
     if normalized_url.startswith("https://raw.githubusercontent.com/"):
         return "github_raw"
-    if normalized_url.lower().endswith(".pdf"):
+    if urllib.parse.urlparse(normalized_url).path.lower().endswith(".pdf"):
         return "direct_pdf"
     return "html"
 
@@ -126,6 +198,7 @@ def load_catalog(path: Path) -> list[CatalogRow]:
                 license=optional_text(item.get("license")),
                 usage_rights=optional_text(item.get("usage_rights")),
                 redaction_status=optional_text(item.get("redaction_status")),
+                duplicate_of=optional_text(item.get("duplicate_of")),
             )
         )
     return rows
@@ -229,6 +302,29 @@ def download_pdf(url: str, output_path: Path) -> str:
     return source_sha256
 
 
+def download_html(url: str, output_path: Path) -> str:
+    validate_https_url(url)
+    opener = urllib.request.build_opener(SafeHTTPSRedirectHandler())
+    request = urllib.request.Request(url=url, headers={"User-Agent": USER_AGENT})
+    with opener.open(request, timeout=DEFAULT_TIMEOUT_SECONDS) as response:
+        validate_https_url(response.geturl())
+        payload = response.read()
+        content_type = response.headers.get_content_type()
+    if content_type not in {"text/html", "application/xhtml+xml"} and b"<html" not in payload[:4096].lower():
+        raise ValueError("downloaded payload is not HTML")
+    output_path.write_bytes(payload)
+    return hashlib.sha256(payload).hexdigest()
+
+
+def extract_html_text(raw_html_path: Path, extracted_txt_path: Path) -> None:
+    parser = MainContentHTMLParser()
+    parser.feed(raw_html_path.read_text(encoding="utf-8", errors="replace"))
+    text = parser.text()
+    if len(text.strip()) < 200:
+        raise ValueError("HTML page did not contain enough main-content text")
+    extracted_txt_path.write_text(text, encoding="utf-8")
+
+
 def extract_text(raw_pdf_path: Path, extracted_txt_path: Path) -> None:
     pdftotext_cmd = ["pdftotext", "-layout", str(raw_pdf_path), str(extracted_txt_path)]
     pdftotext = subprocess.run(pdftotext_cmd, check=False, capture_output=True, text=True)
@@ -322,6 +418,11 @@ def main() -> int:
         default=0,
         help="Optional maximum number of successful ingests (0 = no limit).",
     )
+    parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Ignore the prior manifest when intentionally rebuilding canonical identities.",
+    )
     args = parser.parse_args()
 
     ensure_pdf_tools()
@@ -334,7 +435,7 @@ def main() -> int:
     extracted_dir.mkdir(parents=True, exist_ok=True)
 
     rows = load_catalog(Path(args.catalog))
-    existing_records = load_existing_manifest_records(manifest_path)
+    existing_records = [] if args.fresh else load_existing_manifest_records(manifest_path)
     existing_id_by_source_url: dict[str, str] = {}
     existing_source_sha_by_url: dict[str, str] = {}
     used_audit_ids: set[str] = set()
@@ -381,6 +482,11 @@ def main() -> int:
             report["reason"] = "missing_source_url"
             report_rows.append(report)
             continue
+        if row.duplicate_of:
+            report["result"] = "skipped"
+            report["reason"] = f"duplicate_content_of:{row.duplicate_of}"
+            report_rows.append(report)
+            continue
         if args.limit and success_count >= args.limit:
             report["result"] = "skipped"
             report["reason"] = "limit_reached"
@@ -397,13 +503,8 @@ def main() -> int:
             continue
 
         source_type = classify_source_type(row.source_url, normalized_url)
-        if source_type in {"drive", "html"}:
-            report["result"] = "skipped"
-            report["reason"] = f"unsupported_source_type:{source_type}"
-            report_rows.append(report)
-            continue
-
-        raw_path = raw_dir / f"{audit_id}.pdf"
+        raw_suffix = ".html" if source_type == "html" else ".pdf"
+        raw_path = raw_dir / f"{audit_id}{raw_suffix}"
         extracted_path = extracted_dir / f"{audit_id}.txt"
         source_sha256 = ""
         reused_existing_artifacts = False
@@ -414,8 +515,12 @@ def main() -> int:
                 if not source_sha256:
                     source_sha256 = sha256_file(raw_path)
             else:
-                source_sha256 = download_pdf(normalized_url, raw_path)
-                extract_text(raw_path, extracted_path)
+                if source_type == "html":
+                    source_sha256 = download_html(normalized_url, raw_path)
+                    extract_html_text(raw_path, extracted_path)
+                else:
+                    source_sha256 = download_pdf(normalized_url, raw_path)
+                    extract_text(raw_path, extracted_path)
         except Exception as exc:  # noqa: BLE001 - per-row failure should not abort full ingest
             raw_path.unlink(missing_ok=True)
             extracted_path.unlink(missing_ok=True)
